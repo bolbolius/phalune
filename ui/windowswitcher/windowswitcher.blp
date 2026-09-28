@@ -1,0 +1,44 @@
+using Gtk 4.0;
+
+Overlay overlay_box {
+  hexpand: true;
+  vexpand: true;
+  styles ["window-switcher-overlay"]
+
+  child: Box card {
+    orientation: vertical;
+    spacing: 14;
+    halign: center;
+    valign: center;
+    styles ["window-switcher-card"]
+
+    ScrolledWindow scrolled_window {
+      hscrollbar-policy: automatic;
+      vscrollbar-policy: never;
+      propagate-natural-width: true;
+      styles ["window-switcher-scrolled"]
+
+      child: Box cards_container {
+        orientation: horizontal;
+        spacing: 10;
+        halign: center;
+        styles ["window-switcher-list"]
+      };
+    }
+
+    Label selected_title_label {
+      halign: center;
+      ellipsize: end;
+      max-width-chars: 48;
+      styles ["window-switcher-selected-title"]
+    }
+
+    Label empty_label {
+      label: _("No open windows");
+      visible: false;
+      halign: center;
+      valign: center;
+      styles ["window-switcher-empty"]
+    }
+  };
+}

@@ -1,0 +1,13 @@
+using Gtk 4.0;
+
+Box keyboard_box {
+  orientation: horizontal;
+  spacing: 0;
+  styles ["widget", "widget-keyboard", "widget-pill"]
+
+  Label keyboard_label {
+    label: _("--");
+    styles ["keyboard-label"]
+  }
+}
+

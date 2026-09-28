@@ -1,0 +1,37 @@
+using Gtk 4.0;
+
+ListBoxRow launcher_item {
+  styles ["launcher-row"]
+
+  Box row_box {
+    orientation: horizontal;
+    spacing: 12;
+    styles ["launcher-item"]
+
+    Image row_icon {
+      pixel-size: 30;
+      accessible-role: presentation;
+      styles ["launcher-icon"]
+    }
+
+    Box row_text {
+      orientation: vertical;
+      spacing: 2;
+      valign: center;
+      hexpand: true;
+
+      Label row_name {
+        halign: start;
+        ellipsize: end;
+        styles ["launcher-name"]
+      }
+
+      Label row_desc {
+        halign: start;
+        ellipsize: end;
+        styles ["launcher-desc"]
+      }
+    }
+  }
+}
+

@@ -1,0 +1,22 @@
+using Gtk 4.0;
+
+Box privacy_box {
+  orientation: horizontal;
+  spacing: 6;
+  visible: false;
+  styles ["widget-box", "privacy-widget"]
+
+  Image mic_icon {
+    icon-name: "audio-input-microphone-symbolic";
+    pixel-size: 14;
+    visible: false;
+    styles ["privacy-icon", "mic-active"]
+  }
+
+  Image camera_icon {
+    icon-name: "camera-web-symbolic";
+    pixel-size: 14;
+    visible: false;
+    styles ["privacy-icon", "camera-active"]
+  }
+}

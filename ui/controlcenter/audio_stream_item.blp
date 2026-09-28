@@ -1,0 +1,83 @@
+using Gtk 4.0;
+
+Box audio_stream_box {
+  orientation: vertical;
+  spacing: 6;
+  styles ["audio-stream-row"]
+
+  Box audio_stream_header {
+    orientation: horizontal;
+    spacing: 8;
+
+    Image audio_stream_icon {
+      icon-name: "audio-speakers-symbolic";
+      pixel-size: 18;
+      accessible-role: presentation;
+      styles ["audio-stream-icon"]
+    }
+
+    Box {
+      orientation: vertical;
+      valign: center;
+      halign: start;
+      hexpand: true;
+
+      Label audio_stream_name {
+        label: _("Application");
+        halign: start;
+        ellipsize: end;
+        max-width-chars: 20;
+        styles ["audio-stream-name"]
+      }
+
+      Label audio_stream_media {
+        label: _("Media");
+        halign: start;
+        ellipsize: end;
+        max-width-chars: 24;
+        visible: false;
+        styles ["audio-stream-media"]
+      }
+    }
+
+    Button audio_stream_mute_btn {
+      tooltip-text: _("Mute application");
+      valign: center;
+      styles ["flat", "audio-stream-mute-button"]
+
+      child: Image audio_stream_mute_icon {
+        icon-name: "audio-volume-high-symbolic";
+        pixel-size: 16;
+        accessible-role: presentation;
+      };
+    }
+  }
+
+  Box audio_stream_slider_row {
+    orientation: horizontal;
+    spacing: 10;
+    styles ["audio-stream-slider-row"]
+
+    Scale audio_stream_scale {
+      hexpand: true;
+      orientation: horizontal;
+      draw-value: false;
+      valign: center;
+      styles ["slider-scale"]
+
+      adjustment: Adjustment audio_stream_adj {
+        lower: 0;
+        upper: 100;
+        value: 100;
+      };
+    }
+
+    Label audio_stream_vol_label {
+      label: _("100%");
+      xalign: 1;
+      width-chars: 4;
+      valign: center;
+      styles ["slider-value-label"]
+    }
+  }
+}

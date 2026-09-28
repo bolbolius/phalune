@@ -1,0 +1,776 @@
+using Gtk 4.0;
+
+Overlay overlay_box {
+  hexpand: true;
+  vexpand: true;
+  styles ["control-center-overlay"]
+
+  child: Box card {
+    orientation: vertical;
+    spacing: 14;
+    halign: end;
+    valign: start;
+    margin-top: 40;
+    margin-end: 16;
+    width-request: 360;
+    styles ["control-center-card"]
+
+    Stack content_stack {
+      transition-type: slide_left_right;
+      transition-duration: 200;
+
+      StackPage {
+        name: "main";
+        child: Box main_box {
+          orientation: vertical;
+          spacing: 14;
+
+          // Quick Toggles Grid (2 columns x 2 rows)
+          Grid toggles_grid {
+            column-spacing: 10;
+            row-spacing: 10;
+            column-homogeneous: true;
+            row-homogeneous: true;
+            styles ["quick-toggles-grid"]
+
+            Box wifi_tile {
+              orientation: horizontal;
+              spacing: 0;
+              styles ["quick-toggle", "quick-toggle-split"]
+              layout {
+                row: 0;
+                column: 0;
+              }
+
+              Button wifi_button {
+                hexpand: true;
+                tooltip-text: _("Toggle Wi-Fi");
+                styles ["flat", "quick-toggle-body"]
+
+                child: Box {
+                  orientation: horizontal;
+                  spacing: 8;
+
+                  Image wifi_icon {
+                    icon-name: "network-wireless-symbolic";
+                    pixel-size: 22;
+                    accessible-role: presentation;
+                    styles ["quick-toggle-icon"]
+                  }
+
+                  Box {
+                    orientation: vertical;
+                    valign: center;
+                    halign: start;
+                    hexpand: true;
+
+                    Label wifi_title {
+                      label: _("Wi-Fi");
+                      halign: start;
+                      styles ["quick-toggle-title"]
+                    }
+
+                    Label wifi_status {
+                      label: _("Off");
+                      halign: start;
+                      ellipsize: end;
+                      max-width-chars: 10;
+                      styles ["quick-toggle-subtitle"]
+                    }
+                  }
+                };
+              }
+
+              Separator {
+                orientation: vertical;
+                styles ["quick-toggle-separator"]
+              }
+
+              Button wifi_arrow_button {
+                tooltip-text: _("Wi-Fi Networks");
+                styles ["flat", "quick-toggle-arrow-button"]
+                icon-name: "go-next-symbolic";
+                valign: fill;
+              }
+            }
+
+            Box bluetooth_tile {
+              orientation: horizontal;
+              spacing: 0;
+              styles ["quick-toggle", "quick-toggle-split"]
+              layout {
+                row: 0;
+                column: 1;
+              }
+
+              Button bluetooth_button {
+                hexpand: true;
+                tooltip-text: _("Toggle Bluetooth");
+                styles ["flat", "quick-toggle-body"]
+
+                child: Box {
+                  orientation: horizontal;
+                  spacing: 8;
+
+                  Image bluetooth_icon {
+                    icon-name: "bluetooth-active-symbolic";
+                    pixel-size: 22;
+                    accessible-role: presentation;
+                    styles ["quick-toggle-icon"]
+                  }
+
+                  Box {
+                    orientation: vertical;
+                    valign: center;
+                    halign: start;
+                    hexpand: true;
+
+                    Label bluetooth_title {
+                      label: _("Bluetooth");
+                      halign: start;
+                      styles ["quick-toggle-title"]
+                    }
+
+                    Label bluetooth_status {
+                      label: _("Off");
+                      halign: start;
+                      ellipsize: end;
+                      max-width-chars: 10;
+                      styles ["quick-toggle-subtitle"]
+                    }
+                  }
+                };
+              }
+
+              Separator {
+                orientation: vertical;
+                styles ["quick-toggle-separator"]
+              }
+
+              Button bluetooth_arrow_button {
+                tooltip-text: _("Bluetooth Devices");
+                styles ["flat", "quick-toggle-arrow-button"]
+                icon-name: "go-next-symbolic";
+                valign: fill;
+              }
+            }
+
+            Button dnd_button {
+              tooltip-text: _("Do Not Disturb");
+              styles ["quick-toggle"]
+              layout {
+                row: 1;
+                column: 0;
+              }
+
+              child: Box {
+                orientation: horizontal;
+                spacing: 10;
+
+                Image dnd_icon {
+                  icon-name: "notifications-disabled-symbolic";
+                  pixel-size: 22;
+                  accessible-role: presentation;
+                  styles ["quick-toggle-icon"]
+                }
+
+                Box {
+                  orientation: vertical;
+                  valign: center;
+                  halign: start;
+                  hexpand: true;
+
+                  Label dnd_title {
+                    label: _("Do Not Disturb");
+                    halign: start;
+                    styles ["quick-toggle-title"]
+                  }
+
+                  Label dnd_status {
+                    label: _("Off");
+                    halign: start;
+                    ellipsize: end;
+                    max-width-chars: 14;
+                    styles ["quick-toggle-subtitle"]
+                  }
+                }
+              };
+            }
+
+            Box power_tile {
+              orientation: horizontal;
+              spacing: 0;
+              styles ["quick-toggle", "quick-toggle-split"]
+              layout {
+                row: 1;
+                column: 1;
+              }
+
+              Button power_button {
+                hexpand: true;
+                tooltip-text: _("Power Profile");
+                styles ["flat", "quick-toggle-body"]
+
+                child: Box {
+                  orientation: horizontal;
+                  spacing: 8;
+
+                  Image power_icon {
+                    icon-name: "power-profile-balanced-symbolic";
+                    pixel-size: 22;
+                    accessible-role: presentation;
+                    styles ["quick-toggle-icon"]
+                  }
+
+                  Box {
+                    orientation: vertical;
+                    valign: center;
+                    halign: start;
+                    hexpand: true;
+
+                    Label power_title {
+                      label: _("Power Mode");
+                      halign: start;
+                      styles ["quick-toggle-title"]
+                    }
+
+                    Label power_status {
+                      label: _("Balanced");
+                      halign: start;
+                      ellipsize: end;
+                      max-width-chars: 10;
+                      styles ["quick-toggle-subtitle"]
+                    }
+                  }
+                };
+              }
+
+              Separator {
+                orientation: vertical;
+                styles ["quick-toggle-separator"]
+              }
+
+              Button power_arrow_button {
+                tooltip-text: _("Power Profiles");
+                styles ["flat", "quick-toggle-arrow-button"]
+                icon-name: "go-next-symbolic";
+                valign: fill;
+              }
+            }
+          }
+
+          // Sliders Container
+          Box sliders_box {
+            orientation: vertical;
+            spacing: 10;
+            styles ["sliders-box"]
+
+            // Volume Slider Row
+            Box volume_row {
+              orientation: horizontal;
+              spacing: 10;
+              styles ["slider-row"]
+
+              Button volume_button {
+                tooltip-text: _("Toggle Mute");
+                styles ["slider-icon-button"]
+
+                child: Image volume_icon {
+                  icon-name: "audio-volume-high-symbolic";
+                  pixel-size: 20;
+                  accessible-role: presentation;
+                  styles ["slider-icon"]
+                };
+              }
+
+              Scale volume_scale {
+                hexpand: true;
+                orientation: horizontal;
+                draw-value: false;
+                valign: center;
+                styles ["slider-scale"]
+
+                adjustment: Adjustment volume_adj {
+                  lower: 0;
+                  upper: 100;
+                  value: 50;
+                };
+              }
+
+              Label volume_label {
+                label: _("50%");
+                xalign: 1;
+                width-chars: 4;
+                valign: center;
+                styles ["slider-value-label"]
+              }
+
+              Button volume_arrow_button {
+                tooltip-text: _("Audio Settings");
+                styles ["flat", "slider-arrow-button"]
+                icon-name: "go-next-symbolic";
+                valign: center;
+              }
+            }
+
+            // Brightness Slider Row
+            Box brightness_row {
+              orientation: horizontal;
+              spacing: 10;
+              styles ["slider-row"]
+
+              Button brightness_button {
+                tooltip-text: _("Display Brightness");
+                styles ["slider-icon-button"]
+
+                child: Image brightness_icon {
+                  icon-name: "display-brightness-symbolic";
+                  pixel-size: 20;
+                  accessible-role: presentation;
+                  styles ["slider-icon"]
+                };
+              }
+
+              Scale brightness_scale {
+                hexpand: true;
+                orientation: horizontal;
+                draw-value: false;
+                valign: center;
+                styles ["slider-scale"]
+
+                adjustment: Adjustment brightness_adj {
+                  lower: 0;
+                  upper: 100;
+                  value: 75;
+                };
+              }
+
+              Label brightness_label {
+                label: _("75%");
+                xalign: 1;
+                width-chars: 4;
+                valign: center;
+                styles ["slider-value-label"]
+              }
+            }
+          }
+        };
+      }
+
+      StackPage {
+        name: "wifi";
+        child: Box wifi_page {
+          orientation: vertical;
+          spacing: 12;
+
+          Box wifi_subview_header {
+            orientation: horizontal;
+            spacing: 8;
+
+            Button wifi_back_button {
+              tooltip-text: _("Back");
+              styles ["flat", "subview-back-button"]
+              icon-name: "go-previous-symbolic";
+            }
+
+            Label wifi_subview_title {
+              label: _("Wi-Fi Networks");
+              hexpand: true;
+              halign: start;
+              styles ["subview-title"]
+            }
+
+            Button wifi_scan_button {
+              tooltip-text: _("Scan for networks");
+              styles ["flat", "subview-action-button"]
+              icon-name: "view-refresh-symbolic";
+            }
+
+            Switch wifi_radio_switch {
+              valign: center;
+              active: true;
+            }
+          }
+
+          ScrolledWindow wifi_scrolled_window {
+            hscrollbar-policy: never;
+            vscrollbar-policy: automatic;
+            min-content-height: 260;
+            max-content-height: 340;
+            propagate-natural-height: true;
+            styles ["subview-scrolled"]
+
+            child: ListBox wifi_list_box {
+              selection-mode: none;
+              styles ["wifi-list-box"]
+            };
+          }
+
+          Label wifi_empty_label {
+            label: _("No Wi-Fi networks found");
+            visible: false;
+            styles ["subview-empty-label"]
+          }
+        };
+      }
+
+      StackPage {
+        name: "bluetooth";
+        child: Box bluetooth_page {
+          orientation: vertical;
+          spacing: 12;
+
+          Box bluetooth_subview_header {
+            orientation: horizontal;
+            spacing: 8;
+
+            Button bluetooth_back_button {
+              tooltip-text: _("Back");
+              styles ["flat", "subview-back-button"]
+              icon-name: "go-previous-symbolic";
+            }
+
+            Label bluetooth_subview_title {
+              label: _("Bluetooth Devices");
+              hexpand: true;
+              halign: start;
+              styles ["subview-title"]
+            }
+
+            Button bluetooth_scan_button {
+              tooltip-text: _("Scan for devices");
+              styles ["flat", "subview-action-button"]
+              icon-name: "view-refresh-symbolic";
+            }
+
+            Switch bluetooth_radio_switch {
+              valign: center;
+              active: true;
+            }
+          }
+
+          ScrolledWindow bluetooth_scrolled_window {
+            hscrollbar-policy: never;
+            vscrollbar-policy: automatic;
+            min-content-height: 260;
+            max-content-height: 340;
+            propagate-natural-height: true;
+            styles ["subview-scrolled"]
+
+            child: ListBox bluetooth_list_box {
+              selection-mode: none;
+              styles ["bluetooth-list-box"]
+            };
+          }
+
+          Label bluetooth_empty_label {
+            label: _("No Bluetooth devices found");
+            visible: false;
+            styles ["subview-empty-label"]
+          }
+        };
+      }
+
+      StackPage {
+        name: "power";
+        child: Box power_page {
+          orientation: vertical;
+          spacing: 12;
+
+          Box power_subview_header {
+            orientation: horizontal;
+            spacing: 8;
+
+            Button power_back_button {
+              tooltip-text: _("Back");
+              styles ["flat", "subview-back-button"]
+              icon-name: "go-previous-symbolic";
+            }
+
+            Label power_subview_title {
+              label: _("Power Profiles");
+              hexpand: true;
+              halign: start;
+              styles ["subview-title"]
+            }
+          }
+
+          Box power_profiles_box {
+            orientation: vertical;
+            spacing: 8;
+            styles ["power-profiles-box"]
+
+            Button power_profile_performance_btn {
+              styles ["flat", "power-profile-row"]
+
+              child: Box {
+                orientation: horizontal;
+                spacing: 12;
+
+                Image {
+                  icon-name: "power-profile-performance-symbolic";
+                  pixel-size: 20;
+                  accessible-role: presentation;
+                  styles ["power-profile-icon"]
+                }
+
+                Box {
+                  orientation: vertical;
+                  valign: center;
+                  halign: start;
+                  hexpand: true;
+
+                  Label {
+                    label: _("Performance");
+                    halign: start;
+                    styles ["power-profile-title"]
+                  }
+
+                  Label {
+                    label: _("High performance and power usage");
+                    halign: start;
+                    styles ["power-profile-subtitle"]
+                  }
+                }
+
+                Image power_profile_performance_check {
+                  icon-name: "object-select-symbolic";
+                  pixel-size: 16;
+                  accessible-role: presentation;
+                  visible: false;
+                  styles ["power-profile-check"]
+                }
+              };
+            }
+
+            Button power_profile_balanced_btn {
+              styles ["flat", "power-profile-row"]
+
+              child: Box {
+                orientation: horizontal;
+                spacing: 12;
+
+                Image {
+                  icon-name: "power-profile-balanced-symbolic";
+                  pixel-size: 20;
+                  accessible-role: presentation;
+                  styles ["power-profile-icon"]
+                }
+
+                Box {
+                  orientation: vertical;
+                  valign: center;
+                  halign: start;
+                  hexpand: true;
+
+                  Label {
+                    label: _("Balanced");
+                    halign: start;
+                    styles ["power-profile-title"]
+                  }
+
+                  Label {
+                    label: _("Standard performance and power usage");
+                    halign: start;
+                    styles ["power-profile-subtitle"]
+                  }
+                }
+
+                Image power_profile_balanced_check {
+                  icon-name: "object-select-symbolic";
+                  pixel-size: 16;
+                  accessible-role: presentation;
+                  visible: false;
+                  styles ["power-profile-check"]
+                }
+              };
+            }
+
+            Button power_profile_saver_btn {
+              styles ["flat", "power-profile-row"]
+
+              child: Box {
+                orientation: horizontal;
+                spacing: 12;
+
+                Image {
+                  icon-name: "power-profile-power-saver-symbolic";
+                  pixel-size: 20;
+                  accessible-role: presentation;
+                  styles ["power-profile-icon"]
+                }
+
+                Box {
+                  orientation: vertical;
+                  valign: center;
+                  halign: start;
+                  hexpand: true;
+
+                  Label {
+                    label: _("Power Saver");
+                    halign: start;
+                    styles ["power-profile-title"]
+                  }
+
+                  Label {
+                    label: _("Reduced performance to extend battery life");
+                    halign: start;
+                    styles ["power-profile-subtitle"]
+                  }
+                }
+
+                Image power_profile_saver_check {
+                  icon-name: "object-select-symbolic";
+                  pixel-size: 16;
+                  accessible-role: presentation;
+                  visible: false;
+                  styles ["power-profile-check"]
+                }
+              };
+            }
+          }
+        };
+      }
+
+      StackPage {
+        name: "audio";
+        child: Box audio_page {
+          orientation: vertical;
+          spacing: 12;
+
+          Box audio_subview_header {
+            orientation: horizontal;
+            spacing: 8;
+
+            Button audio_back_button {
+              tooltip-text: _("Back");
+              styles ["flat", "subview-back-button"]
+              icon-name: "go-previous-symbolic";
+            }
+
+            Label audio_subview_title {
+              label: _("Sound");
+              hexpand: true;
+              halign: start;
+              styles ["subview-title"]
+            }
+          }
+
+          Box audio_sliders_box {
+            orientation: vertical;
+            spacing: 10;
+            styles ["sliders-box"]
+
+            // Output Volume Slider Row
+            Box audio_output_row {
+              orientation: horizontal;
+              spacing: 10;
+              styles ["slider-row"]
+
+              Button audio_output_button {
+                tooltip-text: _("Toggle Output Mute");
+                styles ["slider-icon-button"]
+
+                child: Image audio_output_icon {
+                  icon-name: "audio-volume-high-symbolic";
+                  pixel-size: 20;
+                  accessible-role: presentation;
+                  styles ["slider-icon"]
+                };
+              }
+
+              Scale audio_output_scale {
+                hexpand: true;
+                orientation: horizontal;
+                draw-value: false;
+                valign: center;
+                styles ["slider-scale"]
+
+                adjustment: Adjustment audio_output_adj {
+                  lower: 0;
+                  upper: 100;
+                  value: 50;
+                };
+              }
+
+              Label audio_output_label {
+                label: _("50%");
+                xalign: 1;
+                width-chars: 4;
+                valign: center;
+                styles ["slider-value-label"]
+              }
+            }
+
+            // Input Volume Slider Row
+            Box audio_input_row {
+              orientation: horizontal;
+              spacing: 10;
+              styles ["slider-row"]
+
+              Button audio_input_button {
+                tooltip-text: _("Toggle Microphone Mute");
+                styles ["slider-icon-button"]
+
+                child: Image audio_input_icon {
+                  icon-name: "audio-input-microphone-symbolic";
+                  pixel-size: 20;
+                  accessible-role: presentation;
+                  styles ["slider-icon"]
+                };
+              }
+
+              Scale audio_input_scale {
+                hexpand: true;
+                orientation: horizontal;
+                draw-value: false;
+                valign: center;
+                styles ["slider-scale"]
+
+                adjustment: Adjustment audio_input_adj {
+                  lower: 0;
+                  upper: 100;
+                  value: 50;
+                };
+              }
+
+              Label audio_input_label {
+                label: _("50%");
+                xalign: 1;
+                width-chars: 4;
+                valign: center;
+                styles ["slider-value-label"]
+              }
+            }
+          }
+
+          Label audio_apps_header {
+            label: _("Applications");
+            halign: start;
+            styles ["subview-section-title"]
+          }
+
+          ScrolledWindow audio_streams_scrolled_window {
+            hscrollbar-policy: never;
+            vscrollbar-policy: automatic;
+            min-content-height: 160;
+            max-content-height: 240;
+            propagate-natural-height: true;
+            styles ["subview-scrolled"]
+
+            child: ListBox audio_streams_list_box {
+              selection-mode: none;
+              styles ["audio-streams-list-box"]
+            };
+          }
+
+          Label audio_empty_label {
+            label: _("No applications currently playing audio");
+            visible: false;
+            styles ["subview-empty-label"]
+          }
+        };
+      }
+    }
+  };
+}

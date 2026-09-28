@@ -1,0 +1,30 @@
+using Gtk 4.0;
+
+Button card_button {
+  focusable: true;
+  styles ["window-tile-btn"]
+
+  child: Box tile_box {
+    orientation: vertical;
+    spacing: 8;
+    halign: center;
+    valign: center;
+    width-request: 92;
+    height-request: 92;
+    styles ["window-tile-box"]
+
+    Image app_icon {
+      pixel-size: 48;
+      halign: center;
+      valign: center;
+      styles ["window-tile-icon"]
+    }
+
+    Label app_name {
+      halign: center;
+      ellipsize: end;
+      max-width-chars: 12;
+      styles ["window-tile-app"]
+    }
+  };
+}

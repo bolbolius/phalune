@@ -1,0 +1,20 @@
+using Gtk 4.0;
+
+Box audio_box {
+  orientation: horizontal;
+  spacing: 0;
+  styles ["widget", "widget-audio", "widget-pill"]
+
+  Image audio_icon {
+    icon-name: "audio-volume-high-symbolic";
+    pixel-size: 16;
+    accessibility {
+      label: _("Audio Volume");
+    }
+  }
+
+  Label audio_label {
+    label: _("100%");
+    styles ["audio-label"]
+  }
+}

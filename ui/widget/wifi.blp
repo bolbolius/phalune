@@ -1,0 +1,20 @@
+using Gtk 4.0;
+
+Box wifi_box {
+  orientation: horizontal;
+  spacing: 0;
+  styles ["widget", "widget-wifi", "widget-pill"]
+
+  Image wifi_icon {
+    icon-name: "network-wireless-symbolic";
+    pixel-size: 16;
+    accessibility {
+      label: _("Wi-Fi");
+    }
+  }
+
+  Label wifi_label {
+    label: _("Disconnected");
+    styles ["wifi-label"]
+  }
+}

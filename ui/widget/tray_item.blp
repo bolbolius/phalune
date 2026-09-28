@@ -1,0 +1,17 @@
+using Gtk 4.0;
+
+Button tray_item_button {
+  tooltip-text: _("Status Notifier Item");
+  accessibility {
+    label: _("Status Notifier Item");
+  }
+  styles ["tray-item-button"]
+
+  Image tray_item_icon {
+    pixel-size: 16;
+    icon-name: "application-x-executable-symbolic";
+    accessibility {
+      label: _("Tray Icon");
+    }
+  }
+}

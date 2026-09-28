@@ -1,0 +1,33 @@
+using Gtk 4.0;
+
+Box osd_card {
+  orientation: horizontal;
+  spacing: 12;
+  halign: center;
+  valign: center;
+  styles ["osd-card"]
+
+  Image osd_icon {
+    icon-name: "audio-volume-high";
+    pixel-size: 24;
+    accessible-role: presentation;
+    styles ["osd-icon"]
+  }
+
+  Label osd_label {
+    label: _("Volume");
+    styles ["osd-label"]
+  }
+
+  ProgressBar osd_progress {
+    valign: center;
+    width-request: 140;
+    height-request: 8;
+    styles ["osd-progress"]
+  }
+
+  Label osd_value {
+    label: _("0%");
+    styles ["osd-value"]
+  }
+}

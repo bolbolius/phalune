@@ -1,0 +1,19 @@
+using Gtk 4.0;
+
+Box notifications_box {
+  orientation: horizontal;
+  spacing: 0;
+  styles ["widget-box", "notifications-widget", "widget-pill"]
+
+  Image notifications_icon {
+    icon-name: "preferences-system-notifications-symbolic";
+    pixel-size: 16;
+    styles ["widget-icon"]
+  }
+
+  Label notifications_badge {
+    label: "";
+    visible: false;
+    styles ["widget-label", "notifications-badge"]
+  }
+}

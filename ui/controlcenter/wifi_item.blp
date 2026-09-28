@@ -1,0 +1,86 @@
+using Gtk 4.0;
+
+Box wifi_item_box {
+  orientation: vertical;
+  spacing: 4;
+  styles ["wifi-item-row"]
+
+  Box wifi_item_header {
+    orientation: horizontal;
+    spacing: 10;
+
+    Image wifi_item_signal {
+      icon-name: "network-wireless-signal-good-symbolic";
+      pixel-size: 18;
+      accessible-role: presentation;
+      styles ["wifi-item-signal"]
+    }
+
+    Box {
+      orientation: vertical;
+      valign: center;
+      halign: start;
+      hexpand: true;
+
+      Label wifi_item_ssid {
+        label: _("Network");
+        halign: start;
+        ellipsize: end;
+        styles ["wifi-item-ssid"]
+      }
+
+      Label wifi_item_status {
+        label: _("Status");
+        halign: start;
+        visible: false;
+        styles ["wifi-item-status"]
+      }
+    }
+
+    Image wifi_item_lock {
+      icon-name: "network-wireless-encrypted-symbolic";
+      pixel-size: 16;
+      accessible-role: presentation;
+      visible: false;
+      styles ["wifi-item-lock"]
+    }
+
+    Image wifi_item_connected {
+      icon-name: "object-select-symbolic";
+      pixel-size: 16;
+      accessible-role: presentation;
+      visible: false;
+      styles ["wifi-item-connected-icon"]
+    }
+
+    Button wifi_item_button {
+      label: _("Connect");
+      valign: center;
+      styles ["flat", "wifi-item-action-button"]
+    }
+  }
+
+  Box wifi_password_box {
+    orientation: horizontal;
+    spacing: 6;
+    visible: false;
+    styles ["wifi-password-box"]
+
+    PasswordEntry wifi_password_entry {
+      hexpand: true;
+      placeholder-text: _("Enter passphrase…");
+      show-peek-icon: true;
+      styles ["wifi-password-entry"]
+    }
+
+    Button wifi_password_connect_btn {
+      label: _("Join");
+      styles ["suggested-action", "wifi-password-join-btn"]
+    }
+
+    Button wifi_password_cancel_btn {
+      label: _("Cancel");
+      styles ["flat", "wifi-password-cancel-btn"]
+    }
+  }
+}

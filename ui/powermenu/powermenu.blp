@@ -1,0 +1,216 @@
+using Gtk 4.0;
+
+Overlay overlay_box {
+  hexpand: true;
+  vexpand: true;
+  styles ["powermenu-overlay"]
+
+  child: Box card {
+    orientation: vertical;
+    spacing: 16;
+    halign: center;
+    valign: center;
+    width-request: 540;
+    styles ["powermenu-card"]
+
+    Box header_box {
+      orientation: horizontal;
+      spacing: 8;
+      halign: center;
+
+      Image header_icon {
+        icon-name: "system-shutdown-symbolic";
+        pixel-size: 20;
+        accessible-role: presentation;
+      }
+
+      Label header_title {
+        label: _("Power Menu");
+        styles ["powermenu-title"]
+      }
+    }
+
+    Grid actions_grid {
+      column-spacing: 12;
+      row-spacing: 12;
+      column-homogeneous: true;
+      row-homogeneous: true;
+      styles ["powermenu-grid"]
+
+      Button lock_button {
+        tooltip-text: _("Lock Screen (L)");
+        styles ["powermenu-action-btn"]
+        layout {
+          row: 0;
+          column: 0;
+        }
+
+        child: Box {
+          orientation: vertical;
+          spacing: 8;
+          halign: center;
+          valign: center;
+
+          Image {
+            icon-name: "system-lock-screen-symbolic";
+            pixel-size: 32;
+            accessible-role: presentation;
+            styles ["powermenu-icon"]
+          }
+
+          Label {
+            label: _("Lock");
+            styles ["powermenu-action-title"]
+          }
+        };
+      }
+
+      Button suspend_button {
+        tooltip-text: _("Suspend / Sleep (S)");
+        styles ["powermenu-action-btn"]
+        layout {
+          row: 0;
+          column: 1;
+        }
+
+        child: Box {
+          orientation: vertical;
+          spacing: 8;
+          halign: center;
+          valign: center;
+
+          Image {
+            icon-name: "weather-clear-night-symbolic";
+            pixel-size: 32;
+            accessible-role: presentation;
+            styles ["powermenu-icon"]
+          }
+
+          Label {
+            label: _("Suspend");
+            styles ["powermenu-action-title"]
+          }
+        };
+      }
+
+      Button hibernate_button {
+        tooltip-text: _("Hibernate (H)");
+        styles ["powermenu-action-btn"]
+        layout {
+          row: 0;
+          column: 2;
+        }
+
+        child: Box {
+          orientation: vertical;
+          spacing: 8;
+          halign: center;
+          valign: center;
+
+          Image {
+            icon-name: "drive-harddisk-symbolic";
+            pixel-size: 32;
+            accessible-role: presentation;
+            styles ["powermenu-icon"]
+          }
+
+          Label {
+            label: _("Hibernate");
+            styles ["powermenu-action-title"]
+          }
+        };
+      }
+
+      Button logout_button {
+        tooltip-text: _("Log Out (O)");
+        styles ["powermenu-action-btn"]
+        layout {
+          row: 1;
+          column: 0;
+        }
+
+        child: Box {
+          orientation: vertical;
+          spacing: 8;
+          halign: center;
+          valign: center;
+
+          Image {
+            icon-name: "system-log-out-symbolic";
+            pixel-size: 32;
+            accessible-role: presentation;
+            styles ["powermenu-icon"]
+          }
+
+          Label {
+            label: _("Log Out");
+            styles ["powermenu-action-title"]
+          }
+        };
+      }
+
+      Button reboot_button {
+        tooltip-text: _("Restart (R)");
+        styles ["powermenu-action-btn"]
+        layout {
+          row: 1;
+          column: 1;
+        }
+
+        child: Box {
+          orientation: vertical;
+          spacing: 8;
+          halign: center;
+          valign: center;
+
+          Image {
+            icon-name: "system-reboot-symbolic";
+            pixel-size: 32;
+            accessible-role: presentation;
+            styles ["powermenu-icon"]
+          }
+
+          Label {
+            label: _("Restart");
+            styles ["powermenu-action-title"]
+          }
+        };
+      }
+
+      Button shutdown_button {
+        tooltip-text: _("Shut Down (P)");
+        styles ["powermenu-action-btn", "destructive-action"]
+        layout {
+          row: 1;
+          column: 2;
+        }
+
+        child: Box {
+          orientation: vertical;
+          spacing: 8;
+          halign: center;
+          valign: center;
+
+          Image {
+            icon-name: "system-shutdown-symbolic";
+            pixel-size: 32;
+            accessible-role: presentation;
+            styles ["powermenu-icon"]
+          }
+
+          Label {
+            label: _("Shut Down");
+            styles ["powermenu-action-title"]
+          }
+        };
+      }
+    }
+
+    Button cancel_button {
+      label: _("Cancel");
+      halign: center;
+      styles ["powermenu-cancel-btn"]
+    }
+  };
+}
+

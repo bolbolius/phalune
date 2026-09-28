@@ -1,0 +1,42 @@
+using Gtk 4.0;
+
+Overlay overlay_box {
+  hexpand: true;
+  vexpand: true;
+  styles ["launcher-overlay"]
+
+  child: Box card {
+    orientation: vertical;
+    spacing: 12;
+    halign: center;
+    valign: center;
+    width-request: 520;
+    height-request: 500;
+    styles ["launcher-card"]
+
+    SearchEntry search_entry {
+      placeholder-text: _("Type to search applications…");
+      styles ["launcher-search"]
+    }
+
+    ScrolledWindow scrolled_window {
+      hexpand: true;
+      vexpand: true;
+      styles ["launcher-scrolled"]
+
+      ListBox list_box {
+        selection-mode: single;
+        activate-on-single-click: true;
+        styles ["launcher-list"]
+      }
+    }
+
+    Label no_results_label {
+      label: _("No applications found");
+      hexpand: true;
+      vexpand: true;
+      visible: false;
+      styles ["launcher-no-results"]
+    }
+  };
+}

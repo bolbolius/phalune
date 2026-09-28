@@ -1,0 +1,150 @@
+using Gtk 4.0;
+
+Overlay overlay_box {
+  hexpand: true;
+  vexpand: true;
+  styles ["lockscreen-overlay"]
+
+  child: Box main_box {
+    orientation: vertical;
+    valign: fill;
+    halign: fill;
+    hexpand: true;
+    vexpand: true;
+
+    // Top spacer
+    Box {
+      vexpand: true;
+    }
+
+    // Center card
+    Box card {
+      orientation: vertical;
+      spacing: 16;
+      halign: center;
+      valign: center;
+      width-request: 380;
+      styles ["lockscreen-card"]
+
+      // Clock section
+      Box clock_box {
+        orientation: vertical;
+        spacing: 4;
+        halign: center;
+
+        Label clock_label {
+          label: "12:00";
+          styles ["lockscreen-clock"]
+        }
+
+        Label date_label {
+          label: "Monday, January 1";
+          styles ["lockscreen-date"]
+        }
+      }
+
+      // User avatar and name
+      Box user_box {
+        orientation: vertical;
+        spacing: 8;
+        halign: center;
+        margin-top: 12;
+
+        Image user_avatar {
+          icon-name: "avatar-default-symbolic";
+          pixel-size: 64;
+          accessible-role: presentation;
+          styles ["lockscreen-avatar"]
+        }
+
+        Label user_name {
+          label: "User";
+          styles ["lockscreen-username"]
+        }
+      }
+
+      // Password input row
+      Box input_box {
+        orientation: horizontal;
+        spacing: 8;
+        halign: center;
+        width-request: 280;
+        styles ["lockscreen-input-box"]
+
+        PasswordEntry password_entry {
+          hexpand: true;
+          placeholder-text: _("Enter password…");
+          show-peek-icon: true;
+          styles ["lockscreen-entry"]
+        }
+
+        Button unlock_button {
+          tooltip-text: _("Unlock");
+          styles ["lockscreen-unlock-btn"]
+
+          child: Image {
+            icon-name: "go-next-symbolic";
+            pixel-size: 16;
+            accessible-role: presentation;
+          };
+        }
+      }
+
+      // Feedback / Error label
+      Label feedback_label {
+        label: "";
+        halign: center;
+        visible: false;
+        styles ["lockscreen-feedback"]
+      }
+    }
+
+    // Bottom spacer
+    Box {
+      vexpand: true;
+    }
+
+    // Bottom power bar
+    Box bottom_bar {
+      orientation: horizontal;
+      spacing: 16;
+      halign: center;
+      margin-bottom: 32;
+      styles ["lockscreen-bottom-bar"]
+
+      Button suspend_btn {
+        tooltip-text: _("Suspend");
+        styles ["lockscreen-bottom-btn"]
+
+        child: Image {
+          icon-name: "weather-clear-night-symbolic";
+          pixel-size: 20;
+          accessible-role: presentation;
+        };
+      }
+
+      Button reboot_btn {
+        tooltip-text: _("Restart");
+        styles ["lockscreen-bottom-btn"]
+
+        child: Image {
+          icon-name: "system-reboot-symbolic";
+          pixel-size: 20;
+          accessible-role: presentation;
+        };
+      }
+
+      Button poweroff_btn {
+        tooltip-text: _("Shut Down");
+        styles ["lockscreen-bottom-btn"]
+
+        child: Image {
+          icon-name: "system-shutdown-symbolic";
+          pixel-size: 20;
+          accessible-role: presentation;
+        };
+      }
+    }
+  };
+}
+

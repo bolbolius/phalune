@@ -1,0 +1,20 @@
+using Gtk 4.0;
+
+Box battery_box {
+  orientation: horizontal;
+  spacing: 0;
+  styles ["widget", "widget-battery", "widget-pill"]
+
+  Image battery_icon {
+    icon-name: "battery-level-100-charged-symbolic";
+    pixel-size: 16;
+    accessibility {
+      label: _("Battery Status");
+    }
+  }
+
+  Label battery_label {
+    label: _("100%");
+    styles ["battery-label"]
+  }
+}

@@ -1,0 +1,78 @@
+using Gtk 4.0;
+
+Box notify_card {
+  orientation: horizontal;
+  spacing: 10;
+  styles ["notify-card"]
+
+  Image card_icon {
+    pixel-size: 32;
+    valign: start;
+    accessible-role: presentation;
+    styles ["notify-icon"]
+  }
+
+  Box content_box {
+    orientation: vertical;
+    spacing: 3;
+    hexpand: true;
+
+    Box header_box {
+      orientation: horizontal;
+      spacing: 6;
+
+      Label app_label {
+        halign: start;
+        hexpand: true;
+        styles ["notify-app"]
+      }
+
+      Button close_button {
+        label: _("✕");
+        tooltip-text: _("Close");
+        styles ["notify-close"]
+      }
+    }
+
+    Label title_label {
+      halign: start;
+      ellipsize: end;
+      styles ["notify-title"]
+    }
+
+    Label body_label {
+      halign: start;
+      wrap: true;
+      wrap-mode: word_char;
+      lines: 3;
+      ellipsize: end;
+      styles ["notify-body"]
+    }
+
+    Box actions_box {
+      orientation: horizontal;
+      spacing: 6;
+      visible: false;
+      styles ["notify-actions"]
+    }
+
+    Box reply_box {
+      orientation: horizontal;
+      spacing: 6;
+      visible: false;
+      styles ["notify-reply-box"]
+
+      Entry reply_entry {
+        placeholder-text: _("Reply…");
+        hexpand: true;
+        styles ["notify-reply-entry"]
+      }
+
+      Button reply_button {
+        label: _("Send");
+        styles ["suggested-action", "notify-reply-btn"]
+      }
+    }
+  }
+}
+

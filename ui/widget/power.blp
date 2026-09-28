@@ -1,0 +1,15 @@
+using Gtk 4.0;
+
+Box power_box {
+  orientation: horizontal;
+  spacing: 0;
+  styles ["widget", "widget-power", "widget-pill"]
+  tooltip-text: _("Power Menu");
+
+  Image power_icon {
+    icon-name: "system-shutdown-symbolic";
+    pixel-size: 16;
+    accessible-role: presentation;
+  }
+}
+

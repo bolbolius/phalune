@@ -1,0 +1,71 @@
+using Gtk 4.0;
+
+Box bluetooth_item_box {
+  orientation: vertical;
+  spacing: 4;
+  styles ["bluetooth-item-row"]
+
+  Box bluetooth_item_header {
+    orientation: horizontal;
+    spacing: 10;
+
+    Image bluetooth_item_icon {
+      icon-name: "bluetooth-active-symbolic";
+      pixel-size: 18;
+      accessible-role: presentation;
+      styles ["bluetooth-item-icon"]
+    }
+
+    Box {
+      orientation: vertical;
+      valign: center;
+      halign: start;
+      hexpand: true;
+
+      Label bluetooth_item_name {
+        label: _("Device");
+        halign: start;
+        ellipsize: end;
+        styles ["bluetooth-item-name"]
+      }
+
+      Label bluetooth_item_status {
+        label: _("Status");
+        halign: start;
+        visible: false;
+        styles ["bluetooth-item-status"]
+      }
+    }
+
+    Image bluetooth_item_connected {
+      icon-name: "object-select-symbolic";
+      pixel-size: 16;
+      accessible-role: presentation;
+      visible: false;
+      styles ["bluetooth-item-connected-icon"]
+    }
+
+    Button bluetooth_item_button {
+      label: _("Connect");
+      valign: center;
+      styles ["flat", "bluetooth-item-action-button"]
+    }
+  }
+
+  Box bluetooth_actions_box {
+    orientation: horizontal;
+    spacing: 6;
+    visible: false;
+    styles ["bluetooth-actions-box"]
+
+    Button bluetooth_forget_btn {
+      label: _("Forget");
+      styles ["flat", "destructive-action", "bluetooth-forget-btn"]
+    }
+
+    Button bluetooth_cancel_btn {
+      label: _("Cancel");
+      styles ["flat", "bluetooth-cancel-btn"]
+    }
+  }
+}

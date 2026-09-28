@@ -1,0 +1,21 @@
+using Gtk 4.0;
+
+Box bluetooth_box {
+  orientation: horizontal;
+  spacing: 0;
+  styles ["widget", "widget-bluetooth", "widget-pill"]
+
+  Image bluetooth_icon {
+    icon-name: "bluetooth-active-symbolic";
+    pixel-size: 16;
+    accessibility {
+      label: _("Bluetooth");
+    }
+  }
+
+  Label bluetooth_label {
+    label: _("On");
+    styles ["bluetooth-label"]
+  }
+}
+

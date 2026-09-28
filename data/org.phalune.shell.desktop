@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Phalune
+Comment=Wayland desktop shell
+Exec=phalune
+Icon=phalune
+Type=Application
+Categories=Utility;
+StartupNotify=false

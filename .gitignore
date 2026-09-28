@@ -1,0 +1,13 @@
+# Binaries
+/phalune
+*.test
+
+# Generated compile-time UI files
+*.ui
+
+# OS & Editor
+.DS_Store
+*.swp
+*~
+.idea/
+.vscode/

@@ -1,0 +1,78 @@
+using Gtk 4.0;
+
+Overlay overlay_box {
+  hexpand: true;
+  vexpand: true;
+  styles ["notification-center-overlay"]
+
+  child: Box card {
+    orientation: vertical;
+    spacing: 12;
+    halign: end;
+    valign: start;
+    margin-top: 40;
+    margin-end: 16;
+    width-request: 380;
+    styles ["notification-center-card"]
+
+    Box header_box {
+      orientation: horizontal;
+      spacing: 8;
+      styles ["notification-center-header"]
+
+      Label title_label {
+        label: _("Notifications");
+        halign: start;
+        hexpand: true;
+        styles ["notification-center-title"]
+      }
+
+      Label count_badge {
+        label: _("0");
+        visible: false;
+        styles ["notification-count-badge"]
+      }
+
+      Button dnd_button {
+        icon-name: "preferences-system-notifications-symbolic";
+        tooltip-text: _("Do Not Disturb");
+        styles ["flat", "notification-dnd-button"]
+      }
+
+      Button clear_button {
+        icon-name: "edit-clear-all-symbolic";
+        tooltip-text: _("Clear All Notifications");
+        styles ["flat", "notification-clear-button"]
+      }
+
+      Button close_button {
+        icon-name: "window-close-symbolic";
+        tooltip-text: _("Close");
+        styles ["flat", "notification-close-button"]
+      }
+    }
+
+    ScrolledWindow scrolled_window {
+      hscrollbar-policy: never;
+      vscrollbar-policy: automatic;
+      min-content-height: 200;
+      max-content-height: 480;
+      propagate-natural-height: true;
+      styles ["notification-scrolled-window"]
+
+      child: ListBox list_box {
+        selection-mode: none;
+        styles ["notification-list-box"]
+      };
+    }
+
+    Label empty_label {
+      label: _("No Notifications");
+      halign: center;
+      valign: center;
+      margin-top: 32;
+      margin-bottom: 32;
+      styles ["subview-empty-label"]
+    }
+  };
+}

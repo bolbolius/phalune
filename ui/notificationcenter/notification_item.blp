@@ -1,0 +1,59 @@
+using Gtk 4.0;
+
+Box item_box {
+  orientation: vertical;
+  spacing: 6;
+  styles ["notification-history-item"]
+
+  Box item_header {
+    orientation: horizontal;
+    spacing: 8;
+
+    Image item_icon {
+      pixel-size: 16;
+      styles ["notification-history-icon"]
+    }
+
+    Label app_name {
+      label: _("App");
+      halign: start;
+      hexpand: true;
+      styles ["notification-history-app"]
+    }
+
+    Label time_label {
+      label: _("Just now");
+      halign: end;
+      styles ["notification-history-time"]
+    }
+
+    Button dismiss_button {
+      icon-name: "window-close-symbolic";
+      tooltip-text: _("Dismiss");
+      styles ["flat", "notification-history-close"]
+    }
+  }
+
+  Label summary_label {
+    halign: start;
+    ellipsize: end;
+    styles ["notification-history-summary"]
+  }
+
+  Label body_label {
+    halign: start;
+    wrap: true;
+    wrap-mode: word_char;
+    lines: 3;
+    ellipsize: end;
+    visible: false;
+    styles ["notification-history-body"]
+  }
+
+  Box actions_box {
+    orientation: horizontal;
+    spacing: 6;
+    visible: false;
+    styles ["notify-actions"]
+  }
+}

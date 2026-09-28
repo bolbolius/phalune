@@ -1,0 +1,47 @@
+# Architecture
+
+The setup is similar to Qt/QML (inspired by `quickshell`):
+- Go handles logic, state, IPC, and system integration.
+- Blueprint (`.blp`) defines the widget tree, layouts, sizing, and CSS classes.
+
+Go code shouldn't construct GTK layouts manually. We load `.blp` templates via `gtk.NewBuilderFromString(ui.<Widget>)` and wire up signals or dynamic children from there.
+
+## Structure
+
+- `cmd/phalune/` — App entry point. Runs the daemon or sends CLI messages (`phalune msg ...`).
+- `internal/`
+  - `config/` — Parses `config.toml` and validates widget names.
+  - `ipc/` — Unix socket server and client at `$XDG_RUNTIME_DIR/phalune.sock`.
+  - `niri/` — Talks to Niri over its socket, tracks workspace events, and triggers focus changes.
+  - `shell/` — Glues the bar, launcher, OSD, notifications, and CSS together.
+    - `bar/` — Top bar layer surface created for each connected monitor.
+  - `widget/` — Bar widget interface and registry (`clock`, `workspaces`, `audio`, `battery`, `tray`, `bluetooth`, `wifi`, `keyboard`, `power`, `notifications`, `privacy`).
+  - `launcher/` — App launcher overlay with fuzzy search, frecency ranking, and `.desktop` parsing.
+  - `controlcenter/` — Quick settings overlay (Wi-Fi, Bluetooth, DND, power profiles, volume and brightness sliders, media stream routing).
+  - `notificationcenter/` — Dropdown panel for notification history and quick actions.
+  - `windowswitcher/` — Horizontal Alt-Tab window switcher with application tiles and instant workspace navigation.
+  - `osd/` — Volume, microphone, caps lock, and brightness overlay with auto-dismiss and native listeners.
+  - `notify/` — Notification toasts and standard `org.freedesktop.Notifications` D-Bus service.
+  - `powermenu/` — System power management dialog (Lock, Suspend, Hibernate, Reboot, Power Off).
+  - `lockscreen/` — Full-screen overlay lock screen with PAM password authentication.
+  - `session/` — Session management listening to `systemd-logind` / `ConsoleKit2` signals.
+  - `privacy/` — Hardware usage indicators (microphone and camera active detection).
+  - `removable/` — Automatic notifications when USB drives and storage media are plugged in.
+- `ui/` — Blueprint files (`.blp`), plus `ui.go` which embeds the compiled `.ui` XML for Go.
+
+## How it works
+
+Running `phalune` reads `config.toml`, connects to Niri's event socket, and registers the bar widgets. Once the GTK application activates, `shell.New()` creates a top bar on each connected monitor.
+
+The launcher, control center, OSD, and notification popups also create layer-shell surfaces on the overlay layer, but stay hidden until triggered.
+
+While running, the shell listens on a Unix socket. Commands like `phalune msg toggle-launcher` connect to this socket, dispatch the action to GTK's main loop via `glib.IdleAdd`, and return a status string.
+
+## Notes
+
+- Single binary: Both the daemon and CLI client live in the same `phalune` binary.
+- Wayland only: Startup forces `GDK_BACKEND=wayland` because `gtk4-layer-shell` requires Wayland.
+- GTK and goroutines: GTK is not thread-safe. Anything touching widgets from a background goroutine (Niri stream, IPC, D-Bus, tickers) must go through `glib.IdleAdd`.
+- No polling: We avoid periodic polling loops across the shell because it wastes CPU and battery. We prefer push-based event streams and kernel subscriptions (e.g. Niri JSON-RPC socket stream, pactl subscribe for audio/mic, and Linux Netlink uevent socket for backlight and hardware keys).
+- Generated UI files: `make` compiles `.blp` into `.ui` files in `ui/`. We have them git-ignored and keep on disk so `gopls` doesn't complain about missing embed files.
+
