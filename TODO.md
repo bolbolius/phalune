@@ -33,9 +33,22 @@
 
 ### Alpha 0.2
 
-- [ ] Clipboard history.
-- [ ] Screenshot integration.
-- [ ] Polkit authentication UI.
-- [ ] Media/MPRIS controls.
-- [ ] Support for `.desktop` sub-actions.
-- [ ] Command execution in launcher (`:reboot`, `:poweroff`, `:reload`).
+- [ ] Media / MPRIS Controls:
+- [ ] Launcher updates:
+  - [ ] Shell commands (`:reboot`, `:poweroff`, `:reload`, `:lock`).
+  - [ ] `.desktop` sub-actions.
+- [ ] Clipboard Manager:
+  - [ ] Background watcher.
+  - [ ] Searchable history overlay UI.
+- [ ] Polkit Agent:
+  - [ ] D-Bus PolicyKit1 listener.
+  - [ ] GTK4 auth prompt dialog.
+- [ ] Screenshot Tooling:
+  - [ ] Area / window / display grab.
+  - [ ] Actionable preview toast (Copy / Save / Open).
+
+### Alpha 0.3
+
+- [ ] Settings app.
+- [ ] Adding support for other WMs.
+- [ ] `--json` flag for status queries in ipc.
