@@ -48,8 +48,8 @@ Send IPC messages to the running instance:
   2. Handle it in `cmd/phalune/main.go` inside `ipcHandler`.
   3. Call the relevant method on `shell.Shell`.
 - Changing UI or layouts:
-  - Edit the `.blp` file in `ui/`. Never build static layouts in Go.
-  - Run `make ui` to update the `.ui` files.
+  1. Edit the `.blp` file in `ui/`. Never build static layouts in Go.
+  2. Run `make ui` to update the `.ui` files.
 
 ## Notes
 
