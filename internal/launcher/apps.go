@@ -11,6 +11,8 @@ import (
 	"syscall"
 )
 
+// App is a launchable entry: either an installed .desktop application or a
+// built-in shell command.
 type App struct {
 	ID          string
 	Name        string
@@ -22,6 +24,20 @@ type App struct {
 	Terminal    bool
 	Categories  []string
 	Keywords    []string
+	Actions     []DesktopAction
+
+	invalid   bool
+	noDisplay bool
+	hidden    bool
+}
+
+type DesktopAction struct {
+	ID        string
+	Name      string
+	Icon      string
+	Exec      string
+	CleanExec string
+	Terminal  *bool
 }
 
 var execCodeRegex = regexp.MustCompile(`%[fFuUnNkKmicdvs]`)
@@ -98,40 +114,18 @@ func parseDesktopFile(path string, id string) (App, bool) {
 
 	scanner := bufio.NewScanner(file)
 	inDesktopEntry := false
+	currentAction := ""
+	actionSections := map[string][][2]string{}
 
 	var app App
 	app.ID = id
-	noDisplay := false
-	hidden := false
+	actionsKey := ""
 
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
-			section := line[1 : len(line)-1]
-			inDesktopEntry = section == "Desktop Entry"
-			continue
-		}
-
-		if !inDesktopEntry {
-			continue
-		}
-
-		idx := strings.Index(line, "=")
-		if idx == -1 {
-			continue
-		}
-
-		key := strings.TrimSpace(line[:idx])
-		val := strings.TrimSpace(line[idx+1:])
-
+	handleKV := func(app *App, key, val string) {
 		switch key {
 		case "Type":
 			if val != "Application" {
-				return App{}, false
+				app.invalid = true
 			}
 		case "Name":
 			if app.Name == "" {
@@ -153,9 +147,15 @@ func parseDesktopFile(path string, id string) (App, bool) {
 		case "Terminal":
 			app.Terminal = strings.EqualFold(val, "true")
 		case "NoDisplay":
-			noDisplay = strings.EqualFold(val, "true")
+			if strings.EqualFold(val, "true") {
+				app.noDisplay = true
+			}
 		case "Hidden":
-			hidden = strings.EqualFold(val, "true")
+			if strings.EqualFold(val, "true") {
+				app.hidden = true
+			}
+		case "Actions":
+			actionsKey = val
 		case "Categories":
 			for _, c := range strings.Split(val, ";") {
 				c = strings.TrimSpace(c)
@@ -173,7 +173,94 @@ func parseDesktopFile(path string, id string) (App, bool) {
 		}
 	}
 
-	if noDisplay || hidden || app.Name == "" || app.Exec == "" {
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
+			section := line[1 : len(line)-1]
+
+			if section == "Desktop Entry" {
+				inDesktopEntry = true
+				continue
+			}
+
+			if strings.HasPrefix(section, "Desktop Action ") {
+				inDesktopEntry = false
+				actionID := strings.TrimPrefix(section, "Desktop Action ")
+				if actionID != "" {
+					currentAction = actionID
+					if _, ok := actionSections[actionID]; !ok {
+						actionSections[actionID] = nil
+					}
+				} else {
+					currentAction = ""
+				}
+				continue
+			}
+
+			inDesktopEntry = false
+			currentAction = ""
+			continue
+		}
+
+		idx := strings.Index(line, "=")
+		if idx == -1 {
+			continue
+		}
+
+		key := strings.TrimSpace(line[:idx])
+		val := strings.TrimSpace(line[idx+1:])
+
+		if inDesktopEntry {
+			if !app.invalid {
+				handleKV(&app, key, val)
+			}
+			continue
+		}
+
+		if actionID := currentAction; actionID != "" {
+			actionSections[actionID] = append(actionSections[actionID], [2]string{key, val})
+		}
+	}
+
+	// Parse [Desktop Action] sections listed in the Actions= key of the main
+	// entry, keeping the declared order.
+	if actionsKey != "" {
+		for _, field := range strings.Split(actionsKey, ";") {
+			field = strings.TrimSpace(field)
+			if field == "" || actionSections[field] == nil {
+				continue
+			}
+
+			var action DesktopAction
+			action.ID = field
+			for _, kv := range actionSections[field] {
+				switch kv[0] {
+				case "Name":
+					if action.Name == "" {
+						action.Name = kv[1]
+					}
+				case "Icon":
+					action.Icon = kv[1]
+				case "Exec":
+					action.Exec = kv[1]
+					action.CleanExec = CleanExec(kv[1])
+				case "Terminal":
+					valBool := strings.EqualFold(kv[1], "true")
+					action.Terminal = &valBool
+				}
+			}
+			if action.Name == "" || action.CleanExec == "" {
+				continue
+			}
+			app.Actions = append(app.Actions, action)
+		}
+	}
+
+	if app.invalid || app.noDisplay || app.hidden || app.Name == "" || app.Exec == "" {
 		return App{}, false
 	}
 
@@ -191,7 +278,33 @@ func LaunchApp(app App, preferredTerm ...string) error {
 		return fmt.Errorf("invalid command line %q", rawCmd)
 	}
 
-	if app.Terminal {
+	return execParts(parts, app.Terminal, preferredTerm...)
+}
+
+// LaunchDesktopAction launches a [Desktop Action] sub-entry of app.
+func LaunchDesktopAction(app App, action DesktopAction, preferredTerm ...string) error {
+	rawCmd := action.CleanExec
+	if rawCmd == "" {
+		rawCmd = action.Exec
+	}
+	if rawCmd == "" {
+		return fmt.Errorf("action %q has no Exec", action.ID)
+	}
+
+	parts, err := splitCommandLine(rawCmd)
+	if err != nil || len(parts) == 0 {
+		return fmt.Errorf("invalid command line %q", rawCmd)
+	}
+
+	terminal := app.Terminal
+	if action.Terminal != nil {
+		terminal = *action.Terminal
+	}
+	return execParts(parts, terminal, preferredTerm...)
+}
+
+func execParts(parts []string, terminal bool, preferredTerm ...string) error {
+	if terminal {
 		term := ""
 		if len(preferredTerm) > 0 && preferredTerm[0] != "" {
 			term = preferredTerm[0]

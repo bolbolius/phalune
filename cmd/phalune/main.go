@@ -359,6 +359,13 @@ func main() {
 
 		sh = shell.New(app, cfg, reg, niriSvc)
 		logging.SetNotifier(sh)
+		sh.SetConfigReloader(func() {
+			glib.IdleAdd(func() {
+				if err := doReload(nil); err != nil {
+					slog.Error("config reload failed", "error", err)
+				}
+			})
+		})
 
 		if err := sh.Start(); err != nil {
 			slog.Error("failed to start shell", "error", err)

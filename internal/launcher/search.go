@@ -39,6 +39,60 @@ type scoredApp struct {
 	score float64
 }
 
+type Result struct {
+	App     *App
+	Action  *DesktopAction
+	Command *commandEntry
+}
+
+func (r Result) Title() string {
+	switch {
+	case r.Command != nil:
+		return ":" + r.Command.Name
+	case r.Action != nil:
+		return r.Action.Name
+	case r.App != nil:
+		return r.App.Name
+	}
+	return ""
+}
+
+func (r Result) Subtitle() string {
+	switch {
+	case r.Command != nil:
+		return r.Command.Description
+	case r.Action != nil:
+		if r.App != nil {
+			return r.App.Name
+		}
+	case r.App != nil:
+		if r.App.GenericName != "" {
+			return r.App.GenericName
+		}
+		return r.App.Comment
+	}
+	return ""
+}
+
+func (r Result) IconName() string {
+	switch {
+	case r.Command != nil:
+		if r.Command.Icon != "" {
+			return r.Command.Icon
+		}
+	case r.Action != nil:
+		if r.Action.Icon != "" {
+			return r.Action.Icon
+		}
+		if r.App != nil && r.App.Icon != "" {
+			return r.App.Icon
+		}
+	case r.App != nil && r.App.Icon != "":
+		return r.App.Icon
+	}
+	return "application-x-executable"
+}
+
 func SortAppsAlphabetical(apps []App) []App {
 	result := make([]App, len(apps))
 	copy(result, apps)
@@ -194,4 +248,98 @@ func FilterApps(apps []App, query string, store *FrecencyStore) []App {
 		result[i] = s.app
 	}
 	return result
+}
+
+func FilterResults(apps []App, commands []commandEntry, query string, store *FrecencyStore) []Result {
+	q := strings.TrimSpace(query)
+	isCommandQuery := strings.HasPrefix(q, ":")
+	qLower := strings.ToLower(q)
+
+	type scoredResult struct {
+		res   Result
+		score float64
+	}
+	var scored []scoredResult
+
+	if isCommandQuery {
+		qCmd := strings.TrimPrefix(qLower, ":")
+		for i := range commands {
+			s := matchCommand(commands[i], qCmd)
+			if s > 0 {
+				scored = append(scored, scoredResult{
+					res:   Result{Command: &commands[i]},
+					score: float64(s) + 100,
+				})
+			}
+		}
+	} else {
+		for i := range apps {
+			for j := range apps[i].Actions {
+				action := &apps[i].Actions[j]
+				score := scoreAction(apps[i], *action, qLower)
+				if score > 0 {
+					scored = append(scored, scoredResult{
+						res:   Result{App: &apps[i], Action: action},
+						score: score,
+					})
+				}
+			}
+		}
+
+		filtered := FilterApps(apps, q, store)
+		for i := range filtered {
+			scored = append(scored, scoredResult{
+				res:   Result{App: &filtered[i]},
+				score: 0,
+			})
+		}
+	}
+
+	if len(scored) == 0 {
+		return nil
+	}
+
+	sort.SliceStable(scored, func(i, j int) bool {
+		return scored[i].score > scored[j].score
+	})
+
+	results := make([]Result, 0, len(scored))
+	for _, s := range scored {
+		results = append(results, s.res)
+	}
+	return results
+}
+
+func scoreAction(app App, action DesktopAction, qLower string) float64 {
+	if qLower == "" {
+		return 0
+	}
+	q := strings.ReplaceAll(qLower, " ", "")
+
+	actionName := strings.ToLower(action.Name)
+	actionCompact := strings.ReplaceAll(actionName, " ", "")
+	appName := strings.ToLower(app.Name)
+
+	score := 0.0
+	switch {
+	case actionCompact == q:
+		score = 92
+	case strings.HasPrefix(actionCompact, q):
+		score = 78
+	case strings.Contains(actionCompact, q):
+		score = 60
+	case strings.Contains(q, appName) && appName != "":
+		if az := FuzzyScore(strings.ReplaceAll(q, appName+" ", ""), actionCompact); az > 0 {
+			score = 55 + float64(az)/10
+		}
+	}
+
+	if score == 0 {
+		combined := strings.ReplaceAll(appName+" "+actionName, " ", "")
+		if fz := FuzzyScore(q, combined); fz > 0 && len(q) >= 3 {
+			score = 40 + float64(fz)/10
+		}
+	}
+
+	return score
 }

@@ -216,27 +216,7 @@ func TestWifiAccessPointSorting(t *testing.T) {
 		{SSID: "SavedStrong", Strength: 80, Secured: true, Connected: false, Saved: true},
 	}
 
-	sortAccessPoints := func(list []AccessPoint) {
-		for i := 0; i < len(list); i++ {
-			for j := i + 1; j < len(list); j++ {
-				swap := false
-				if list[i].Connected != list[j].Connected {
-					swap = !list[i].Connected
-				} else if list[i].Saved != list[j].Saved {
-					swap = !list[i].Saved
-				} else if list[i].Strength != list[j].Strength {
-					swap = list[i].Strength < list[j].Strength
-				} else {
-					swap = list[i].SSID > list[j].SSID
-				}
-				if swap {
-					list[i], list[j] = list[j], list[i]
-				}
-			}
-		}
-	}
-
-	sortAccessPoints(aps)
+	SortAccessPoints(aps)
 
 	expected := []string{
 		"ConnectedNet",

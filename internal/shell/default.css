@@ -405,6 +405,21 @@ window.launcher-window > contents {
     color: #787c99;
 }
 
+.launcher-name.command-prefix,
+.launcher-row-command .launcher-name {
+    color: #7aa2f7;
+}
+
+.launcher-row-command .launcher-icon {
+    color: #7aa2f7;
+}
+
+.launcher-row-action .launcher-name::after {
+    content: " ↗";
+    font-size: 11px;
+    color: #787c99;
+}
+
 .launcher-no-results {
     font-size: 14px;
     color: #787c99;

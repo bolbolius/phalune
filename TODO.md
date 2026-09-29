@@ -34,9 +34,9 @@
 ### Alpha 0.2
 
 - [X] Media / MPRIS Controls:
-- [ ] Launcher updates:
-  - [ ] Shell commands (`:reboot`, `:poweroff`, `:reload`, `:lock`).
-  - [ ] `.desktop` sub-actions.
+- [X] Launcher updates:
+  - [X] Shell commands (`:reboot`, `:poweroff`, `:reload`, `:lock`).
+  - [X] `.desktop` sub-actions.
 - [ ] Clipboard Manager:
   - [ ] Background watcher.
   - [ ] Searchable history overlay UI.

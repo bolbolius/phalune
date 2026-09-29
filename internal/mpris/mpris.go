@@ -80,7 +80,7 @@ func New() (*Controller, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cacheDir := filepath.Join(os.TempDir(), "phalune-media-art")
 	if err := os.MkdirAll(cacheDir, 0755); err != nil {
-		slog.Warn("mpris: failed to create art cache dir", "dir", cacheDir, "err", err)
+		slog.Warn("mpris: failed to create art cache dir", "dir", cacheDir, "error", err)
 	}
 	pruneArtCache(cacheDir)
 
@@ -162,7 +162,7 @@ func (c *Controller) initPlayers() {
 	var names []string
 	err := c.conn.BusObject().Call("org.freedesktop.DBus.ListNames", 0).Store(&names)
 	if err != nil {
-		slog.Warn("mpris: failed to list dbus names", "err", err)
+		slog.Warn("mpris: failed to list dbus names", "error", err)
 		return
 	}
 
@@ -444,7 +444,7 @@ func (c *Controller) listenBusEvents() {
 	for _, rule := range rules {
 		call := c.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, rule)
 		if call.Err != nil {
-			slog.Warn("mpris: AddMatch error", "rule", rule, "err", call.Err)
+			slog.Warn("mpris: AddMatch error", "rule", rule, "error", call.Err)
 		}
 	}
 

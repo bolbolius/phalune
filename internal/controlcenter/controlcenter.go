@@ -396,7 +396,7 @@ func New(app *gtk.Application, notifyMgr *notify.Manager) (*ControlCenter, error
 			})
 		})
 	} else {
-		slog.Warn("controlcenter: mpris unavailable", "err", err)
+		slog.Warn("controlcenter: mpris unavailable", "error", err)
 	}
 
 	cc.setupInteractivity()

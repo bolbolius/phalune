@@ -1,6 +1,8 @@
 package launcher
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -94,5 +96,150 @@ func TestFrecencyStore(t *testing.T) {
 	scoreWeekOld := store.Score("app2")
 	if scoreWeekOld < 4.5 || scoreWeekOld > 5.5 {
 		t.Errorf("expected score after 7 days to halve (~5), got %v", scoreWeekOld)
+	}
+}
+
+func TestParseDesktopActions(t *testing.T) {
+	content := `[Desktop Entry]
+Type=Application
+Name=Firefox
+Exec=firefox %u
+Icon=firefox
+Actions=new-private-window;new-window;
+
+[Desktop Action new-private-window]
+Name=Open a Private Window
+Icon=firefox-private
+Exec=firefox --private-window %u
+
+[Desktop Action new-window]
+Name=Open a New Window
+Exec=firefox --new-window %u
+
+[Desktop Action orphan]
+Name=Orphan Action
+Exec=firefox --orphan
+`
+	path := filepath.Join(t.TempDir(), "firefox.desktop")
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	app, ok := parseDesktopFile(path, "firefox.desktop")
+	if !ok {
+		t.Fatal("expected app to parse")
+	}
+	if len(app.Actions) != 2 {
+		t.Fatalf("expected 2 actions (listed only), got %d: %+v", len(app.Actions), app.Actions)
+	}
+
+	priv := app.Actions[0]
+	if priv.ID != "new-private-window" {
+		t.Errorf("expected first action ID new-private-window, got %q", priv.ID)
+	}
+	if priv.Name != "Open a Private Window" {
+		t.Errorf("unexpected action name %q", priv.Name)
+	}
+	if priv.CleanExec != "firefox --private-window" {
+		t.Errorf("unexpected action CleanExec %q", priv.CleanExec)
+	}
+	if priv.Icon != "firefox-private" {
+		t.Errorf("unexpected action icon %q", priv.Icon)
+	}
+
+	second := app.Actions[1]
+	if second.ID != "new-window" || second.Name != "Open a New Window" {
+		t.Errorf("unexpected second action %+v", second)
+	}
+}
+
+func TestFilterResultsCommands(t *testing.T) {
+	cmds := commandList(&ShellCommands{
+		Reboot:   func() error { return nil },
+		PowerOff: func() error { return nil },
+		Lock:     func() {},
+	})
+
+	res := FilterResults(nil, cmds, ":reboot", nil)
+	if len(res) == 0 {
+		t.Fatal("expected :reboot to match reboot command")
+	}
+	if res[0].Command == nil || res[0].Command.Name != "reboot" {
+		t.Fatalf("expected reboot command first, got %+v", res[0])
+	}
+
+	// Alias match
+	resAlias := FilterResults(nil, cmds, ":shutdown", nil)
+	if len(resAlias) == 0 || resAlias[0].Command == nil || resAlias[0].Command.Name != "poweroff" {
+		t.Fatalf("expected :shutdown alias to match poweroff, got %+v", resAlias)
+	}
+
+	// Bare colon shows all commands
+	resAll := FilterResults(nil, cmds, ":", nil)
+	if len(resAll) != len(cmds) {
+		t.Fatalf("expected %d commands for ':', got %d", len(cmds), len(resAll))
+	}
+
+	// Non-colon query returns app results, no commands
+	apps := []App{{ID: "firefox.desktop", Name: "Firefox", Exec: "firefox"}}
+	resApp := FilterResults(apps, cmds, "fir", nil)
+	if len(resApp) == 0 || resApp[0].App == nil {
+		t.Fatalf("expected app result for 'fir', got %+v", resApp)
+	}
+}
+
+func TestFilterResultsSubActions(t *testing.T) {
+	firefox := App{
+		ID:   "firefox.desktop",
+		Name: "Firefox",
+		Exec: "firefox",
+		Actions: []DesktopAction{
+			{ID: "new-private-window", Name: "New Private Window", Exec: "firefox --private-window"},
+			{ID: "new-window", Name: "New Window", Exec: "firefox --new-window"},
+		},
+	}
+	apps := []App{firefox}
+
+	res := FilterResults(apps, nil, "private", nil)
+	if len(res) == 0 || res[0].Action == nil {
+		t.Fatalf("expected 'private' to match private-window action, got %+v", res)
+	}
+	if res[0].Action.ID != "new-private-window" || res[0].App == nil || res[0].App.ID != "firefox.desktop" {
+		t.Fatalf("unexpected first result %+v", res[0])
+	}
+
+	// Combined query "firefox private" also lands on the action.
+	resCombo := FilterResults(apps, nil, "firefox private", nil)
+	if len(resCombo) == 0 || resCombo[0].Action == nil {
+		t.Fatalf("expected 'firefox private' to match action, got %+v", resCombo)
+	}
+
+	// Action result icons fall back to parent app icon.
+	r := Result{App: &firefox, Action: &firefox.Actions[0]}
+	if got := r.IconName(); got != "firefox" {
+		// App has no icon set here, so fallback expected.
+		if got != "application-x-executable" {
+			t.Errorf("unexpected icon fallback %q", got)
+		}
+	}
+}
+
+func TestResultAccessors(t *testing.T) {
+	cmd := commandEntry{Name: "lock", Description: "Lock screen", Icon: "system-lock-screen-symbolic"}
+	r := Result{Command: &cmd}
+	if r.Title() != ":lock" {
+		t.Errorf("expected :lock title, got %q", r.Title())
+	}
+	if r.Subtitle() != "Lock screen" {
+		t.Errorf("unexpected subtitle %q", r.Subtitle())
+	}
+	if r.IconName() != "system-lock-screen-symbolic" {
+		t.Errorf("unexpected icon %q", r.IconName())
+	}
+
+	app := App{ID: "a.desktop", Name: "App", Icon: "app-icon"}
+	ra := Result{App: &app}
+	if ra.Title() != "App" || ra.Subtitle() != "" || ra.IconName() != "app-icon" {
+		t.Errorf("unexpected app result %+v", ra)
 	}
 }

@@ -23,8 +23,9 @@ type Launcher struct {
 	terminal string
 
 	frecency *FrecencyStore
+	commands []commandEntry
 	allApps  []App
-	current  []App
+	current  []Result
 }
 
 func New(app *gtk.Application, cfg config.LauncherConfig) (*Launcher, error) {
@@ -65,6 +66,7 @@ func New(app *gtk.Application, cfg config.LauncherConfig) (*Launcher, error) {
 		pageSize:       pageSize,
 		terminal:       cfg.Terminal,
 		frecency:       frecency,
+		commands:       commandList(nil),
 	}
 
 	l.setupKeyNavigation()
@@ -90,7 +92,7 @@ func (l *Launcher) setupInteractivity(overlayBox *gtk.Overlay, card *gtk.Box) {
 	l.listBox.ConnectRowActivated(func(row *gtk.ListBoxRow) {
 		idx := row.Index()
 		if idx >= 0 && idx < len(l.current) {
-			l.launch(l.current[idx])
+			l.launchResult(l.current[idx])
 		}
 	})
 
@@ -112,12 +114,12 @@ func (l *Launcher) setupKeyNavigation() {
 			if row != nil {
 				idx := row.Index()
 				if idx >= 0 && idx < len(l.current) {
-					l.launch(l.current[idx])
+					l.launchResult(l.current[idx])
 					return true
 				}
 			}
 			if len(l.current) > 0 {
-				l.launch(l.current[0])
+				l.launchResult(l.current[0])
 				return true
 			}
 			return true
@@ -183,7 +185,7 @@ func (l *Launcher) moveSelection(delta int) {
 
 func (l *Launcher) updateFilter() {
 	query := l.searchEntry.Text()
-	l.current = FilterApps(l.allApps, query, l.frecency)
+	l.current = FilterResults(l.allApps, l.commands, query, l.frecency)
 	l.renderList()
 }
 
@@ -205,28 +207,26 @@ func (l *Launcher) renderList() {
 	l.noResultsLabel.SetVisible(false)
 	l.scrolledWindow.SetVisible(true)
 
-	for _, app := range l.current {
+	for _, res := range l.current {
 		rowBuilder := gtk.NewBuilderFromString(ui.LauncherItem)
 		row := rowBuilder.GetObject("launcher_item").Cast().(*gtk.ListBoxRow)
 		icon := rowBuilder.GetObject("row_icon").Cast().(*gtk.Image)
 		nameLabel := rowBuilder.GetObject("row_name").Cast().(*gtk.Label)
 		descLabel := rowBuilder.GetObject("row_desc").Cast().(*gtk.Label)
 
-		iconName := app.Icon
-		if iconName == "" {
-			iconName = "application-x-executable"
-		}
-		icon.SetFromIconName(iconName)
-		nameLabel.SetText(app.Name)
+		icon.SetFromIconName(res.IconName())
+		nameLabel.SetText(res.Title())
 
-		desc := app.GenericName
-		if desc == "" {
-			desc = app.Comment
-		}
-		if desc != "" {
+		if desc := res.Subtitle(); desc != "" {
 			descLabel.SetText(desc)
 		} else {
 			descLabel.SetVisible(false)
+		}
+
+		if res.Command != nil {
+			row.AddCSSClass("launcher-row-command")
+		} else if res.Action != nil {
+			row.AddCSSClass("launcher-row-action")
 		}
 
 		l.listBox.Append(row)
@@ -246,6 +246,35 @@ func (l *Launcher) launch(app App) {
 			slog.Error("failed to launch application", "app", app.Name, "error", err)
 		}
 	}()
+}
+
+func (l *Launcher) launchResult(res Result) {
+	switch {
+	case res.Command != nil:
+		cmd := *res.Command
+		l.Close()
+		go func() {
+			if err := cmd.Run(); err != nil {
+				slog.Warn("launcher command failed", "command", cmd.Name, "error", err)
+			}
+		}()
+
+	case res.Action != nil && res.App != nil:
+		l.frecency.RecordLaunch(res.App.ID)
+		l.Close()
+		app := *res.App
+		action := *res.Action
+		go func() {
+			if err := LaunchDesktopAction(app, action, l.terminal); err != nil {
+				slog.Error("failed to launch desktop action", "app", app.Name, "action", action.Name, "error", err)
+			}
+		}()
+
+	default:
+		if res.App != nil {
+			l.launch(*res.App)
+		}
+	}
 }
 
 func (l *Launcher) Toggle() {
@@ -289,6 +318,16 @@ func (l *Launcher) UpdateConfig(cfg config.LauncherConfig) {
 	l.terminal = cfg.Terminal
 	if l.frecency != nil {
 		l.frecency.SetParams(cfg.Frecency.HalfLifeDays, cfg.Frecency.MaxBoost)
+	}
+}
+
+func (l *Launcher) SetShellCommands(cmds *ShellCommands) {
+	if l == nil {
+		return
+	}
+	l.commands = commandList(cmds)
+	if l.window != nil && l.window.IsVisible() {
+		l.updateFilter()
 	}
 }
 

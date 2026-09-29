@@ -49,6 +49,7 @@ type Shell struct {
 	powerMenu          *powermenu.PowerMenu
 	windowSwitcher     *windowswitcher.WindowSwitcher
 	sessionCancel      context.CancelFunc
+	configReloader     func()
 	mu                 sync.Mutex
 }
 
@@ -231,6 +232,28 @@ func (s *Shell) Logout() error {
 	return fmt.Errorf("session manager not available")
 }
 
+func (s *Shell) ReloadConfig() {
+	s.mu.Lock()
+	reloader := s.configReloader
+	s.mu.Unlock()
+
+	if reloader != nil {
+		reloader()
+		return
+	}
+	glib.IdleAdd(func() {
+		if err := LoadStyle(); err != nil {
+			slog.Warn("launcher reload: style reload warning", "error", err)
+		}
+	})
+}
+
+func (s *Shell) SetConfigReloader(fn func()) {
+	s.mu.Lock()
+	s.configReloader = fn
+	s.mu.Unlock()
+}
+
 func (s *Shell) ShowOSD(icon, label string, value float64) {
 	if s.osdMgr != nil {
 		s.osdMgr.Show(icon, label, value)
@@ -381,6 +404,16 @@ func (s *Shell) Start() error {
 	if err != nil {
 		return fmt.Errorf("failed to create launcher: %w", err)
 	}
+	launch.SetShellCommands(&launcher.ShellCommands{
+		Reboot:    s.Reboot,
+		PowerOff:  s.PowerOff,
+		Suspend:   s.Suspend,
+		Hibernate: s.Hibernate,
+		Logout:    s.Logout,
+		Lock:      s.Lock,
+		Reload:    s.ReloadConfig,
+		PowerMenu: s.TogglePowerMenu,
+	})
 	s.launcher = launch
 
 	// Top bars with multi-monitor hotplug
