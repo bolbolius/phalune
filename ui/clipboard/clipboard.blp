@@ -1,0 +1,54 @@
+using Gtk 4.0;
+
+Overlay overlay_box {
+  hexpand: true;
+  vexpand: true;
+  styles ["clipboard-overlay"]
+
+  child: Box card {
+    orientation: vertical;
+    spacing: 8;
+    margin-top: 64;
+    margin-bottom: 128;
+    halign: center;
+    valign: start;
+    width-request: 480;
+    styles ["clipboard-card"]
+
+    SearchEntry search_entry {
+      styles ["clipboard-search"]
+    }
+
+    ScrolledWindow scrolled_window {
+      hexpand: true;
+      vexpand: true;
+      height-request: 320;
+      styles ["clipboard-scrolled"]
+
+      ListBox list_box {
+        selection-mode: single;
+        activate-on-single-click: true;
+        styles ["clipboard-list"]
+      }
+    }
+
+    Label no_results_label {
+      label: _("Clipboard history is empty");
+      visible: false;
+      styles ["clipboard-no-results"]
+    }
+
+    Box footer_box {
+      orientation: horizontal;
+      spacing: 8;
+      halign: end;
+      styles ["clipboard-footer"]
+
+      Button clear_button {
+        label: _("Clear All");
+        tooltip-text: _("Clear clipboard history");
+        styles ["flat", "clipboard-clear-btn"]
+      }
+    }
+  };
+}

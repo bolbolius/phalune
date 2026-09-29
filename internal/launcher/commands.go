@@ -15,6 +15,7 @@ const (
 	CommandLock      = "lock"
 	CommandReload    = "reload"
 	CommandPowerMenu = "power-menu"
+	CommandClipboard = "clipboard"
 )
 
 type ShellCommands struct {
@@ -26,6 +27,7 @@ type ShellCommands struct {
 	Lock      func()
 	Reload    func()
 	PowerMenu func()
+	Clipboard func()
 }
 
 type commandEntry struct {
@@ -54,6 +56,8 @@ func commandIcon(name string) string {
 		return "view-refresh-symbolic"
 	case "power-menu":
 		return "system-shutdown-symbolic"
+	case "clipboard":
+		return "edit-paste-symbolic"
 	default:
 		return "application-x-executable-symbolic"
 	}
@@ -73,6 +77,7 @@ func commandList(svc *ShellCommands) []commandEntry {
 		{CommandLock, "Lock screen", "", []string{}, wrapVoid(svc.Lock)},
 		{CommandReload, "Reload shell configuration", "", []string{}, wrapVoid(svc.Reload)},
 		{CommandPowerMenu, "Open power menu", "", []string{"powermenu"}, wrapVoid(svc.PowerMenu)},
+		{CommandClipboard, "Clipboard history", "", []string{"paste", "clips"}, wrapVoid(svc.Clipboard)},
 	}
 
 	for i := range entries {

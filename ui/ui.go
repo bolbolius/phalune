@@ -18,6 +18,14 @@ var Launcher string
 //go:embed launcher/launcher_item.ui
 var LauncherItem string
 
+// Clipboard
+//
+//go:embed clipboard/clipboard.ui
+var Clipboard string
+
+//go:embed clipboard/clipboard_item.ui
+var ClipboardItem string
+
 // Control Center
 //
 //go:embed controlcenter/controlcenter.ui
@@ -87,6 +95,9 @@ var Keyboard string
 
 //go:embed widget/power.ui
 var Power string
+
+//go:embed widget/clipboard.ui
+var ClipboardWidget string
 
 //go:embed widget/notifications.ui
 var NotificationsWidget string

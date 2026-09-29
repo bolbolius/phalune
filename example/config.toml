@@ -26,7 +26,7 @@ widgets = ["clock"]
 
 # Right section widgets (arranged horizontally on the far right)
 [bar.right]
-widgets = ["tray", "wifi", "bluetooth", "audio", "battery", "keyboard", "power"]
+widgets = ["privacy", "tray", "wifi", "bluetooth", "audio", "battery", "keyboard", "clipboard", "notifications", "power"]
 
 # ─── Widget: Workspaces ───────────────────────────────────────────────────────
 
@@ -226,6 +226,25 @@ max_boost = 25.0
 # Whether to switch across windows from all workspaces (true) or only the current workspace (false)
 all_workspaces = true
 
+# ─── Clipboard History ────────────────────────────────────────────────────────
+[clipboard]
+# Maximum number of entries kept in history (ring buffer)
+max_entries = 30
+
+# Persist clipboard history to ~/.cache/phalune/clipboard across restarts
+persist = true
+
+# Maximum size in bytes for captured image textures (default: 16 MiB)
+max_image_bytes = 16777216
+
+# Maximum size in bytes for captured text entries (default: 1 MiB)
+max_text_bytes = 1048576
+
+# Application IDs / window titles / MIME types to ignore
+# Password managers are automatically excluded based on Wayland password-manager hints
+# ignored_apps = ["KeePassXC", "Bitwarden"]
+# blacklist = ["1Password"]
+
 # ─── Logging ──────────────────────────────────────────────────────────────────
 
 [logging]
@@ -240,3 +259,4 @@ notify = false
 
 # Notification log level: only messages at or above this level trigger notifications
 notify_level = "warn"
+

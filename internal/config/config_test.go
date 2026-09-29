@@ -23,7 +23,7 @@ func TestDefaultConfig(t *testing.T) {
 		t.Errorf("unexpected center widgets: %v", cfg.Bar.Center.Widgets)
 	}
 
-	expectedRight := []string{"privacy", "tray", "wifi", "bluetooth", "audio", "battery", "keyboard", "notifications", "power"}
+	expectedRight := []string{"privacy", "tray", "wifi", "bluetooth", "audio", "battery", "keyboard", "clipboard", "notifications", "power"}
 	if len(cfg.Bar.Right.Widgets) != len(expectedRight) {
 		t.Errorf("expected %d right widgets, got %d (%v)", len(expectedRight), len(cfg.Bar.Right.Widgets), cfg.Bar.Right.Widgets)
 	} else {

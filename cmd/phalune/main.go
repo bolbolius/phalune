@@ -21,6 +21,7 @@ import (
 	"phalune/internal/widget/bluetooth"
 	"phalune/internal/widget/clock"
 	"phalune/internal/widget/keyboard"
+	widgetClipboard "phalune/internal/widget/clipboard"
 	widgetNotifications "phalune/internal/widget/notifications"
 	"phalune/internal/widget/power"
 	widgetPrivacy "phalune/internal/widget/privacy"
@@ -95,6 +96,7 @@ func main() {
 	reg.Register("network", wifi.New)
 	reg.Register("keyboard", keyboard.New)
 	reg.Register("power", power.New)
+	reg.Register("clipboard", widgetClipboard.New)
 	reg.Register("notifications", widgetNotifications.New)
 	reg.Register("privacy", widgetPrivacy.New)
 
@@ -182,6 +184,15 @@ func main() {
 			case ipc.ActionClosePowerMenu, "power-menu-close", "powermenu-close":
 				sh.ClosePowerMenu()
 				respCh <- ipc.Response{OK: true, Message: "power menu closed"}
+			case ipc.ActionToggleClipboard, "clipboard-toggle", "clipboard":
+				sh.ToggleClipboard()
+				respCh <- ipc.Response{OK: true, Message: "clipboard toggled"}
+			case ipc.ActionOpenClipboard, "clipboard-open":
+				sh.OpenClipboard()
+				respCh <- ipc.Response{OK: true, Message: "clipboard opened"}
+			case ipc.ActionCloseClipboard, "clipboard-close":
+				sh.CloseClipboard()
+				respCh <- ipc.Response{OK: true, Message: "clipboard closed"}
 			case ipc.ActionWindowSwitcher, "alt-tab", "switch-window":
 				sub := req.Args["action"]
 				switch sub {

@@ -37,9 +37,9 @@
 - [X] Launcher updates:
   - [X] Shell commands (`:reboot`, `:poweroff`, `:reload`, `:lock`).
   - [X] `.desktop` sub-actions.
-- [ ] Clipboard Manager:
-  - [ ] Background watcher.
-  - [ ] Searchable history overlay UI.
+- [X] Clipboard Manager:
+  - [X] Background watcher.
+  - [X] Searchable history overlay UI.
 - [ ] Polkit Agent:
   - [ ] D-Bus PolicyKit1 listener.
   - [ ] GTK4 auth prompt dialog.

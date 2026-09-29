@@ -25,6 +25,9 @@ type Context struct {
 	ToggleNotificationCenter func()
 	OpenNotificationCenter   func()
 	CloseNotificationCenter  func()
+	ToggleClipboard          func()
+	OpenClipboard            func()
+	CloseClipboard           func()
 	NotifyStore              NotificationStore
 	Privacy                  PrivacyMonitor
 }

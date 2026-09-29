@@ -1,0 +1,14 @@
+using Gtk 4.0;
+
+Box clipboard_box {
+  orientation: horizontal;
+  spacing: 0;
+  styles ["widget", "widget-clipboard", "widget-pill"]
+  tooltip-text: _("Clipboard History");
+
+  Image clipboard_icon {
+    icon-name: "edit-paste-symbolic";
+    pixel-size: 16;
+    accessible-role: presentation;
+  }
+}

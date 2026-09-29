@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"phalune/internal/config"
+	"phalune/internal/clipboard"
 	"phalune/internal/controlcenter"
 	"phalune/internal/launcher"
 	"phalune/internal/lockscreen"
@@ -48,6 +49,8 @@ type Shell struct {
 	lockscreenMgr      *lockscreen.Manager
 	powerMenu          *powermenu.PowerMenu
 	windowSwitcher     *windowswitcher.WindowSwitcher
+	clipboardWatcher   *clipboard.Watcher
+	clipboardOverlay   *clipboard.Overlay
 	sessionCancel      context.CancelFunc
 	configReloader     func()
 	mu                 sync.Mutex
@@ -126,6 +129,24 @@ func (s *Shell) CloseNotificationCenter() {
 func (s *Shell) TogglePowerMenu() {
 	if s.powerMenu != nil {
 		s.powerMenu.Toggle()
+	}
+}
+
+func (s *Shell) ToggleClipboard() {
+	if s.clipboardOverlay != nil {
+		s.clipboardOverlay.Toggle()
+	}
+}
+
+func (s *Shell) OpenClipboard() {
+	if s.clipboardOverlay != nil {
+		s.clipboardOverlay.Open()
+	}
+}
+
+func (s *Shell) CloseClipboard() {
+	if s.clipboardOverlay != nil {
+		s.clipboardOverlay.Close()
 	}
 }
 
@@ -413,8 +434,27 @@ func (s *Shell) Start() error {
 		Lock:      s.Lock,
 		Reload:    s.ReloadConfig,
 		PowerMenu: s.TogglePowerMenu,
+		Clipboard: s.ToggleClipboard,
 	})
 	s.launcher = launch
+
+	// Clipboard history watcher + overlay.
+	if s.cfg.Clipboard.MaxEntries != 0 || s.cfg.Clipboard.Persist || s.cfg.Clipboard.MaxImageBytes != 0 {
+		clipWatcher, err := clipboard.NewWatcher(s.cfg.Clipboard)
+		if err != nil {
+			slog.Warn("shell: clipboard watcher unavailable", "error", err)
+		} else {
+			s.clipboardWatcher = clipWatcher
+			overlay, err := clipboard.NewOverlay(s.app, clipWatcher)
+			if err != nil {
+				slog.Warn("shell: clipboard overlay unavailable", "error", err)
+				clipWatcher.Stop()
+				s.clipboardWatcher = nil
+			} else {
+				s.clipboardOverlay = overlay
+			}
+		}
+	}
 
 	// Top bars with multi-monitor hotplug
 	s.syncBars()
@@ -452,6 +492,9 @@ func (s *Shell) buildWidgetContext(monitor *gdk.Monitor) widget.Context {
 		ToggleNotificationCenter: s.ToggleNotificationCenter,
 		OpenNotificationCenter:   s.OpenNotificationCenter,
 		CloseNotificationCenter:  s.CloseNotificationCenter,
+		ToggleClipboard:          s.ToggleClipboard,
+		OpenClipboard:            s.OpenClipboard,
+		CloseClipboard:           s.CloseClipboard,
 		NotifyStore:              store,
 		Privacy:                  s.privacyMonitor,
 	}
@@ -559,6 +602,15 @@ func (s *Shell) Stop() {
 		s.launcher = nil
 	}
 
+	if s.clipboardOverlay != nil {
+		s.clipboardOverlay.Destroy()
+		s.clipboardOverlay = nil
+	}
+	if s.clipboardWatcher != nil {
+		s.clipboardWatcher.Stop()
+		s.clipboardWatcher = nil
+	}
+
 	if s.windowSwitcher != nil {
 		s.windowSwitcher.Destroy()
 		s.windowSwitcher = nil
@@ -631,6 +683,10 @@ func (s *Shell) Reload(newCfg *config.Config) error {
 
 	if s.launcher != nil {
 		s.launcher.UpdateConfig(newCfg.Launcher)
+	}
+
+	if s.clipboardWatcher != nil {
+		s.clipboardWatcher.SetConfig(newCfg.Clipboard)
 	}
 
 	if s.sessionMgr != nil {

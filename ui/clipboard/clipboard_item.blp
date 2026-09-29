@@ -1,0 +1,43 @@
+using Gtk 4.0;
+
+ListBoxRow clipboard_item {
+  styles ["clipboard-row"]
+
+  Box row_box {
+    orientation: horizontal;
+    spacing: 12;
+    styles ["clipboard-item"]
+
+    Image row_icon {
+      pixel-size: 24;
+      accessible-role: presentation;
+      styles ["clipboard-icon"]
+    }
+
+    Box row_text {
+      orientation: vertical;
+      spacing: 2;
+      valign: center;
+      hexpand: true;
+
+      Label row_name {
+        halign: start;
+        ellipsize: end;
+        styles ["clipboard-name"]
+      }
+
+      Label row_desc {
+        halign: start;
+        ellipsize: end;
+        styles ["clipboard-desc"]
+      }
+    }
+
+    Button row_delete {
+      icon-name: "user-trash-symbolic";
+      valign: center;
+      tooltip-text: _("Remove entry");
+      styles ["flat", "clipboard-delete-btn"]
+    }
+  }
+}

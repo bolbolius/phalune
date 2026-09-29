@@ -426,6 +426,129 @@ window.launcher-window > contents {
     padding: 40px;
 }
 
+/* Clipboard History */
+window.clipboard-window,
+window.clipboard-window.background,
+window.clipboard-window > contents {
+    background: transparent;
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.clipboard-overlay {
+    background-color: rgba(0, 0, 0, 0.45);
+}
+
+.clipboard-card {
+    background-color: rgba(26, 27, 38, 0.94);
+    color: #c0caf5;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.clipboard-search {
+    background-color: rgba(255, 255, 255, 0.06);
+    color: #c0caf5;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 14px;
+    transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
+}
+
+.clipboard-search:focus-within {
+    border-color: #7aa2f7;
+    box-shadow: 0 0 0 2px rgba(122, 162, 247, 0.25);
+}
+
+.clipboard-scrolled {
+    margin-top: 4px;
+}
+
+.clipboard-list {
+    background-color: transparent;
+}
+
+.clipboard-row {
+    background-color: transparent;
+    border-radius: 8px;
+    padding: 6px 10px;
+    margin-bottom: 3px;
+    transition: background-color 130ms ease, color 130ms ease;
+}
+
+.clipboard-row:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.clipboard-row:active {
+    background-color: rgba(122, 162, 247, 0.3);
+}
+
+.clipboard-row:selected {
+    background-color: rgba(122, 162, 247, 0.2);
+    outline: none;
+}
+
+.clipboard-icon {
+    margin-right: 4px;
+    color: #7aa2f7;
+}
+
+.clipboard-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #c0caf5;
+}
+
+.clipboard-desc {
+    font-size: 11px;
+    color: #787c99;
+}
+
+.clipboard-delete-btn {
+    opacity: 0.5;
+    padding: 4px;
+    border-radius: 6px;
+    transition: opacity 120ms ease, background-color 120ms ease, color 120ms ease;
+}
+
+.clipboard-row:hover .clipboard-delete-btn {
+    opacity: 0.9;
+}
+
+.clipboard-delete-btn:hover {
+    opacity: 1;
+    background-color: rgba(247, 118, 142, 0.2);
+    color: #f7768e;
+}
+
+.clipboard-no-results {
+    font-size: 13px;
+    color: #787c99;
+    padding: 32px;
+}
+
+.clipboard-footer {
+    padding-top: 4px;
+}
+
+.clipboard-clear-btn {
+    font-size: 12px;
+    color: #787c99;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: color 120ms ease, background-color 120ms ease;
+}
+
+.clipboard-clear-btn:hover {
+    color: #f7768e;
+    background-color: rgba(247, 118, 142, 0.15);
+}
+
 /* OSD Surface */
 window.osd-window,
 window.osd-window.background,
@@ -1508,6 +1631,29 @@ window.control-center-window > contents {
 .mpris-play-btn:active {
     background-color: #b4befe;
     color: #1a1b26;
+}
+
+/* Clipboard Bar Widget */
+.widget-clipboard {
+    color: #c0caf5;
+    min-width: var(--bar-unit);
+    min-height: calc(var(--bar-height) - 6px);
+    padding: 1px 0;
+    margin: 0;
+}
+
+.widget-clipboard:hover {
+    background-color: rgba(122, 162, 247, 0.15);
+    color: #7aa2f7;
+}
+
+.widget-clipboard:active {
+    background-color: rgba(122, 162, 247, 0.25);
+}
+
+.widget-clipboard image {
+    min-width: var(--bar-unit);
+    color: #7aa2f7;
 }
 
 /* Power Bar Widget */

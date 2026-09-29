@@ -70,7 +70,7 @@ widgets = ["workspaces"]
 widgets = ["clock"]
 
 [bar.right]
-widgets = ["privacy", "tray", "wifi", "bluetooth", "audio", "battery", "keyboard", "notifications", "power"]
+widgets = ["privacy", "tray", "wifi", "bluetooth", "audio", "battery", "keyboard", "clipboard", "notifications", "power"]
 
 [bar.clock]
 format = "15:04"
@@ -110,6 +110,11 @@ phalune msg toggle-power-menu
 phalune msg open-power-menu
 phalune msg close-power-menu
 
+# Clipboard History
+phalune msg toggle-clipboard
+phalune msg open-clipboard
+phalune msg close-clipboard
+
 # Lock Screen & Session
 phalune msg lock
 phalune msg unlock
@@ -143,6 +148,7 @@ phalune msg ping
 
 - Window Switcher (Alt-Tab)
 - Application Launcher
+- Clipboard History (search, paste, preview, persist)
 - Control Center (Quick Settings)
 - Multi-Monitor Bar
 - On-Screen Display (OSD)

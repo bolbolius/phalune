@@ -24,6 +24,7 @@ var KnownWidgets = map[string]bool{
 	"network":       true,
 	"keyboard":      true,
 	"power":         true,
+	"clipboard":     true,
 	"notifications": true,
 	"privacy":       true,
 }
@@ -36,6 +37,7 @@ type Config struct {
 	OSD            OSDConfig            `toml:"osd"`
 	ControlCenter  ControlCenterConfig  `toml:"control_center"`
 	Launcher       LauncherConfig       `toml:"launcher"`
+	Clipboard      ClipboardConfig      `toml:"clipboard"`
 	WindowSwitcher WindowSwitcherConfig `toml:"window_switcher"`
 	LockScreen     LockScreenConfig     `toml:"lockscreen"`
 	Session        SessionConfig        `toml:"session"`
@@ -188,6 +190,17 @@ type FrecencyConfig struct {
 	MaxBoost     float64 `toml:"max_boost"`      // Max search score bonus
 }
 
+// ──────────────────────────── Clipboard ────────────────────────────
+
+type ClipboardConfig struct {
+	MaxEntries    int      `toml:"max_entries"`
+	Persist       bool     `toml:"persist"`
+	MaxImageBytes int      `toml:"max_image_bytes"`
+	MaxTextBytes  int      `toml:"max_text_bytes"`
+	IgnoredApps   []string `toml:"ignored_apps"`
+	Blacklist     []string `toml:"blacklist"`
+}
+
 // ──────────────────────────── Window Switcher ────────────────────────────
 
 type WindowSwitcherConfig struct {
@@ -212,7 +225,7 @@ func Default() *Config {
 			Position: "top",
 			Left:     SectionConfig{Widgets: []string{"workspaces"}},
 			Center:   SectionConfig{Widgets: []string{"clock"}},
-			Right:    SectionConfig{Widgets: []string{"privacy", "tray", "wifi", "bluetooth", "audio", "battery", "keyboard", "notifications", "power"}},
+			Right:    SectionConfig{Widgets: []string{"privacy", "tray", "wifi", "bluetooth", "audio", "battery", "keyboard", "clipboard", "notifications", "power"}},
 			Workspaces: WorkspacesConfig{
 				AllOutputs: false,
 			},
@@ -278,6 +291,12 @@ func Default() *Config {
 		},
 		WindowSwitcher: WindowSwitcherConfig{
 			AllWorkspaces: true,
+		},
+		Clipboard: ClipboardConfig{
+			MaxEntries:    30,
+			Persist:       true,
+			MaxImageBytes: 16 << 20, // 16 MiB
+			MaxTextBytes:  1 << 20,  // 1 MiB
 		},
 		LockScreen: LockScreenConfig{
 			TimeFormat: "15:04",
@@ -478,6 +497,16 @@ func (c *Config) validate() {
 	}
 	if c.Launcher.Frecency.MaxBoost < 0 {
 		c.Launcher.Frecency.MaxBoost = d.Launcher.Frecency.MaxBoost
+	}
+
+	if c.Clipboard.MaxEntries <= 0 {
+		c.Clipboard.MaxEntries = d.Clipboard.MaxEntries
+	}
+	if c.Clipboard.MaxImageBytes <= 0 {
+		c.Clipboard.MaxImageBytes = d.Clipboard.MaxImageBytes
+	}
+	if c.Clipboard.MaxTextBytes <= 0 {
+		c.Clipboard.MaxTextBytes = d.Clipboard.MaxTextBytes
 	}
 
 	if c.Logging.Level != "" {
