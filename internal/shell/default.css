@@ -2001,5 +2001,122 @@ window.window-switcher-window > contents {
     padding: 30px 40px;
 }
 
+/* Polkit Authentication Dialog */
+window.polkit-window,
+window.polkit-window.background,
+window.polkit-window > contents {
+    background: transparent;
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.polkit-overlay {
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.polkit-card {
+    background-color: rgba(26, 27, 38, 0.98);
+    color: #c0caf5;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+}
+
+.polkit-icon {
+    color: #e0af68;
+    margin-right: 4px;
+}
+
+.polkit-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #c0caf5;
+}
+
+.polkit-action {
+    font-size: 11px;
+    color: #787c99;
+    font-family: monospace;
+}
+
+.polkit-message {
+    font-size: 13px;
+    color: #a9b1d6;
+    line-height: 1.4;
+}
+
+.polkit-identity-box {
+    margin-top: 4px;
+}
+
+.polkit-identity-prefix {
+    font-size: 12px;
+    color: #787c99;
+}
+
+.polkit-dropdown {
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: #c0caf5;
+    padding: 4px 8px;
+    font-size: 13px;
+}
+
+.polkit-password-entry {
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: #c0caf5;
+    padding: 8px 12px;
+    font-size: 14px;
+    transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.polkit-password-entry:focus-within {
+    border-color: #7aa2f7;
+    box-shadow: 0 0 0 2px rgba(122, 162, 247, 0.3);
+}
+
+.polkit-error-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #f7768e;
+}
+
+.polkit-cancel-btn {
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #c0caf5;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color 140ms ease;
+}
+
+.polkit-cancel-btn:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.polkit-auth-btn {
+    background-color: #7aa2f7;
+    border: 1px solid rgba(122, 162, 247, 0.8);
+    border-radius: 8px;
+    color: #1a1b26;
+    padding: 6px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background-color 140ms ease, box-shadow 140ms ease;
+}
+
+.polkit-auth-btn:hover {
+    background-color: #89b4fa;
+    box-shadow: 0 0 12px rgba(122, 162, 247, 0.4);
+}
+
+
 
 

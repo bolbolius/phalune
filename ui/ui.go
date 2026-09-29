@@ -26,6 +26,11 @@ var Clipboard string
 //go:embed clipboard/clipboard_item.ui
 var ClipboardItem string
 
+// Polkit
+//
+//go:embed polkit/polkit_dialog.ui
+var PolkitDialog string
+
 // Control Center
 //
 //go:embed controlcenter/controlcenter.ui

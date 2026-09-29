@@ -15,6 +15,7 @@ import (
 	"phalune/internal/notificationcenter"
 	"phalune/internal/notify"
 	"phalune/internal/osd"
+	"phalune/internal/polkit"
 	"phalune/internal/powermenu"
 	"phalune/internal/privacy"
 	"phalune/internal/removable"
@@ -51,6 +52,7 @@ type Shell struct {
 	windowSwitcher     *windowswitcher.WindowSwitcher
 	clipboardWatcher   *clipboard.Watcher
 	clipboardOverlay   *clipboard.Overlay
+	polkitAgent        *polkit.Agent
 	sessionCancel      context.CancelFunc
 	configReloader     func()
 	mu                 sync.Mutex
@@ -456,6 +458,16 @@ func (s *Shell) Start() error {
 		}
 	}
 
+	// Polkit authentication agent
+	pkAgent, err := polkit.New(s.app)
+	if err != nil {
+		slog.Warn("shell: polkit agent initialization failed", "error", err)
+	} else if err := pkAgent.Start(); err != nil {
+		slog.Warn("shell: polkit agent registration failed", "error", err)
+	} else {
+		s.polkitAgent = pkAgent
+	}
+
 	// Top bars with multi-monitor hotplug
 	s.syncBars()
 	monitorsList := display.Monitors()
@@ -609,6 +621,11 @@ func (s *Shell) Stop() {
 	if s.clipboardWatcher != nil {
 		s.clipboardWatcher.Stop()
 		s.clipboardWatcher = nil
+	}
+
+	if s.polkitAgent != nil {
+		s.polkitAgent.Stop()
+		s.polkitAgent = nil
 	}
 
 	if s.windowSwitcher != nil {

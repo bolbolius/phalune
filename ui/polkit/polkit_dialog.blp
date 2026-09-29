@@ -1,0 +1,105 @@
+using Gtk 4.0;
+
+Overlay overlay_box {
+  hexpand: true;
+  vexpand: true;
+  styles ["polkit-overlay"]
+
+  child: Box card {
+    orientation: vertical;
+    spacing: 16;
+    halign: center;
+    valign: center;
+    width-request: 420;
+    styles ["polkit-card"]
+
+    Box header_box {
+      orientation: horizontal;
+      spacing: 12;
+
+      Image icon {
+        icon-name: "dialog-password-symbolic";
+        pixel-size: 32;
+        accessible-role: presentation;
+        styles ["polkit-icon"]
+      }
+
+      Box title_box {
+        orientation: vertical;
+        spacing: 2;
+        valign: center;
+        hexpand: true;
+
+        Label title_label {
+          label: _("Authentication Required");
+          halign: start;
+          styles ["polkit-title"]
+        }
+
+        Label action_label {
+          halign: start;
+          ellipsize: end;
+          styles ["polkit-action"]
+        }
+      }
+    }
+
+    Label message_label {
+      halign: start;
+      wrap: true;
+      wrap-mode: word_char;
+      max-width-chars: 42;
+      styles ["polkit-message"]
+    }
+
+    Box identity_box {
+      orientation: horizontal;
+      spacing: 8;
+      valign: center;
+      styles ["polkit-identity-box"]
+
+      Label identity_prefix {
+        label: _("Authenticate as:");
+        halign: start;
+        styles ["polkit-identity-prefix"]
+      }
+
+      DropDown identity_dropdown {
+        hexpand: true;
+        styles ["polkit-dropdown"]
+      }
+    }
+
+    PasswordEntry password_entry {
+      placeholder-text: _("Password");
+      show-peek-icon: true;
+      activates-default: true;
+      styles ["polkit-password-entry"]
+    }
+
+    Label error_label {
+      halign: start;
+      visible: false;
+      wrap: true;
+      styles ["polkit-error-label"]
+    }
+
+    Box button_box {
+      orientation: horizontal;
+      spacing: 8;
+      halign: end;
+      margin-top: 8;
+      styles ["polkit-button-box"]
+
+      Button cancel_button {
+        label: _("Cancel");
+        styles ["polkit-cancel-btn"]
+      }
+
+      Button auth_button {
+        label: _("Authenticate");
+        styles ["suggested-action", "polkit-auth-btn"]
+      }
+    }
+  };
+}

@@ -40,9 +40,9 @@
 - [X] Clipboard Manager:
   - [X] Background watcher.
   - [X] Searchable history overlay UI.
-- [ ] Polkit Agent:
-  - [ ] D-Bus PolicyKit1 listener.
-  - [ ] GTK4 auth prompt dialog.
+- [X] Polkit Agent:
+  - [X] D-Bus PolicyKit1 listener.
+  - [X] GTK4 auth prompt dialog.
 - [ ] Screenshot Tooling:
   - [ ] Area / window / display grab.
   - [ ] Actionable preview toast (Copy / Save / Open).
