@@ -47,11 +47,11 @@ func BluetoothDeviceIcon(icon string) string {
 }
 
 type BluetoothController struct {
-	mu          sync.Mutex
-	conn        *dbus.Conn
-	adapterPath dbus.ObjectPath
-	powered     bool
-	available   bool
+	mu            sync.Mutex
+	conn          *dbus.Conn
+	adapterPath   dbus.ObjectPath
+	powered       bool
+	available     bool
 	discovering   bool
 	devices       []BluetoothDevice
 	debounceTimer *time.Timer

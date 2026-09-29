@@ -170,7 +170,6 @@ func (s *Shell) PrevWindow() {
 	}
 }
 
-
 func (s *Shell) Lock() {
 	if s.sessionMgr != nil {
 		s.sessionMgr.Lock()

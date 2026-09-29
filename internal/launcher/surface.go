@@ -26,4 +26,3 @@ func ConfigureLauncherSurface(win *gtk.Window) error {
 
 	return nil
 }
-

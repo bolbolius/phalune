@@ -14,14 +14,14 @@ import (
 )
 
 var KnownWidgets = map[string]bool{
-	"clock":      true,
-	"workspaces": true,
-	"audio":      true,
-	"battery":    true,
-	"tray":       true,
-	"bluetooth":  true,
-	"wifi":       true,
-	"network":    true,
+	"clock":         true,
+	"workspaces":    true,
+	"audio":         true,
+	"battery":       true,
+	"tray":          true,
+	"bluetooth":     true,
+	"wifi":          true,
+	"network":       true,
 	"keyboard":      true,
 	"power":         true,
 	"notifications": true,

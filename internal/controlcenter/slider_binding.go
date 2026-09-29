@@ -15,10 +15,10 @@ const defaultSliderLockout = 500 * time.Millisecond
 type SliderBinding struct {
 	mu sync.Mutex
 
-	scale   *gtk.Scale
-	label   *gtk.Label
-	btn     *gtk.Button
-	icon    *gtk.Image
+	scale *gtk.Scale
+	label *gtk.Label
+	btn   *gtk.Button
+	icon  *gtk.Image
 
 	cloneScale *gtk.Scale
 	cloneLabel *gtk.Label

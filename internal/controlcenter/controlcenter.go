@@ -3,6 +3,7 @@ package controlcenter
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"math"
 	"os"
 	"strings"
@@ -100,6 +101,9 @@ type ControlCenter struct {
 	mprisPrevBtn    *gtk.Button
 	mprisPlayBtn    *gtk.Button
 	mprisNextBtn    *gtk.Button
+	mprisDestroyed  bool
+	mprisTexCache   map[string]*gdk.Texture
+	mprisTexPath    string
 
 	// Controllers
 	wifiCtrl    *WiFiController
@@ -288,6 +292,7 @@ func New(app *gtk.Application, notifyMgr *notify.Manager) (*ControlCenter, error
 		mprisPrevBtn:            mprisPrevBtn,
 		mprisPlayBtn:            mprisPlayBtn,
 		mprisNextBtn:            mprisNextBtn,
+		mprisTexCache:           make(map[string]*gdk.Texture),
 		notifyMgr:               notifyMgr,
 	}
 
@@ -360,10 +365,10 @@ func New(app *gtk.Application, notifyMgr *notify.Manager) (*ControlCenter, error
 
 	cc.streamRows = make(map[int]*streamRow)
 	cc.inputBinding = NewSliderBinding(SliderConfig{
-		Scale:   audioInScale,
-		Label:   audioInLabel,
-		Button:  audioInBtn,
-		Icon:    audioInIcon,
+		Scale:  audioInScale,
+		Label:  audioInLabel,
+		Button: audioInBtn,
+		Icon:   audioInIcon,
 		OnApply: func(pct int) {
 			cc.audioCtrl.SetInputVolume(pct)
 		},
@@ -390,6 +395,8 @@ func New(app *gtk.Application, notifyMgr *notify.Manager) (*ControlCenter, error
 				cc.updateMprisUI(active)
 			})
 		})
+	} else {
+		slog.Warn("controlcenter: mpris unavailable", "err", err)
 	}
 
 	cc.setupInteractivity()
@@ -593,7 +600,6 @@ func (cc *ControlCenter) renderNetworks(networks []AccessPoint) {
 			unsavedNets = append(unsavedNets, net)
 		}
 	}
-
 
 	renderItem := func(ap AccessPoint, isSavedSection bool) {
 		builder := gtk.NewBuilderFromString(ui.WifiItem)
@@ -1154,6 +1160,9 @@ func (cc *ControlCenter) IsVisible() bool {
 }
 
 func (cc *ControlCenter) updateMprisUI(active *mpris.PlayerState) {
+	if cc.mprisDestroyed {
+		return
+	}
 	if active == nil || active.Status == mpris.PlaybackStopped {
 		cc.mprisCard.SetVisible(false)
 		return
@@ -1269,11 +1278,8 @@ func (cc *ControlCenter) updateMprisArt(active *mpris.PlayerState) {
 	}
 
 	if artPath != "" {
-		if strings.HasPrefix(artPath, "file://") {
-			artPath = strings.TrimPrefix(artPath, "file://")
-		}
 		if _, err := os.Stat(artPath); err == nil {
-			if tex := loadCroppedTexture(artPath, artSize); tex != nil {
+			if tex := cc.croppedTexture(artPath, artSize); tex != nil {
 				cc.mprisArt.SetPixelSize(artSize)
 				cc.mprisArt.SetFromPaintable(tex)
 				return
@@ -1286,22 +1292,15 @@ func (cc *ControlCenter) updateMprisArt(active *mpris.PlayerState) {
 	if display != nil {
 		theme := gtk.IconThemeGetForDisplay(display)
 		if theme != nil {
-			candidates := []string{
-				strings.ToLower(strings.TrimSpace(active.Identity)),
-				strings.TrimSpace(active.Identity),
-				"org.telegram.desktop",
-				"telegram",
-				"spotify",
-				"firefox",
-				"chromium",
-				"vlc",
-				"mpv",
+			// Candidate names derived from the player identity and bus name
+			// only; fall through to the generic icon when nothing matches.
+			candidates := make([]string, 0, 4)
+			if ident := strings.TrimSpace(active.Identity); ident != "" {
+				candidates = append(candidates, strings.ToLower(ident), ident)
 			}
-
-			// Add cleaned bus name without mpris prefix
 			busShort := strings.TrimPrefix(active.BusName, "org.mpris.MediaPlayer2.")
-			if busShort != "" {
-				candidates = append([]string{strings.ToLower(busShort)}, candidates...)
+			if busShort != "" && busShort != active.Identity {
+				candidates = append(candidates, strings.ToLower(busShort), busShort)
 			}
 
 			for _, c := range candidates {
@@ -1334,7 +1333,28 @@ func (cc *ControlCenter) updateMprisArt(active *mpris.PlayerState) {
 	cc.mprisArt.SetFromIconName("audio-x-generic-symbolic")
 }
 
+// croppedTexture loads and center-crops an image to targetSize, caching the
+// result per path so repeated state changes don't re-decode the file.
+func (cc *ControlCenter) croppedTexture(path string, targetSize int) *gdk.Texture {
+	if tex, ok := cc.mprisTexCache[path]; ok {
+		return tex
+	}
+	tex := loadCroppedTexture(path, targetSize)
+	if tex != nil {
+		// Drop any previous path so at most one cached texture lingers.
+		if cc.mprisTexPath != "" && cc.mprisTexPath != path {
+			delete(cc.mprisTexCache, cc.mprisTexPath)
+		}
+		cc.mprisTexCache[path] = tex
+		cc.mprisTexPath = path
+	}
+	return tex
+}
+
 func (cc *ControlCenter) Destroy() {
+	cc.mu.Lock()
+	cc.mprisDestroyed = true
+	cc.mu.Unlock()
 	cc.Close()
 	if cc.mprisCtrl != nil {
 		_ = cc.mprisCtrl.Close()

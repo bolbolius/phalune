@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -22,6 +23,9 @@ const (
 	mprisPrefix    = "org.mpris.MediaPlayer2."
 	mprisInterface = "org.mpris.MediaPlayer2.Player"
 	propsInterface = "org.freedesktop.DBus.Properties"
+
+	// maxArtBytes caps how much album art is downloaded into the cache.
+	maxArtBytes = 10 << 20
 )
 
 // PlaybackStatus represents player state.
@@ -35,20 +39,20 @@ const (
 
 // PlayerState contains current playback information of a player.
 type PlayerState struct {
-	BusName        string
-	Owner          string
-	Identity       string
-	Title          string
-	Artist         string
-	Album          string
-	ArtURL         string
-	LocalArtPath   string
-	Status         PlaybackStatus
-	CanGoNext      bool
-	CanGoPrevious  bool
-	CanPlay        bool
-	CanPause       bool
-	CanControl     bool
+	BusName       string
+	Owner         string
+	Identity      string
+	Title         string
+	Artist        string
+	Album         string
+	ArtURL        string
+	LocalArtPath  string
+	Status        PlaybackStatus
+	CanGoNext     bool
+	CanGoPrevious bool
+	CanPlay       bool
+	CanPause      bool
+	CanControl    bool
 }
 
 // Controller manages discovering and interacting with MPRIS players.
@@ -75,7 +79,10 @@ func New() (*Controller, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cacheDir := filepath.Join(os.TempDir(), "phalune-media-art")
-	_ = os.MkdirAll(cacheDir, 0755)
+	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+		slog.Warn("mpris: failed to create art cache dir", "dir", cacheDir, "err", err)
+	}
+	pruneArtCache(cacheDir)
 
 	c := &Controller{
 		conn:       conn,
@@ -105,12 +112,16 @@ func (c *Controller) Close() error {
 }
 
 // OnChange registers a listener called whenever active player state changes.
+// The callback is invoked synchronously (outside the controller lock) with the
+// current active state.
 func (c *Controller) OnChange(cb func(active *PlayerState)) {
 	c.mu.Lock()
-	defer c.mu.Unlock()
 	c.callbacks = append(c.callbacks, cb)
+	initial := c.getActiveLocked()
+	c.mu.Unlock()
+
 	if cb != nil {
-		cb(c.getActiveLocked())
+		cb(initial)
 	}
 }
 
@@ -156,20 +167,36 @@ func (c *Controller) initPlayers() {
 	}
 
 	c.mu.Lock()
+	busNames := make([]string, 0, len(names))
 	for _, name := range names {
 		if strings.HasPrefix(name, mprisPrefix) {
-			st := c.fetchPlayerStateLocked(name)
-			if st != nil {
-				c.players[name] = st
-			}
+			busNames = append(busNames, name)
 		}
 	}
+	c.mu.Unlock()
+
+	for _, name := range busNames {
+		st := c.fetchPlayerState(name)
+		if st != nil {
+			c.mu.Lock()
+			if st.Owner != "" {
+				c.ownerToBus[st.Owner] = name
+			}
+			c.players[name] = st
+			c.recalculateActiveLocked()
+			c.mu.Unlock()
+		}
+	}
+
+	c.mu.Lock()
 	c.recalculateActiveLocked()
 	c.mu.Unlock()
 	c.notifyChange()
 }
 
-func (c *Controller) fetchPlayerStateLocked(busName string) *PlayerState {
+// fetchPlayerState queries a player over D-Bus without holding the controller
+// lock; callers must publish the result under the lock.
+func (c *Controller) fetchPlayerState(busName string) *PlayerState {
 	obj := c.conn.Object(busName, "/org/mpris/MediaPlayer2")
 
 	var identity string
@@ -191,9 +218,6 @@ func (c *Controller) fetchPlayerStateLocked(busName string) *PlayerState {
 
 	var owner string
 	_ = c.conn.BusObject().Call("org.freedesktop.DBus.GetNameOwner", 0, busName).Store(&owner)
-	if owner != "" {
-		c.ownerToBus[owner] = busName
-	}
 
 	st := &PlayerState{
 		BusName:  busName,
@@ -356,7 +380,7 @@ func (c *Controller) resolveArtURL(st *PlayerState) {
 			if err != nil {
 				return
 			}
-			_, err = io.Copy(f, resp.Body)
+			_, err = io.Copy(f, io.LimitReader(resp.Body, maxArtBytes))
 			f.Close()
 			if err != nil {
 				_ = os.Remove(tmpFile)
@@ -377,17 +401,21 @@ func (c *Controller) resolveArtURL(st *PlayerState) {
 }
 
 func (c *Controller) recalculateActiveLocked() {
-	// Prioritize Playing players, then Paused, then others
-	var candidatePlaying string
-	var candidatePaused string
-	var candidateAny string
+	// Prioritize Playing players, then Paused, then others. Bus names are
+	// walked in sorted order so the result is deterministic.
+	busNames := make([]string, 0, len(c.players))
+	for name := range c.players {
+		busNames = append(busNames, name)
+	}
+	sort.Strings(busNames)
 
-	for name, st := range c.players {
-		if st.Status == PlaybackPlaying {
+	var candidatePlaying, candidatePaused, candidateAny string
+	for _, name := range busNames {
+		st := c.players[name]
+		if candidatePlaying == "" && st.Status == PlaybackPlaying {
 			candidatePlaying = name
-			break
 		}
-		if st.Status == PlaybackPaused && candidatePaused == "" {
+		if candidatePaused == "" && st.Status == PlaybackPaused {
 			candidatePaused = name
 		}
 		if candidateAny == "" {
@@ -395,13 +423,14 @@ func (c *Controller) recalculateActiveLocked() {
 		}
 	}
 
-	if candidatePlaying != "" {
+	switch {
+	case candidatePlaying != "":
 		c.activeBus = candidatePlaying
-	} else if candidatePaused != "" {
+	case candidatePaused != "":
 		c.activeBus = candidatePaused
-	} else if candidateAny != "" {
+	case candidateAny != "":
 		c.activeBus = candidateAny
-	} else {
+	default:
 		c.activeBus = ""
 	}
 }
@@ -466,13 +495,22 @@ func (c *Controller) handleSignal(sig *dbus.Signal) {
 			if oldOwner != "" {
 				delete(c.ownerToBus, oldOwner)
 			}
-			st := c.fetchPlayerStateLocked(name)
-			if st != nil {
-				c.players[name] = st
-				c.recalculateActiveLocked()
-			}
 		}
 		c.mu.Unlock()
+
+		if newOwner != "" {
+			// Query the player outside the lock; D-Bus calls may block.
+			st := c.fetchPlayerState(name)
+			if st != nil {
+				c.mu.Lock()
+				if st.Owner != "" {
+					c.ownerToBus[st.Owner] = name
+				}
+				c.players[name] = st
+				c.recalculateActiveLocked()
+				c.mu.Unlock()
+			}
+		}
 		c.notifyChange()
 
 	case "org.freedesktop.DBus.Properties.PropertiesChanged":
@@ -522,6 +560,16 @@ func (c *Controller) handleSignal(sig *dbus.Signal) {
 					st.CanGoPrevious = b
 				}
 			}
+			if val, ok := changed["CanPlay"]; ok {
+				if b, ok := val.Value().(bool); ok {
+					st.CanPlay = b
+				}
+			}
+			if val, ok := changed["CanPause"]; ok {
+				if b, ok := val.Value().(bool); ok {
+					st.CanPause = b
+				}
+			}
 			c.recalculateActiveLocked()
 		}
 		c.mu.Unlock()
@@ -561,4 +609,26 @@ func (c *Controller) callActive(method string) error {
 	obj := c.conn.Object(busName, "/org/mpris/MediaPlayer2")
 	call := obj.Call(mprisInterface+"."+method, 0)
 	return call.Err
+}
+
+// pruneArtCache removes cached art files older than a week to keep the cache
+// directory bounded across sessions.
+func pruneArtCache(dir string) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return
+	}
+	cutoff := time.Now().Add(-7 * 24 * time.Hour)
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		info, err := e.Info()
+		if err != nil {
+			continue
+		}
+		if info.ModTime().Before(cutoff) {
+			_ = os.Remove(filepath.Join(dir, e.Name()))
+		}
+	}
 }

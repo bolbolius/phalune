@@ -185,4 +185,3 @@ func (pc *PowerController) Toggle() {
 	next := NextPowerProfile(current)
 	pc.SetProfile(next)
 }
-

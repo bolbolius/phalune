@@ -13,10 +13,10 @@ type Widget interface {
 }
 
 type Context struct {
-	Config          *config.Config
-	Niri            *niri.Service
-	Output          string
-	ShowOSD         func(icon, label string, value float64)
+	Config                   *config.Config
+	Niri                     *niri.Service
+	Output                   string
+	ShowOSD                  func(icon, label string, value float64)
 	TogglePowerMenu          func()
 	OpenPowerMenu            func()
 	ClosePowerMenu           func()

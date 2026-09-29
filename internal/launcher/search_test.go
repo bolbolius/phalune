@@ -96,4 +96,3 @@ func TestFrecencyStore(t *testing.T) {
 		t.Errorf("expected score after 7 days to halve (~5), got %v", scoreWeekOld)
 	}
 }
-

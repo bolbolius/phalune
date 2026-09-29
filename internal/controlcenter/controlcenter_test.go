@@ -155,7 +155,6 @@ func TestBluetoothDeviceIcon(t *testing.T) {
 	}
 }
 
-
 func TestSlidersLockout(t *testing.T) {
 	app := gtk.NewApplication("org.phalune.testsliders", 0)
 	app.ConnectActivate(func() {
@@ -368,4 +367,3 @@ func TestLoadCroppedTexture(t *testing.T) {
 		t.Errorf("expected nil texture for nonexistent file")
 	}
 }
-
