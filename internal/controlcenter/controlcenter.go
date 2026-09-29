@@ -4,14 +4,17 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"os"
 	"strings"
 	"sync"
 
+	"phalune/internal/mpris"
 	"phalune/internal/notify"
 	"phalune/ui"
 
 	"github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
+	"github.com/diamondburned/gotk4/pkg/gdkpixbuf/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
@@ -88,12 +91,23 @@ type ControlCenter struct {
 	inputBinding            *SliderBinding
 	streamRows              map[int]*streamRow
 
+	// Media Player (MPRIS) widgets
+	mprisCard       *gtk.Box
+	mprisArt        *gtk.Image
+	mprisTitle      *gtk.Label
+	mprisArtist     *gtk.Label
+	mprisPlayerName *gtk.Label
+	mprisPrevBtn    *gtk.Button
+	mprisPlayBtn    *gtk.Button
+	mprisNextBtn    *gtk.Button
+
 	// Controllers
 	wifiCtrl    *WiFiController
 	btCtrl      *BluetoothController
 	powerCtrl   *PowerController
 	slidersCtrl *SlidersController
 	audioCtrl   *AudioController
+	mprisCtrl   *mpris.Controller
 	notifyMgr   *notify.Manager
 
 	mu             sync.Mutex
@@ -200,6 +214,15 @@ func New(app *gtk.Application, notifyMgr *notify.Manager) (*ControlCenter, error
 	audioListBox := builder.GetObject("audio_streams_list_box").Cast().(*gtk.ListBox)
 	audioEmptyLabel := builder.GetObject("audio_empty_label").Cast().(*gtk.Label)
 
+	mprisCard := builder.GetObject("mpris_card").Cast().(*gtk.Box)
+	mprisArt := builder.GetObject("mpris_art").Cast().(*gtk.Image)
+	mprisTitle := builder.GetObject("mpris_title").Cast().(*gtk.Label)
+	mprisArtist := builder.GetObject("mpris_artist").Cast().(*gtk.Label)
+	mprisPlayerName := builder.GetObject("mpris_player_name").Cast().(*gtk.Label)
+	mprisPrevBtn := builder.GetObject("mpris_prev_button").Cast().(*gtk.Button)
+	mprisPlayBtn := builder.GetObject("mpris_play_button").Cast().(*gtk.Button)
+	mprisNextBtn := builder.GetObject("mpris_next_button").Cast().(*gtk.Button)
+
 	win.SetChild(overlayBox)
 
 	cc := &ControlCenter{
@@ -257,6 +280,14 @@ func New(app *gtk.Application, notifyMgr *notify.Manager) (*ControlCenter, error
 		bluetoothScrolledWindow: btScrolledWin,
 		bluetoothListBox:        btListBox,
 		bluetoothEmptyLabel:     btEmptyLabel,
+		mprisCard:               mprisCard,
+		mprisArt:                mprisArt,
+		mprisTitle:              mprisTitle,
+		mprisArtist:             mprisArtist,
+		mprisPlayerName:         mprisPlayerName,
+		mprisPrevBtn:            mprisPrevBtn,
+		mprisPlayBtn:            mprisPlayBtn,
+		mprisNextBtn:            mprisNextBtn,
 		notifyMgr:               notifyMgr,
 	}
 
@@ -351,6 +382,15 @@ func New(app *gtk.Application, notifyMgr *notify.Manager) (*ControlCenter, error
 	cc.audioCtrl.SetOnStreamsChanged(func(streams []AudioStream) {
 		cc.renderAudioStreams(streams)
 	})
+
+	if mprisCtrl, err := mpris.New(); err == nil {
+		cc.mprisCtrl = mprisCtrl
+		cc.mprisCtrl.OnChange(func(active *mpris.PlayerState) {
+			glib.IdleAdd(func() {
+				cc.updateMprisUI(active)
+			})
+		})
+	}
 
 	cc.setupInteractivity()
 
@@ -450,6 +490,23 @@ func (cc *ControlCenter) setupInteractivity() {
 	// Audio subview controls
 	cc.audioBackButton.ConnectClicked(func() {
 		cc.contentStack.SetVisibleChildName("main")
+	})
+
+	// MPRIS controls
+	cc.mprisPrevBtn.ConnectClicked(func() {
+		if cc.mprisCtrl != nil {
+			_ = cc.mprisCtrl.Previous()
+		}
+	})
+	cc.mprisPlayBtn.ConnectClicked(func() {
+		if cc.mprisCtrl != nil {
+			_ = cc.mprisCtrl.PlayPause()
+		}
+	})
+	cc.mprisNextBtn.ConnectClicked(func() {
+		if cc.mprisCtrl != nil {
+			_ = cc.mprisCtrl.Next()
+		}
 	})
 
 	// Outside click dismissal
@@ -1096,8 +1153,192 @@ func (cc *ControlCenter) IsVisible() bool {
 	return cc.visible
 }
 
+func (cc *ControlCenter) updateMprisUI(active *mpris.PlayerState) {
+	if active == nil || active.Status == mpris.PlaybackStopped {
+		cc.mprisCard.SetVisible(false)
+		return
+	}
+
+	cc.mprisCard.SetVisible(true)
+
+	title := active.Title
+	if strings.TrimSpace(title) == "" {
+		title = "Unknown Track"
+	}
+	cc.mprisTitle.SetText(title)
+
+	artist := active.Artist
+	if strings.TrimSpace(artist) == "" {
+		if active.Album != "" {
+			artist = active.Album
+		} else {
+			artist = "Unknown Artist"
+		}
+	}
+	cc.mprisArtist.SetText(artist)
+	cc.mprisPlayerName.SetText(active.Identity)
+
+	// Art priority: 1. Cover Art, 2. App Icon, 3. Fallback
+	cc.updateMprisArt(active)
+
+	if active.Status == mpris.PlaybackPlaying {
+		cc.mprisPlayBtn.SetIconName("media-playback-pause-symbolic")
+	} else {
+		cc.mprisPlayBtn.SetIconName("media-playback-start-symbolic")
+	}
+
+	cc.mprisPrevBtn.SetSensitive(active.CanGoPrevious)
+	cc.mprisNextBtn.SetSensitive(active.CanGoNext)
+	cc.mprisPlayBtn.SetSensitive(active.CanPlay || active.CanPause || active.CanControl)
+}
+
+func loadCroppedTexture(path string, targetSize int) *gdk.Texture {
+	pb, err := gdkpixbuf.NewPixbufFromFile(path)
+	if err != nil || pb == nil {
+		return nil
+	}
+	origW := pb.Width()
+	origH := pb.Height()
+	if origW <= 0 || origH <= 0 {
+		return nil
+	}
+
+	// Compute scale to cover targetSize x targetSize preserving aspect ratio
+	scale := float64(targetSize) / float64(origW)
+	if sH := float64(targetSize) / float64(origH); sH > scale {
+		scale = sH
+	}
+
+	newW := int(math.Ceil(float64(origW) * scale))
+	newH := int(math.Ceil(float64(origH) * scale))
+
+	scaled := pb.ScaleSimple(newW, newH, gdkpixbuf.InterpBilinear)
+	if scaled == nil {
+		return nil
+	}
+
+	cropX := (newW - targetSize) / 2
+	cropY := (newH - targetSize) / 2
+	if cropX < 0 {
+		cropX = 0
+	}
+	if cropY < 0 {
+		cropY = 0
+	}
+	if cropX+targetSize > scaled.Width() {
+		cropX = scaled.Width() - targetSize
+	}
+	if cropY+targetSize > scaled.Height() {
+		cropY = scaled.Height() - targetSize
+	}
+	if cropX < 0 {
+		cropX = 0
+	}
+	if cropY < 0 {
+		cropY = 0
+	}
+
+	actualW := targetSize
+	if actualW > scaled.Width()-cropX {
+		actualW = scaled.Width() - cropX
+	}
+	actualH := targetSize
+	if actualH > scaled.Height()-cropY {
+		actualH = scaled.Height() - cropY
+	}
+
+	cropped := scaled.NewSubpixbuf(cropX, cropY, actualW, actualH)
+	if cropped == nil {
+		return gdk.NewTextureForPixbuf(scaled)
+	}
+	return gdk.NewTextureForPixbuf(cropped)
+}
+
+func (cc *ControlCenter) updateMprisArt(active *mpris.PlayerState) {
+	const artSize = 64
+
+	// 1. Cover Art: local file or cached remote file
+	artPath := active.LocalArtPath
+	if artPath == "" && active.ArtURL != "" {
+		raw := active.ArtURL
+		if strings.HasPrefix(raw, "file://") {
+			artPath = strings.TrimPrefix(raw, "file://")
+		} else if strings.HasPrefix(raw, "/") {
+			artPath = raw
+		}
+	}
+
+	if artPath != "" {
+		if strings.HasPrefix(artPath, "file://") {
+			artPath = strings.TrimPrefix(artPath, "file://")
+		}
+		if _, err := os.Stat(artPath); err == nil {
+			if tex := loadCroppedTexture(artPath, artSize); tex != nil {
+				cc.mprisArt.SetPixelSize(artSize)
+				cc.mprisArt.SetFromPaintable(tex)
+				return
+			}
+		}
+	}
+
+	// 2. App Icon from active player identity & bus name
+	display := gdk.DisplayGetDefault()
+	if display != nil {
+		theme := gtk.IconThemeGetForDisplay(display)
+		if theme != nil {
+			candidates := []string{
+				strings.ToLower(strings.TrimSpace(active.Identity)),
+				strings.TrimSpace(active.Identity),
+				"org.telegram.desktop",
+				"telegram",
+				"spotify",
+				"firefox",
+				"chromium",
+				"vlc",
+				"mpv",
+			}
+
+			// Add cleaned bus name without mpris prefix
+			busShort := strings.TrimPrefix(active.BusName, "org.mpris.MediaPlayer2.")
+			if busShort != "" {
+				candidates = append([]string{strings.ToLower(busShort)}, candidates...)
+			}
+
+			for _, c := range candidates {
+				if c == "" {
+					continue
+				}
+				if theme.HasIcon(c) {
+					cc.mprisArt.SetPixelSize(36)
+					cc.mprisArt.SetFromIconName(c)
+					return
+				}
+				// Also try splitting dot identifiers
+				if strings.Contains(c, ".") {
+					parts := strings.Split(c, ".")
+					for j := len(parts) - 1; j >= 0; j-- {
+						p := strings.ToLower(parts[j])
+						if p != "desktop" && p != "exe" && theme.HasIcon(p) {
+							cc.mprisArt.SetPixelSize(36)
+							cc.mprisArt.SetFromIconName(p)
+							return
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// 3. Fallback generic audio icon
+	cc.mprisArt.SetPixelSize(32)
+	cc.mprisArt.SetFromIconName("audio-x-generic-symbolic")
+}
+
 func (cc *ControlCenter) Destroy() {
 	cc.Close()
+	if cc.mprisCtrl != nil {
+		_ = cc.mprisCtrl.Close()
+	}
 	glib.IdleAdd(func() {
 		for _, sr := range cc.streamRows {
 			if sr.cancelWorker != nil {

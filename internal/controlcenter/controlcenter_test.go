@@ -360,3 +360,12 @@ func TestBluetoothSwitchFeedbackSuppression(t *testing.T) {
 	})
 	app.Run(nil)
 }
+
+func TestLoadCroppedTexture(t *testing.T) {
+	// Test nonexistent file returns nil gracefully
+	tex := loadCroppedTexture("/path/does/not/exist.png", 44)
+	if tex != nil {
+		t.Errorf("expected nil texture for nonexistent file")
+	}
+}
+

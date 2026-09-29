@@ -33,7 +33,7 @@
 
 ### Alpha 0.2
 
-- [ ] Media / MPRIS Controls:
+- [X] Media / MPRIS Controls:
 - [ ] Launcher updates:
   - [ ] Shell commands (`:reboot`, `:poweroff`, `:reload`, `:lock`).
   - [ ] `.desktop` sub-actions.

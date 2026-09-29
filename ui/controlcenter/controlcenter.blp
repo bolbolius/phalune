@@ -354,6 +354,82 @@ Overlay overlay_box {
               }
             }
           }
+
+          // Media Player (MPRIS) Card
+          Box mpris_card {
+            orientation: vertical;
+            spacing: 10;
+            visible: false;
+            styles ["mpris-card"]
+
+            Box mpris_header {
+              orientation: horizontal;
+              spacing: 10;
+
+              Image mpris_art {
+                icon-name: "audio-x-generic-symbolic";
+                pixel-size: 64;
+                accessible-role: presentation;
+                styles ["mpris-art"]
+              }
+
+              Box {
+                orientation: vertical;
+                valign: center;
+                hexpand: true;
+
+                Label mpris_title {
+                  label: _("Nothing Playing");
+                  halign: start;
+                  ellipsize: end;
+                  max-width-chars: 20;
+                  styles ["mpris-title"]
+                }
+
+                Label mpris_artist {
+                  label: _("Unknown Artist");
+                  halign: start;
+                  ellipsize: end;
+                  max-width-chars: 20;
+                  styles ["mpris-artist"]
+                }
+              }
+
+              Label mpris_player_name {
+                label: "";
+                valign: start;
+                halign: end;
+                ellipsize: end;
+                max-width-chars: 12;
+                styles ["mpris-player-name"]
+              }
+            }
+
+            Box mpris_controls {
+              orientation: horizontal;
+              spacing: 8;
+              halign: center;
+              styles ["mpris-controls-box"]
+
+              Button mpris_prev_button {
+                tooltip-text: _("Previous");
+                styles ["flat", "mpris-control-btn"]
+                icon-name: "media-skip-backward-symbolic";
+              }
+
+              Button mpris_play_button {
+                tooltip-text: _("Play / Pause");
+                styles ["flat", "mpris-control-btn", "mpris-play-btn"]
+                icon-name: "media-playback-start-symbolic";
+              }
+
+              Button mpris_next_button {
+                tooltip-text: _("Next");
+                styles ["flat", "mpris-control-btn"]
+                icon-name: "media-skip-forward-symbolic";
+              }
+            }
+          }
         };
       }
 
