@@ -67,10 +67,6 @@ func NewWatcher(cfg config.ClipboardConfig) (*Watcher, error) {
 		w.capture(clip)
 	})
 
-	go func() {
-		<-ctx.Done()
-	}()
-
 	return w, nil
 }
 
@@ -112,8 +108,9 @@ func (w *Watcher) SetConfig(cfg config.ClipboardConfig) {
 }
 
 func (w *Watcher) isBlacklisted(clip *gdk.Clipboard, text string) bool {
+	var formats *gdk.ContentFormats
 	if clip != nil {
-		formats := clip.Formats()
+		formats = clip.Formats()
 		if formats != nil {
 			if formats.ContainMIMEType("x-kde-passwordManagerHint") ||
 				formats.ContainMIMEType("application/x-password-manager-hint") ||
@@ -133,11 +130,8 @@ func (w *Watcher) isBlacklisted(clip *gdk.Clipboard, text string) bool {
 		if item == "" {
 			continue
 		}
-		if clip != nil {
-			formats := clip.Formats()
-			if formats != nil && formats.ContainMIMEType(item) {
-				return true
-			}
+		if formats != nil && formats.ContainMIMEType(item) {
+			return true
 		}
 		if text != "" && strings.Contains(strings.ToLower(text), item) {
 			return true
@@ -147,7 +141,7 @@ func (w *Watcher) isBlacklisted(clip *gdk.Clipboard, text string) bool {
 }
 
 func (w *Watcher) capture(clip *gdk.Clipboard) {
-	if w.paused || w.isBlacklisted(clip, "") {
+	if w.paused || w.ctx.Err() != nil || w.isBlacklisted(clip, "") {
 		return
 	}
 	formats := clip.Formats()

@@ -1,6 +1,7 @@
 package clipboard
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -111,6 +112,7 @@ func (s *Store) SetPaths(historyFile, imagesDir string) {
 	defer s.mu.Unlock()
 	s.path = historyFile
 	s.imgDir = imagesDir
+	s.entries = nil
 	if s.persist {
 		s.load()
 	}
@@ -179,12 +181,16 @@ func (s *Store) Add(e *Entry) {
 	}
 	if last := s.lastAdded[dedupKey]; now-last < 400 {
 		// Rapid re-copy of same content (common with terminals); ignore.
+		s.removeAssetsLocked(e)
 		return
 	}
 	s.lastAdded[dedupKey] = now
 
 	for i, old := range s.entries {
 		if sameContent(old, e) {
+			if old.Kind == KindImage && old.FilePath != "" && old.FilePath != e.FilePath {
+				_ = os.Remove(old.FilePath)
+			}
 			// Move to top, refresh timestamp.
 			*old = *e
 			old.CreatedAt = now
@@ -249,7 +255,20 @@ func sameContent(a, b *Entry) bool {
 	}
 	switch a.Kind {
 	case KindImage:
-		return a.Width == b.Width && a.Height == b.Height && filepath.Base(a.FilePath) == filepath.Base(b.FilePath)
+		if a.Width != b.Width || a.Height != b.Height {
+			return false
+		}
+		if a.FilePath == b.FilePath {
+			return true
+		}
+		infoA, errA := os.Stat(a.FilePath)
+		infoB, errB := os.Stat(b.FilePath)
+		if errA != nil || errB != nil || infoA.Size() != infoB.Size() {
+			return false
+		}
+		dataA, errA := os.ReadFile(a.FilePath)
+		dataB, errB := os.ReadFile(b.FilePath)
+		return errA == nil && errB == nil && bytes.Equal(dataA, dataB)
 	default:
 		return a.Text == b.Text
 	}
@@ -302,6 +321,7 @@ func (s *Store) saveLocked() {
 func (s *Store) load() {
 	data, err := os.ReadFile(s.path)
 	if err != nil {
+		s.entries = nil
 		return
 	}
 	var entries []*Entry

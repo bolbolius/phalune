@@ -81,6 +81,37 @@ func TestStore_Deduplication(t *testing.T) {
 	if entries[1].Text != "beta" {
 		t.Errorf("expected beta at index 1, got %s", entries[1].Text)
 	}
+
+	// Test image deduplication and cleanup
+	img1, err := store.CreateImageFile([]byte("identical-bytes"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	store.Add(&Entry{Kind: KindImage, FilePath: img1, Width: 10, Height: 10})
+
+	// Rapid duplicate of same image dimensions: should unlink the new file
+	img2, err := store.CreateImageFile([]byte("identical-bytes"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	store.Add(&Entry{Kind: KindImage, FilePath: img2, Width: 10, Height: 10})
+	if _, err := os.Stat(img2); !os.IsNotExist(err) {
+		t.Errorf("debounced duplicate image file should have been cleaned up")
+	}
+
+	// Duplicate after debounce: moves to top and unlinks old file
+	store.mu.Lock()
+	store.lastAdded["img:10x10"] = time.Now().UnixMilli() - 1000
+	store.mu.Unlock()
+
+	img3, err := store.CreateImageFile([]byte("identical-bytes"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	store.Add(&Entry{Kind: KindImage, FilePath: img3, Width: 10, Height: 10})
+	if _, err := os.Stat(img1); !os.IsNotExist(err) {
+		t.Errorf("superseded image file should have been cleaned up")
+	}
 }
 
 func TestStore_Persistence(t *testing.T) {
