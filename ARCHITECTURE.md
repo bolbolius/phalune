@@ -9,6 +9,7 @@ Go code shouldn't construct GTK layouts manually. We load `.blp` templates via `
 ## Structure
 
 - `cmd/phalune/` — App entry point. Runs the daemon or sends CLI messages (`phalune msg ...`).
+- `cmd/phalune-settings/` — Standalone settings app (`org.phalune.settings`). Edits config.toml with line-preserving writes, then asks the shell to reload over the same IPC socket.
 - `internal/`
   - `config/` — Parses `config.toml` and validates widget names.
   - `ipc/` — Unix socket server and client at `$XDG_RUNTIME_DIR/phalune.sock`.
@@ -28,6 +29,7 @@ Go code shouldn't construct GTK layouts manually. We load `.blp` templates via `
   - `privacy/` — Hardware usage indicators (microphone and camera active detection).
   - `removable/` — Automatic notifications when USB drives and storage media are plugged in.
   - `screenshot/` — Screenshot tooling (grim/slurp capture for area, window, and display) with an actionable Copy / Save / Open preview toast.
+  - `settings/` — Settings app backend: schema (pages/rows), line-preserving TOML editor, shell IPC client.
 - `ui/` — Blueprint files (`.blp`), plus `ui.go` which embeds the compiled `.ui` XML for Go.
 
 ## How it works

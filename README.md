@@ -31,6 +31,9 @@ make build
 # Run
 ./phalune
 
+# Run settings app
+./phalune-settings
+
 # Run with custom config
 ./phalune --config /path/to/config.toml
 ```
@@ -39,6 +42,10 @@ Other targets:
 ```bash
 # Compile UI definitions only
 make ui
+
+# Build only the shell or only the settings app
+make shell
+make settings
 
 # Run test suite
 make test
@@ -160,6 +167,7 @@ phalune msg ping
 - On-Screen Display (OSD)
 - Notifications & Notification Center
 - Screenshots (area/window/display with actionable Copy / Save / Open preview toast)
+- Settings App (`phalune-settings`, edits config.toml with line-preserving writes + hot-reload)
 
 ---
 

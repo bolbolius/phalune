@@ -1,5 +1,6 @@
 # Binaries
 /phalune
+/phalune-settings
 *.test
 
 # Generated compile-time UI files

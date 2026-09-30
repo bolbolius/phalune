@@ -1,4 +1,4 @@
-.PHONY: all build test clean tidy ui clean-ui
+.PHONY: all build shell settings test clean tidy ui clean-ui
 
 export CGO_ENABLED := 1
 
@@ -17,6 +17,13 @@ clean-ui:
 
 build: ui
 	go build -o phalune ./cmd/phalune
+	go build -o phalune-settings ./cmd/phalune-settings
+
+shell: ui
+	go build -o phalune ./cmd/phalune
+
+settings: ui
+	go build -o phalune-settings ./cmd/phalune-settings
 
 test: ui
 	go test -v ./...
@@ -26,4 +33,4 @@ tidy:
 	go mod tidy
 
 clean: clean-ui
-	rm -f phalune
+	rm -f phalune phalune-settings
