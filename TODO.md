@@ -49,6 +49,6 @@
 
 ### Alpha 0.3
 
-- [ ] Settings app.
+- [X] Settings app.
 - [ ] Adding support for other WMs.
 - [ ] `--json` flag for status queries in ipc.
