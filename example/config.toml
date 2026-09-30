@@ -226,6 +226,18 @@ max_boost = 25.0
 # Whether to switch across windows from all workspaces (true) or only the current workspace (false)
 all_workspaces = true
 
+# ─── Screenshots ──────────────────────────────────────────────────────────────
+[screenshot]
+# Fallback capture mode: "area" (interactive selection), "window" (focused window)
+# or "display" (full output). Requires grim (and slurp for area selection).
+default_mode = "area"
+
+# Destination folder for saved screenshots. Empty = ~/Pictures/Screenshots
+# save_dir = ""
+
+# How long the actionable preview toast stays visible before auto-dismiss
+toast_timeout = "6s"
+
 # ─── Clipboard History ────────────────────────────────────────────────────────
 [clipboard]
 # Maximum number of entries kept in history (ring buffer)

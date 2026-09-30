@@ -39,6 +39,7 @@ type Config struct {
 	Launcher       LauncherConfig       `toml:"launcher"`
 	Clipboard      ClipboardConfig      `toml:"clipboard"`
 	WindowSwitcher WindowSwitcherConfig `toml:"window_switcher"`
+	Screenshot     ScreenshotConfig     `toml:"screenshot"`
 	LockScreen     LockScreenConfig     `toml:"lockscreen"`
 	Session        SessionConfig        `toml:"session"`
 	PowerMenu      PowerMenuConfig      `toml:"power_menu"`
@@ -207,6 +208,14 @@ type WindowSwitcherConfig struct {
 	AllWorkspaces bool `toml:"all_workspaces"`
 }
 
+// ──────────────────────────── Screenshot ────────────────────────────
+
+type ScreenshotConfig struct {
+	SaveDir      string   `toml:"save_dir"`      // Destination for saved screenshots (empty = ~/Pictures/Screenshots)
+	DefaultMode  string   `toml:"default_mode"`  // "area", "window" or "display" fallback
+	ToastTimeout Duration `toml:"toast_timeout"` // Preview toast auto-dismiss
+}
+
 // ──────────────────────────── Logging ────────────────────────────
 
 type LogConfig struct {
@@ -291,6 +300,10 @@ func Default() *Config {
 		},
 		WindowSwitcher: WindowSwitcherConfig{
 			AllWorkspaces: true,
+		},
+		Screenshot: ScreenshotConfig{
+			DefaultMode:  "area",
+			ToastTimeout: Duration{6 * time.Second},
 		},
 		Clipboard: ClipboardConfig{
 			MaxEntries:    30,
@@ -507,6 +520,20 @@ func (c *Config) validate() {
 	}
 	if c.Clipboard.MaxTextBytes <= 0 {
 		c.Clipboard.MaxTextBytes = d.Clipboard.MaxTextBytes
+	}
+
+	mode := strings.ToLower(strings.TrimSpace(c.Screenshot.DefaultMode))
+	switch mode {
+	case "area", "window", "display", "screen", "monitor":
+		c.Screenshot.DefaultMode = mode
+	case "":
+		c.Screenshot.DefaultMode = d.Screenshot.DefaultMode
+	default:
+		slog.Warn("config: screenshot.default_mode must be \"area\", \"window\" or \"display\", using default", "got", c.Screenshot.DefaultMode, "default", d.Screenshot.DefaultMode)
+		c.Screenshot.DefaultMode = d.Screenshot.DefaultMode
+	}
+	if c.Screenshot.ToastTimeout.Duration <= 0 {
+		c.Screenshot.ToastTimeout = d.Screenshot.ToastTimeout
 	}
 
 	if c.Logging.Level != "" {

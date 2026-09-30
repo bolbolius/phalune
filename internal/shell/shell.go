@@ -21,6 +21,7 @@ import (
 	"phalune/internal/removable"
 	"phalune/internal/session"
 	"phalune/internal/shell/bar"
+	"phalune/internal/screenshot"
 	"phalune/internal/widget"
 	"phalune/internal/windowswitcher"
 
@@ -52,6 +53,8 @@ type Shell struct {
 	windowSwitcher     *windowswitcher.WindowSwitcher
 	clipboardWatcher   *clipboard.Watcher
 	clipboardOverlay   *clipboard.Overlay
+	screenshotSvc      *screenshot.Service
+	screenshotToast    *screenshot.Toast
 	polkitAgent        *polkit.Agent
 	sessionCancel      context.CancelFunc
 	configReloader     func()
@@ -149,6 +152,12 @@ func (s *Shell) OpenClipboard() {
 func (s *Shell) CloseClipboard() {
 	if s.clipboardOverlay != nil {
 		s.clipboardOverlay.Close()
+	}
+}
+
+func (s *Shell) CaptureScreenshot(mode string) {
+	if s.screenshotSvc != nil {
+		s.screenshotSvc.Capture(mode)
 	}
 }
 
@@ -458,6 +467,25 @@ func (s *Shell) Start() error {
 		}
 	}
 
+	// Screenshot tooling
+	if scTools, toolsErr := screenshot.ResolveTools(); toolsErr != nil {
+		slog.Warn("failed to resolve screenshot tools", "error", toolsErr)
+	} else {
+		scToast, err := screenshot.NewToast(s.app, s.cfg.Screenshot)
+		if err != nil {
+			slog.Warn("failed to create screenshot toast", "error", err)
+		} else {
+			scSvc, err := screenshot.New(s.cfg.Screenshot, s.niriSvc, scToast, scTools)
+			if err != nil {
+				slog.Warn("failed to create screenshot service", "error", err)
+				scToast.Destroy()
+			} else {
+				s.screenshotSvc = scSvc
+				s.screenshotToast = scToast
+			}
+		}
+	}
+
 	// Polkit authentication agent
 	pkAgent, err := polkit.New(s.app)
 	if err != nil {
@@ -623,6 +651,14 @@ func (s *Shell) Stop() {
 		s.clipboardWatcher = nil
 	}
 
+	if s.screenshotSvc != nil {
+		s.screenshotSvc = nil
+	}
+	if s.screenshotToast != nil {
+		s.screenshotToast.Destroy()
+		s.screenshotToast = nil
+	}
+
 	if s.polkitAgent != nil {
 		s.polkitAgent.Stop()
 		s.polkitAgent = nil
@@ -704,6 +740,10 @@ func (s *Shell) Reload(newCfg *config.Config) error {
 
 	if s.clipboardWatcher != nil {
 		s.clipboardWatcher.SetConfig(newCfg.Clipboard)
+	}
+
+	if s.screenshotSvc != nil {
+		s.screenshotSvc.UpdateConfig(newCfg.Screenshot)
 	}
 
 	if s.sessionMgr != nil {

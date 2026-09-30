@@ -549,6 +549,92 @@ window.clipboard-window > contents {
     background-color: rgba(247, 118, 142, 0.15);
 }
 
+/* Screenshot Toast */
+window.screenshot-window,
+window.screenshot-window.background,
+window.screenshot-window > contents {
+    background: transparent;
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.screenshot-toast {
+    background-color: rgba(26, 27, 38, 0.94);
+    color: #c0caf5;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin: 24px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.screenshot-preview {
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.screenshot-toast Picture {
+    min-width: 0;
+    min-height: 0;
+    max-width: 440px;
+    max-height: 248px;
+}
+
+.screenshot-content {
+    min-width: 200px;
+}
+
+.screenshot-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #c0caf5;
+}
+
+.screenshot-info {
+    font-size: 11px;
+    color: #787c99;
+}
+
+.screenshot-actions {
+    padding-top: 4px;
+}
+
+.screenshot-btn {
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.06);
+    color: #c0caf5;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background-color 130ms ease, color 130ms ease, border-color 130ms ease;
+}
+
+.screenshot-btn:hover {
+    background-color: rgba(122, 162, 247, 0.2);
+    border-color: #7aa2f7;
+}
+
+.screenshot-btn.suggested-action {
+    background-color: rgba(122, 162, 247, 0.25);
+    border-color: rgba(122, 162, 247, 0.5);
+}
+
+.screenshot-btn.suggested-action:hover {
+    background-color: rgba(122, 162, 247, 0.4);
+}
+
+.screenshot-close {
+    padding: 2px 8px;
+    border-radius: 6px;
+    color: #787c99;
+}
+
+.screenshot-close:hover {
+    color: #f7768e;
+    background-color: rgba(247, 118, 142, 0.15);
+}
+
 /* OSD Surface */
 window.osd-window,
 window.osd-window.background,

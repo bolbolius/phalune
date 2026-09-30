@@ -127,3 +127,8 @@ var WindowSwitcher string
 
 //go:embed windowswitcher/window_card.ui
 var WindowSwitcherCard string
+
+// Screenshot
+//
+//go:embed screenshot/toast.ui
+var ScreenshotToast string

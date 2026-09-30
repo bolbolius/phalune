@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -253,6 +254,16 @@ func main() {
 			case ipc.ActionLogout, "exit-session":
 				go func() { _ = sh.Logout() }()
 				respCh <- ipc.Response{OK: true, Message: "logging out"}
+			case ipc.ActionScreenshot, "screenshot-area", "screenshot-window", "screenshot-display", "screenshot-screen":
+				mode := req.Args["mode"]
+				if mode == "" && strings.HasPrefix(req.Action, "screenshot-") {
+					mode = strings.TrimPrefix(req.Action, "screenshot-")
+				}
+				if mode == "screen" {
+					mode = "display"
+				}
+				sh.CaptureScreenshot(mode)
+				respCh <- ipc.Response{OK: true, Message: "screenshot capture initiated"}
 			case ipc.ActionTestOSD, "osd-test":
 				sh.TestOSD()
 				respCh <- ipc.Response{OK: true, Message: "OSD test shown"}

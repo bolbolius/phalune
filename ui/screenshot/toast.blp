@@ -1,0 +1,67 @@
+using Gtk 4.0;
+
+Box toast_card {
+  orientation: horizontal;
+  spacing: 12;
+  halign: center;
+  valign: center;
+  styles ["screenshot-toast"]
+
+  Picture toast_picture {
+    width-request: 440;
+    height-request: 248;
+    content-fit: contain;
+    styles ["screenshot-preview"]
+  }
+
+  Box toast_content {
+    orientation: vertical;
+    spacing: 8;
+    valign: center;
+    styles ["screenshot-content"]
+
+    Label toast_title {
+      label: _("Screenshot captured");
+      halign: start;
+      styles ["screenshot-title"]
+    }
+
+    Label toast_info {
+      halign: start;
+      ellipsize: end;
+      styles ["screenshot-info"]
+    }
+
+    Box actions_box {
+      orientation: horizontal;
+      spacing: 6;
+      halign: start;
+      styles ["screenshot-actions"]
+
+      Button copy_button {
+        label: _("Copy");
+        tooltip-text: _("Copy image to clipboard");
+        styles ["suggested-action", "screenshot-btn"]
+      }
+
+      Button save_button {
+        label: _("Save");
+        tooltip-text: _("Save to screenshots folder");
+        styles ["screenshot-btn"]
+      }
+
+      Button open_button {
+        label: _("Open");
+        tooltip-text: _("Open with default application");
+        styles ["flat", "screenshot-btn"]
+      }
+    }
+  }
+
+  Button close_button {
+    label: _("✕");
+    tooltip-text: _("Dismiss");
+    valign: start;
+    styles ["flat", "screenshot-close"]
+  }
+}

@@ -130,6 +130,12 @@ phalune msg osd volume 75
 phalune msg osd brightness 50
 phalune msg test-osd
 
+# Screenshots (requires grim and slurp; modes: area, window, display)
+phalune msg screenshot
+phalune msg screenshot area
+phalune msg screenshot window
+phalune msg screenshot display
+
 # Notification Toasts
 phalune msg notify "Download Finished" "archlinux-2026.iso has finished downloading."
 phalune msg test-notify
@@ -153,6 +159,7 @@ phalune msg ping
 - Multi-Monitor Bar
 - On-Screen Display (OSD)
 - Notifications & Notification Center
+- Screenshots (area/window/display with actionable Copy / Save / Open preview toast)
 
 ---
 

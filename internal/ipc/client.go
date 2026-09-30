@@ -84,6 +84,7 @@ func RunClient(args []string) int {
 		fmt.Println("  poweroff                    Power off computer")
 		fmt.Println("  logout                      Log out of current session")
 		fmt.Println("  osd <type> <value>          Show OSD (e.g. 'osd volume 75' or 'osd brightness 50')")
+		fmt.Println("  screenshot [mode]           Take screenshot (area, window, display)")
 		fmt.Println("  test-osd                    Show sample volume OSD")
 		fmt.Println("  notify <summary> [body]     Show notification toast")
 		fmt.Println("  test-notify                 Show sample notification toast")
@@ -116,6 +117,11 @@ func RunClient(args []string) int {
 		reqArgs = make(map[string]string)
 		if len(args) > 1 {
 			reqArgs["state"] = args[1]
+		}
+	case ActionScreenshot:
+		reqArgs = make(map[string]string)
+		if len(args) > 1 {
+			reqArgs["mode"] = args[1]
 		}
 	case ActionShowOSD:
 		reqArgs = make(map[string]string)

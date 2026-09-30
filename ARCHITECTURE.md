@@ -27,6 +27,7 @@ Go code shouldn't construct GTK layouts manually. We load `.blp` templates via `
   - `session/` — Session management listening to `systemd-logind` / `ConsoleKit2` signals.
   - `privacy/` — Hardware usage indicators (microphone and camera active detection).
   - `removable/` — Automatic notifications when USB drives and storage media are plugged in.
+  - `screenshot/` — Screenshot tooling (grim/slurp capture for area, window, and display) with an actionable Copy / Save / Open preview toast.
 - `ui/` — Blueprint files (`.blp`), plus `ui.go` which embeds the compiled `.ui` XML for Go.
 
 ## How it works

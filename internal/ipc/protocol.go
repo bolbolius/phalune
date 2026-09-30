@@ -37,6 +37,7 @@ const (
 	ActionTestNotify               = "test-notify"
 	ActionSetLogLevel              = "set-log-level"
 	ActionToggleNotifyLogs         = "toggle-notify-logs"
+	ActionScreenshot               = "screenshot"
 	ActionReloadConfig             = "reload-config"
 	ActionReload                   = "reload"
 	ActionTogglePowerMenu          = "toggle-power-menu"

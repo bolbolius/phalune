@@ -43,9 +43,9 @@
 - [X] Polkit Agent:
   - [X] D-Bus PolicyKit1 listener.
   - [X] GTK4 auth prompt dialog.
-- [ ] Screenshot Tooling:
-  - [ ] Area / window / display grab.
-  - [ ] Actionable preview toast (Copy / Save / Open).
+- [X] Screenshot Tooling:
+  - [X] Area / window / display grab.
+  - [X] Actionable preview toast (Copy / Save / Open).
 
 ### Alpha 0.3
 
