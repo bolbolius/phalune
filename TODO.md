@@ -50,5 +50,5 @@
 ### Alpha 0.3
 
 - [X] Settings app.
-- [ ] Adding support for other WMs.
+- [X] Adding support for other compositors.
 - [ ] `--json` flag for status queries in ipc.
