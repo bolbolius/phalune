@@ -6,8 +6,8 @@ import (
 	"strings"
 	"sync"
 
+	"phalune/internal/compositor"
 	"phalune/internal/config"
-	"phalune/internal/niri"
 	"phalune/ui"
 
 	"github.com/diamondburned/gotk4/pkg/core/glib"
@@ -24,16 +24,16 @@ type WindowSwitcher struct {
 	cardsBox           *gtk.Box
 	emptyLabel         *gtk.Label
 
-	niriSvc     *niri.Service
-	cfg         config.WindowSwitcherConfig
-	windows     []niri.Window
-	cardButtons []*gtk.Button
-	selectedIdx int
-	isOpen      bool
-	mu          sync.Mutex
+	compositorSvc compositor.Service
+	cfg           config.WindowSwitcherConfig
+	windows       []compositor.Window
+	cardButtons   []*gtk.Button
+	selectedIdx   int
+	isOpen        bool
+	mu            sync.Mutex
 }
 
-func New(app *gtk.Application, cfg config.WindowSwitcherConfig, niriSvc *niri.Service) (*WindowSwitcher, error) {
+func New(app *gtk.Application, cfg config.WindowSwitcherConfig, compositorSvc compositor.Service) (*WindowSwitcher, error) {
 	win := gtk.NewWindow()
 	win.SetApplication(app)
 	win.SetTitle("phalune-window-switcher")
@@ -62,7 +62,7 @@ func New(app *gtk.Application, cfg config.WindowSwitcherConfig, niriSvc *niri.Se
 		scrolled:           scrolled,
 		cardsBox:           cardsBox,
 		emptyLabel:         emptyLabel,
-		niriSvc:            niriSvc,
+		compositorSvc:      compositorSvc,
 		cfg:                cfg,
 	}
 
@@ -168,21 +168,21 @@ func (ws *WindowSwitcher) Open() {
 }
 
 func (ws *WindowSwitcher) openLocked(reverse bool) {
-	var wins []niri.Window
-	if ws.niriSvc != nil {
-		all, err := ws.niriSvc.QueryWindows()
+	var wins []compositor.Window
+	if ws.compositorSvc != nil {
+		all, err := ws.compositorSvc.QueryWindows()
 		if err != nil {
 			slog.Warn("windowswitcher: query windows failed", "error", err)
 		} else {
 			var focusedWsID uint64
-			for _, w := range ws.niriSvc.Workspaces() {
+			for _, w := range ws.compositorSvc.Workspaces() {
 				if w.IsFocused {
 					focusedWsID = w.ID
 					break
 				}
 			}
 			if focusedWsID == 0 {
-				for _, w := range ws.niriSvc.Workspaces() {
+				for _, w := range ws.compositorSvc.Workspaces() {
 					if w.IsActive {
 						focusedWsID = w.ID
 						break
@@ -202,7 +202,7 @@ func (ws *WindowSwitcher) openLocked(reverse bool) {
 		}
 	}
 
-	// Sort windows by actual position in Niri ribbon: workspace -> column -> row -> floating
+	// Sort windows by position: workspace -> floating last -> x -> y -> ID
 	sort.Slice(wins, func(i, j int) bool {
 		wi, wj := wins[i], wins[j]
 		if wi.WorkspaceID != wj.WorkspaceID {
@@ -212,14 +212,14 @@ func (ws *WindowSwitcher) openLocked(reverse bool) {
 			return !wi.IsFloating
 		}
 		var colI, rowI int
-		if wi.Layout != nil && len(wi.Layout.PosInScrollingLayout) >= 2 {
-			colI = wi.Layout.PosInScrollingLayout[0]
-			rowI = wi.Layout.PosInScrollingLayout[1]
+		if len(wi.Pos) >= 2 {
+			colI = int(wi.Pos[0])
+			rowI = int(wi.Pos[1])
 		}
 		var colJ, rowJ int
-		if wj.Layout != nil && len(wj.Layout.PosInScrollingLayout) >= 2 {
-			colJ = wj.Layout.PosInScrollingLayout[0]
-			rowJ = wj.Layout.PosInScrollingLayout[1]
+		if len(wj.Pos) >= 2 {
+			colJ = int(wj.Pos[0])
+			rowJ = int(wj.Pos[1])
 		}
 		if colI != colJ {
 			return colI < colJ
@@ -358,9 +358,9 @@ func (ws *WindowSwitcher) ActivateSelected() {
 		ws.window.SetVisible(false)
 		ws.mu.Unlock()
 
-		if hasTarget && ws.niriSvc != nil {
+		if hasTarget && ws.compositorSvc != nil {
 			go func(id uint64) {
-				_ = ws.niriSvc.FocusWindow(id)
+				_ = ws.compositorSvc.FocusWindow(id)
 			}(targetID)
 		}
 	})

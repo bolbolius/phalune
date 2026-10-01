@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"phalune/internal/niri"
+	"phalune/internal/compositor"
 )
 
 type Mode string
@@ -34,7 +34,7 @@ func ResolveTools() (*ToolPaths, error) {
 	}
 	s, err := exec.LookPath("slurp")
 	if err != nil {
-		slog.Debug("slurp not found; area mode unavailable", "error", err)
+		slog.Debug("screenshot: slurp not found; area mode unavailable", "error", err)
 		s = ""
 	}
 	return &ToolPaths{Grim: g, Slurp: s}, nil
@@ -44,14 +44,14 @@ func (t *ToolPaths) supportArea() bool {
 	return t != nil && t.Slurp != ""
 }
 
-func (t *ToolPaths) Capture(ctx context.Context, mode Mode, niriSvc *niri.Service) ([]byte, error) {
+func (t *ToolPaths) Capture(ctx context.Context, mode Mode, compositorSvc compositor.Service) ([]byte, error) {
 	if t == nil || t.Grim == "" {
 		return nil, fmt.Errorf("grim is not installed")
 	}
 
 	switch mode {
 	case ModeWindow:
-		return t.captureWindow(ctx, niriSvc)
+		return t.captureWindow(ctx, compositorSvc)
 	case ModeDisplay:
 		return t.captureDisplay(ctx)
 	default:
@@ -88,17 +88,17 @@ func (t *ToolPaths) captureArea(ctx context.Context) ([]byte, error) {
 	return exec.CommandContext(grimCtx, t.Grim, "-t", "png", "-g", geometry, "-").Output()
 }
 
-func (t *ToolPaths) captureWindow(ctx context.Context, niriSvc *niri.Service) ([]byte, error) {
-	if niriSvc == nil {
+func (t *ToolPaths) captureWindow(ctx context.Context, compositorSvc compositor.Service) ([]byte, error) {
+	if compositorSvc == nil {
 		return t.captureDisplay(ctx)
 	}
 
-	windows, err := niriSvc.QueryWindows()
+	windows, err := compositorSvc.QueryWindows()
 	if err != nil {
 		return nil, fmt.Errorf("query focused window: %w", err)
 	}
 
-	var focused *niri.Window
+	var focused *compositor.Window
 	for i := range windows {
 		if windows[i].IsFocused {
 			focused = &windows[i]
@@ -109,7 +109,7 @@ func (t *ToolPaths) captureWindow(ctx context.Context, niriSvc *niri.Service) ([
 		return nil, fmt.Errorf("no focused window")
 	}
 
-	pos, size := windowTileGeometry(focused)
+	pos, size := focused.Pos, focused.Size
 	if pos == nil || size == nil || size[0] <= 0 || size[1] <= 0 {
 		return t.captureDisplay(ctx)
 	}
@@ -125,23 +125,6 @@ func (t *ToolPaths) captureDisplay(ctx context.Context) ([]byte, error) {
 	grimCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	return exec.CommandContext(grimCtx, t.Grim, "-t", "png", "-").Output()
-}
-
-func windowTileGeometry(w *niri.Window) (pos []float64, size []float64) {
-	if w == nil || w.Layout == nil {
-		return nil, nil
-	}
-	tileSize := w.Layout.TileSize
-	if len(tileSize) >= 4 {
-		return tileSize[:2], tileSize[2:4]
-	}
-	if len(tileSize) >= 2 {
-		return []float64{0, 0}, tileSize[:2]
-	}
-	if len(w.Layout.WindowSize) >= 2 {
-		return []float64{0, 0}, []float64{float64(w.Layout.WindowSize[0]), float64(w.Layout.WindowSize[1])}
-	}
-	return nil, nil
 }
 
 func Filename(now time.Time) string {

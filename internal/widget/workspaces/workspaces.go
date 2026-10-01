@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sort"
 
-	"phalune/internal/niri"
+	"phalune/internal/compositor"
 	"phalune/internal/widget"
 	"phalune/ui"
 
@@ -14,19 +14,19 @@ import (
 )
 
 type Workspaces struct {
-	box         *gtk.Box
-	niriSvc     *niri.Service
-	output      string
-	allOutputs  bool
-	buttons     map[uint64]*gtk.Button
-	order       []uint64
-	unsubscribe func()
-	cancel      context.CancelFunc
+	box           *gtk.Box
+	compositorSvc compositor.Service
+	output        string
+	allOutputs    bool
+	buttons       map[uint64]*gtk.Button
+	order         []uint64
+	unsubscribe   func()
+	cancel        context.CancelFunc
 }
 
 func New(ctx widget.Context) (widget.Widget, error) {
-	if ctx.Niri == nil {
-		return nil, fmt.Errorf("niri service is not available")
+	if ctx.Compositor == nil {
+		return nil, fmt.Errorf("compositor service is not available")
 	}
 
 	builder := gtk.NewBuilderFromString(ui.Workspaces)
@@ -39,15 +39,15 @@ func New(ctx widget.Context) (widget.Widget, error) {
 
 	wCtx, cancel := context.WithCancel(context.Background())
 	w := &Workspaces{
-		box:        box,
-		niriSvc:    ctx.Niri,
-		output:     ctx.Output,
-		allOutputs: allOutputs,
-		buttons:    make(map[uint64]*gtk.Button),
-		cancel:     cancel,
+		box:           box,
+		compositorSvc: ctx.Compositor,
+		output:        ctx.Output,
+		allOutputs:    allOutputs,
+		buttons:       make(map[uint64]*gtk.Button),
+		cancel:        cancel,
 	}
 
-	ch, unsub := ctx.Niri.Subscribe()
+	ch, unsub := ctx.Compositor.Subscribe()
 	w.unsubscribe = unsub
 
 	go func() {
@@ -70,10 +70,10 @@ func New(ctx widget.Context) (widget.Widget, error) {
 	return w, nil
 }
 
-func (w *Workspaces) updateWorkspaces(allWorkspaces []niri.Workspace) {
-	var list []niri.Workspace
+func (w *Workspaces) updateWorkspaces(allWorkspaces []compositor.Workspace) {
+	var list []compositor.Workspace
 	for _, ws := range allWorkspaces {
-		if !w.allOutputs && w.output != "" && ws.Output != nil && *ws.Output != w.output {
+		if !w.allOutputs && w.output != "" && ws.Output != w.output {
 			continue
 		}
 		list = append(list, ws)
@@ -120,7 +120,7 @@ func (w *Workspaces) updateWorkspaces(allWorkspaces []niri.Workspace) {
 			btn = btnBuilder.GetObject("workspace_button").Cast().(*gtk.Button)
 			btn.SetLabel(displayName)
 			btn.ConnectClicked(func() {
-				_ = w.niriSvc.FocusWorkspace(wsID)
+				_ = w.compositorSvc.FocusWorkspace(wsID)
 			})
 			w.buttons[wsID] = btn
 		} else {

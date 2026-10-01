@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"phalune/internal/niri"
+	"phalune/internal/compositor"
 	"phalune/internal/widget"
 	"phalune/ui"
 
@@ -133,13 +133,13 @@ func FormatLayoutName(fullName string) string {
 }
 
 type Keyboard struct {
-	box     *gtk.Box
-	icon    *gtk.Image
-	label   *gtk.Label
-	cancel  context.CancelFunc
-	unsub   func()
-	niriSvc *niri.Service
-	format  string
+	box           *gtk.Box
+	icon          *gtk.Image
+	label         *gtk.Label
+	cancel        context.CancelFunc
+	unsub         func()
+	compositorSvc compositor.Service
+	format        string
 }
 
 func New(ctx widget.Context) (widget.Widget, error) {
@@ -166,21 +166,21 @@ func New(ctx widget.Context) (widget.Widget, error) {
 
 	kCtx, cancel := context.WithCancel(context.Background())
 	k := &Keyboard{
-		box:     box,
-		icon:    icon,
-		label:   label,
-		cancel:  cancel,
-		niriSvc: ctx.Niri,
-		format:  format,
+		box:           box,
+		icon:          icon,
+		label:         label,
+		cancel:        cancel,
+		compositorSvc: ctx.Compositor,
+		format:        format,
 	}
 
 	// Click switcher: switches to next layout
 	click := gtk.NewGestureClick()
 	click.SetButton(gdk.BUTTON_PRIMARY)
 	click.ConnectReleased(func(n int, x, y float64) {
-		if k.niriSvc != nil {
+		if k.compositorSvc != nil {
 			go func() {
-				if err := k.niriSvc.SwitchLayoutNext(); err != nil {
+				if err := k.compositorSvc.SwitchLayoutNext(); err != nil {
 					slog.Warn("keyboard: failed to switch layout", "error", err)
 				}
 			}()
@@ -188,9 +188,9 @@ func New(ctx widget.Context) (widget.Widget, error) {
 	})
 	box.AddController(click)
 
-	// Subscribe to Niri keyboard layout events
-	if ctx.Niri != nil {
-		ch, unsub := ctx.Niri.SubscribeKeyboard()
+	// Subscribe to compositor keyboard layout events
+	if ctx.Compositor != nil {
+		ch, unsub := ctx.Compositor.SubscribeKeyboard()
 		k.unsub = unsub
 		go k.listenEvents(kCtx, ch)
 	} else {
@@ -215,7 +215,7 @@ func (k *Keyboard) Destroy() {
 	}
 }
 
-func (k *Keyboard) listenEvents(ctx context.Context, ch <-chan niri.KeyboardLayouts) {
+func (k *Keyboard) listenEvents(ctx context.Context, ch <-chan compositor.KeyboardLayouts) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -229,7 +229,7 @@ func (k *Keyboard) listenEvents(ctx context.Context, ch <-chan niri.KeyboardLayo
 	}
 }
 
-func (k *Keyboard) update(layouts niri.KeyboardLayouts) {
+func (k *Keyboard) update(layouts compositor.KeyboardLayouts) {
 	name := ""
 	if layouts.CurrentIdx >= 0 && layouts.CurrentIdx < len(layouts.Names) {
 		name = layouts.Names[layouts.CurrentIdx]

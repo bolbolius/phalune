@@ -16,8 +16,8 @@ import (
 	"github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gdkpixbuf/v2"
-	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	glibv2 "github.com/diamondburned/gotk4/pkg/glib/v2"
+	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
 const defaultToastTimeout = 6 * time.Second
@@ -289,7 +289,7 @@ func (t *Toast) onSave() {
 
 	path, err := Save(dir, png, time.Now())
 	if err != nil {
-		slog.Warn("failed to save screenshot", "error", err)
+		slog.Warn("screenshot: save failed", "error", err)
 		return
 	}
 
@@ -307,7 +307,7 @@ func (t *Toast) onOpen() {
 		return
 	}
 	if err := exec.Command("xdg-open", path).Start(); err != nil {
-		slog.Warn("failed to open screenshot", "error", err)
+		slog.Warn("screenshot: open failed", "error", err)
 		return
 	}
 	t.Hide()

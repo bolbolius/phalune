@@ -1,8 +1,8 @@
 package widget
 
 import (
+	"phalune/internal/compositor"
 	"phalune/internal/config"
-	"phalune/internal/niri"
 
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
@@ -14,7 +14,7 @@ type Widget interface {
 
 type Context struct {
 	Config                   *config.Config
-	Niri                     *niri.Service
+	Compositor               compositor.Service
 	Output                   string
 	ShowOSD                  func(icon, label string, value float64)
 	TogglePowerMenu          func()

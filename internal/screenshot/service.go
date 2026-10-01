@@ -6,21 +6,21 @@ import (
 	"strings"
 	"time"
 
+	"phalune/internal/compositor"
 	"phalune/internal/config"
-	"phalune/internal/niri"
 
 	"github.com/diamondburned/gotk4/pkg/core/glib"
 )
 
 type Service struct {
-	tools   *ToolPaths
-	toast   *Toast
-	niriSvc *niri.Service
+	tools         *ToolPaths
+	toast         *Toast
+	compositorSvc compositor.Service
 
 	cfg config.ScreenshotConfig
 }
 
-func New(cfg config.ScreenshotConfig, niriSvc *niri.Service, toast *Toast, tools *ToolPaths) (*Service, error) {
+func New(cfg config.ScreenshotConfig, compositorSvc compositor.Service, toast *Toast, tools *ToolPaths) (*Service, error) {
 	if tools == nil {
 		var err error
 		tools, err = ResolveTools()
@@ -29,10 +29,10 @@ func New(cfg config.ScreenshotConfig, niriSvc *niri.Service, toast *Toast, tools
 		}
 	}
 	return &Service{
-		tools:   tools,
-		toast:   toast,
-		niriSvc: niriSvc,
-		cfg:     cfg,
+		tools:         tools,
+		toast:         toast,
+		compositorSvc: compositorSvc,
+		cfg:           cfg,
 	}, nil
 }
 
@@ -53,15 +53,15 @@ func (s *Service) Capture(modeArg string) {
 
 	mode := s.resolveMode(modeArg)
 	tools := s.tools
-	niriSvc := s.niriSvc
+	compositorSvc := s.compositorSvc
 
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 		defer cancel()
 
-		png, err := tools.Capture(ctx, mode, niriSvc)
+		png, err := tools.Capture(ctx, mode, compositorSvc)
 		if err != nil {
-			slog.Warn("failed to capture screenshot", "error", err)
+			slog.Warn("screenshot: capture failed", "error", err)
 			return
 		}
 

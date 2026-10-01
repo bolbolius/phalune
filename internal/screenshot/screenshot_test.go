@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"phalune/internal/compositor"
 	"phalune/internal/config"
-	"phalune/internal/niri"
 )
 
 func TestResolveModeExplicit(t *testing.T) {
@@ -47,42 +47,35 @@ func TestResolveModeDefault(t *testing.T) {
 }
 
 func TestWindowTileGeometry(t *testing.T) {
-	w4 := &niriWindow{tile: []float64{100, 200, 800, 600}}
-	pos, size := windowTileGeometry(w4.as())
+	w4 := &compositor.Window{Pos: []float64{100, 200}, Size: []float64{800, 600}}
+	pos, size := w4.Pos, w4.Size
 	if pos == nil || size == nil {
-		t.Fatal("expected 4-element geometry, got nil")
+		t.Fatal("expected geometry, got nil")
 	}
 	if pos[0] != 100 || pos[1] != 200 || size[0] != 800 || size[1] != 600 {
 		t.Errorf("unexpected geometry: pos=%v size=%v", pos, size)
 	}
 
-	w2 := &niriWindow{tile: []float64{1920, 1080}}
-	pos, size = windowTileGeometry(w2.as())
-	if pos == nil || size == nil {
-		t.Fatal("expected 2-element geometry, got nil")
-	}
-	if pos[0] != 0 || pos[1] != 0 || size[0] != 1920 || size[1] != 1080 {
-		t.Errorf("unexpected 2-element geometry: pos=%v size=%v", pos, size)
+	w2 := &compositor.Window{Size: []float64{1920, 1080}}
+	if w2.Size[0] != 1920 || w2.Size[1] != 1080 {
+		t.Errorf("unexpected 2-element geometry: pos=%v size=%v", w2.Pos, w2.Size)
 	}
 
-	short := &niriWindow{tile: []float64{100}}
-	pos, size = windowTileGeometry(short.as())
-	if pos != nil || size != nil {
-		t.Errorf("expected nil for short tile, got pos=%v size=%v", pos, size)
+	short := &compositor.Window{Size: []float64{100}}
+	if len(short.Size) != 1 {
+		t.Errorf("expected short size preserved, got %v", short.Size)
 	}
 }
 
 func TestWindowTileGeometryFormatting(t *testing.T) {
-	w := &niriWindow{tile: []float64{100, 200, 800, 600}}
-	pos, size := windowTileGeometry(w.as())
-	geom := fmt.Sprintf("%d,%d %dx%d", int(pos[0]), int(pos[1]), int(size[0]), int(size[1]))
+	w := compositor.Window{Pos: []float64{100, 200}, Size: []float64{800, 600}}
+	geom := fmt.Sprintf("%d,%d %dx%d", int(w.Pos[0]), int(w.Pos[1]), int(w.Size[0]), int(w.Size[1]))
 	if geom != "100,200 800x600" {
 		t.Errorf("unexpected geometry: %q", geom)
 	}
 
-	w2 := &niriWindow{tile: []float64{1920, 1080}}
-	pos2, size2 := windowTileGeometry(w2.as())
-	geom2 := fmt.Sprintf("%d,%d %dx%d", int(pos2[0]), int(pos2[1]), int(size2[0]), int(size2[1]))
+	w2 := compositor.Window{Pos: []float64{0, 0}, Size: []float64{1920, 1080}}
+	geom2 := fmt.Sprintf("%d,%d %dx%d", int(w2.Pos[0]), int(w2.Pos[1]), int(w2.Size[0]), int(w2.Size[1]))
 	if geom2 != "0,0 1920x1080" {
 		t.Errorf("unexpected geometry: %q", geom2)
 	}
@@ -148,12 +141,4 @@ func defaultSvcCfg() config.ScreenshotConfig {
 		DefaultMode:  "area",
 		ToastTimeout: config.Duration{Duration: 6 * time.Second},
 	}
-}
-
-type niriWindow struct {
-	tile []float64
-}
-
-func (f *niriWindow) as() *niri.Window {
-	return &niri.Window{Layout: &niri.WindowLayout{TileSize: f.tile}}
 }

@@ -11,9 +11,13 @@ Go code shouldn't construct GTK layouts manually. We load `.blp` templates via `
 - `cmd/phalune/` — App entry point. Runs the daemon or sends CLI messages (`phalune msg ...`).
 - `cmd/phalune-settings/` — Standalone settings app (`org.phalune.settings`). Edits config.toml with line-preserving writes, then asks the shell to reload over the same IPC socket.
 - `internal/`
+  - `compositor/` — Compositor-agnostic `Service` interface, shared state cache, and backends:
+    - `niri/` — Niri JSON-RPC socket; workspace/window/keyboard events and focus actions (stable).
+    - `sway/` — Sway i3-IPC socket on `SWAYSOCK` (experimental).
+    - `hyprland/` — Hyprland command/event sockets in `$XDG_RUNTIME_DIR/hypr/` (experimental).
+    - `detect/` — Environment-based backend auto-detection (`NIRI_SOCKET`, `SWAYSOCK`, `HYPRLAND_INSTANCE_SIGNATURE`).
   - `config/` — Parses `config.toml` and validates widget names.
   - `ipc/` — Unix socket server and client at `$XDG_RUNTIME_DIR/phalune.sock`.
-  - `niri/` — Talks to Niri over its socket, tracks workspace events, and triggers focus changes.
   - `shell/` — Glues the bar, launcher, OSD, notifications, and CSS together.
     - `bar/` — Top bar layer surface created for each connected monitor.
   - `widget/` — Bar widget interface and registry (`clock`, `workspaces`, `audio`, `battery`, `tray`, `bluetooth`, `wifi`, `keyboard`, `power`, `notifications`, `privacy`).
@@ -34,7 +38,7 @@ Go code shouldn't construct GTK layouts manually. We load `.blp` templates via `
 
 ## How it works
 
-Running `phalune` reads `config.toml`, connects to Niri's event socket, and registers the bar widgets. Once the GTK application activates, `shell.New()` creates a top bar on each connected monitor.
+Running `phalune` reads `config.toml`, detects and connects to the running compositor (see `internal/compositor/detect`), and registers the bar widgets. Once the GTK application activates, `shell.New()` creates a top bar on each connected monitor.
 
 The launcher, control center, OSD, and notification popups also create layer-shell surfaces on the overlay layer, but stay hidden until triggered.
 
@@ -44,7 +48,7 @@ While running, the shell listens on a Unix socket. Commands like `phalune msg to
 
 - Single binary: Both the daemon and CLI client live in the same `phalune` binary.
 - Wayland only: Startup forces `GDK_BACKEND=wayland` because `gtk4-layer-shell` requires Wayland.
-- GTK and goroutines: GTK is not thread-safe. Anything touching widgets from a background goroutine (Niri stream, IPC, D-Bus, tickers) must go through `glib.IdleAdd`.
-- No polling: We avoid periodic polling loops across the shell because it wastes CPU and battery. We prefer push-based event streams and kernel subscriptions (e.g. Niri JSON-RPC socket stream, pactl subscribe for audio/mic, and Linux Netlink uevent socket for backlight and hardware keys).
+- GTK and goroutines: GTK is not thread-safe. Anything touching widgets from a background goroutine (compositor event stream, IPC, D-Bus, tickers) must go through `glib.IdleAdd`.
+- No polling: We avoid periodic polling loops across the shell because it wastes CPU and battery. We prefer push-based event streams and kernel subscriptions (e.g. Niri JSON-RPC socket stream, sway/Hyprland IPC, pactl subscribe for audio/mic, and Linux Netlink uevent socket for backlight and hardware keys).
 - Generated UI files: `make` compiles `.blp` into `.ui` files in `ui/`. We have them git-ignored and keep on disk so `gopls` doesn't complain about missing embed files.
 

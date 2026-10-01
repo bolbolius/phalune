@@ -1,6 +1,20 @@
 # phalune
 
-Modular Niri-first Linux Wayland desktop shell written in Go, `gtk4`, `gtk4-layer-shell`, and GTK Blueprint.
+Modular Linux Wayland desktop shell written in Go, `gtk4`, `gtk4-layer-shell`, and GTK Blueprint. Primary target is [Niri](https://github.com/YaLTeR/niri); [Sway](https://github.com/swaywm/sway) and [Hyprland](https://github.com/hyprwm/Hyprland) are supported experimentally.
+
+---
+
+## Compositor Support (Experimental)
+
+Phalune talks to the running compositor through a compositor-agnostic interface (`internal/compositor`). Backends auto-detect from the environment at startup:
+
+| Compositor | Detection | Status |
+|------------|-----------|--------|
+| Niri | `NIRI_SOCKET` | Stable |
+| Sway | `SWAYSOCK` | Experimental |
+| Hyprland | `HYPRLAND_INSTANCE_SIGNATURE` | Experimental |
+
+**Note on experimental status:** Niri is my daily driver and fully tested. Sway and Hyprland are supported but I don't daily drive them to test thoroughly, so there may be rough edges. Feedback and bug reports are welcome.
 
 ---
 

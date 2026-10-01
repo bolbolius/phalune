@@ -10,10 +10,11 @@ import (
 	"syscall"
 	"time"
 
+	"phalune/internal/compositor"
+	"phalune/internal/compositor/detect"
 	"phalune/internal/config"
 	"phalune/internal/ipc"
 	"phalune/internal/logging"
-	"phalune/internal/niri"
 	"phalune/internal/notify"
 	"phalune/internal/shell"
 	"phalune/internal/widget"
@@ -74,16 +75,13 @@ func main() {
 		NotifyLevel:  cfg.Logging.NotifyLevel,
 	}, os.Stderr)
 
-	var niriSvc *niri.Service
-	niriClient, err := niri.NewClient("")
+	var compositorSvc compositor.Service
+	compositorKind, svc, err := detect.Detect()
 	if err != nil {
-		slog.Warn("niri client initialization failed", "error", err)
+		slog.Warn("compositor: no backend detected; bar widgets will be disabled", "error", err)
 	} else {
-		niriSvc = niri.NewService(niriClient)
-		if err := niriSvc.Start(); err != nil {
-			slog.Warn("niri ipc start failed", "error", err)
-			niriSvc = nil
-		}
+		compositorSvc = svc
+		slog.Info("compositor: backend detected", "kind", string(compositorKind))
 	}
 
 	reg := widget.NewRegistry()
@@ -379,7 +377,7 @@ func main() {
 			slog.Warn("style warning", "error", err)
 		}
 
-		sh = shell.New(app, cfg, reg, niriSvc)
+		sh = shell.New(app, cfg, reg, compositorSvc)
 		logging.SetNotifier(sh)
 		sh.SetConfigReloader(func() {
 			glib.IdleAdd(func() {
@@ -425,8 +423,8 @@ func main() {
 		if sh != nil {
 			sh.Stop()
 		}
-		if niriSvc != nil {
-			_ = niriSvc.Close()
+		if compositorSvc != nil {
+			_ = compositorSvc.Close()
 		}
 	})
 

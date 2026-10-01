@@ -8,8 +8,8 @@ import (
 	"os/exec"
 	"sync"
 
+	"phalune/internal/compositor"
 	"phalune/internal/config"
-	"phalune/internal/niri"
 
 	"github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/godbus/dbus/v5"
@@ -22,24 +22,24 @@ const (
 )
 
 type Manager struct {
-	mu          sync.Mutex
-	cfg         config.SessionConfig
-	niriSvc     *niri.Service
-	sysBus      *dbus.Conn
-	onLock      func()
-	onUnlock    func()
-	isLocked    bool
-	cancel      context.CancelFunc
-	execCommand func(name string, arg ...string) *exec.Cmd
+	mu            sync.Mutex
+	cfg           config.SessionConfig
+	compositorSvc compositor.Service
+	sysBus        *dbus.Conn
+	onLock        func()
+	onUnlock      func()
+	isLocked      bool
+	cancel        context.CancelFunc
+	execCommand   func(name string, arg ...string) *exec.Cmd
 }
 
-func New(cfg config.SessionConfig, niriSvc *niri.Service, onLock, onUnlock func()) *Manager {
+func New(cfg config.SessionConfig, compositorSvc compositor.Service, onLock, onUnlock func()) *Manager {
 	return &Manager{
-		cfg:         cfg,
-		niriSvc:     niriSvc,
-		onLock:      onLock,
-		onUnlock:    onUnlock,
-		execCommand: exec.Command,
+		cfg:           cfg,
+		compositorSvc: compositorSvc,
+		onLock:        onLock,
+		onUnlock:      onUnlock,
+		execCommand:   exec.Command,
 	}
 }
 
@@ -208,11 +208,27 @@ func (m *Manager) Logout() error {
 		return m.runShellCommand(customCmd).Run()
 	}
 
-	// Try Niri quit action first if running under Niri
-	if os.Getenv("NIRI_SOCKET") != "" {
-		cmd := m.execCommand("niri", "msg", "action", "quit", "--skip-confirmation")
-		if err := cmd.Run(); err == nil {
-			return nil
+	// Try compositor-native quit first by detected backend kind.
+	if m.compositorSvc != nil {
+		switch m.compositorSvc.Kind() {
+		case compositor.Niri:
+			if cmd := m.execCommand("niri", "msg", "action", "quit", "--skip-confirmation"); cmd != nil {
+				if err := cmd.Run(); err == nil {
+					return nil
+				}
+			}
+		case compositor.Sway:
+			if cmd := m.execCommand("swaymsg", "exit"); cmd != nil {
+				if err := cmd.Run(); err == nil {
+					return nil
+				}
+			}
+		case compositor.Hyprland:
+			if cmd := m.execCommand("hyprctl", "dispatch", "exit"); cmd != nil {
+				if err := cmd.Run(); err == nil {
+					return nil
+				}
+			}
 		}
 	}
 

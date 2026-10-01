@@ -6,12 +6,12 @@ import (
 	"log/slog"
 	"sync"
 
-	"phalune/internal/config"
 	"phalune/internal/clipboard"
+	"phalune/internal/compositor"
+	"phalune/internal/config"
 	"phalune/internal/controlcenter"
 	"phalune/internal/launcher"
 	"phalune/internal/lockscreen"
-	"phalune/internal/niri"
 	"phalune/internal/notificationcenter"
 	"phalune/internal/notify"
 	"phalune/internal/osd"
@@ -19,9 +19,9 @@ import (
 	"phalune/internal/powermenu"
 	"phalune/internal/privacy"
 	"phalune/internal/removable"
+	"phalune/internal/screenshot"
 	"phalune/internal/session"
 	"phalune/internal/shell/bar"
-	"phalune/internal/screenshot"
 	"phalune/internal/widget"
 	"phalune/internal/windowswitcher"
 
@@ -34,7 +34,7 @@ type Shell struct {
 	app                *gtk.Application
 	cfg                *config.Config
 	registry           *widget.Registry
-	niriSvc            *niri.Service
+	compositorSvc      compositor.Service
 	barsByConnector    map[string]*bar.Bar
 	fallbackBar        *bar.Bar
 	launcher           *launcher.Launcher
@@ -61,12 +61,12 @@ type Shell struct {
 	mu                 sync.Mutex
 }
 
-func New(app *gtk.Application, cfg *config.Config, registry *widget.Registry, niriSvc *niri.Service) *Shell {
+func New(app *gtk.Application, cfg *config.Config, registry *widget.Registry, compositorSvc compositor.Service) *Shell {
 	return &Shell{
 		app:             app,
 		cfg:             cfg,
 		registry:        registry,
-		niriSvc:         niriSvc,
+		compositorSvc:   compositorSvc,
 		barsByConnector: make(map[string]*bar.Bar),
 	}
 }
@@ -353,7 +353,7 @@ func (s *Shell) Start() error {
 	s.osdMgr = osdInstance
 	s.osdListeners = osd.StartListeners(osdInstance)
 
-	s.sessionMgr = session.New(s.cfg.Session, s.niriSvc, func() {
+	s.sessionMgr = session.New(s.cfg.Session, s.compositorSvc, func() {
 		if s.lockscreenMgr != nil {
 			s.lockscreenMgr.Lock()
 		}
@@ -375,7 +375,7 @@ func (s *Shell) Start() error {
 		s.powerMenu = pmInstance
 	}
 
-	wsInstance, err := windowswitcher.New(s.app, s.cfg.WindowSwitcher, s.niriSvc)
+	wsInstance, err := windowswitcher.New(s.app, s.cfg.WindowSwitcher, s.compositorSvc)
 	if err != nil {
 		slog.Warn("failed to create window switcher", "error", err)
 	} else {
@@ -475,7 +475,7 @@ func (s *Shell) Start() error {
 		if err != nil {
 			slog.Warn("failed to create screenshot toast", "error", err)
 		} else {
-			scSvc, err := screenshot.New(s.cfg.Screenshot, s.niriSvc, scToast, scTools)
+			scSvc, err := screenshot.New(s.cfg.Screenshot, s.compositorSvc, scToast, scTools)
 			if err != nil {
 				slog.Warn("failed to create screenshot service", "error", err)
 				scToast.Destroy()
@@ -521,7 +521,7 @@ func (s *Shell) buildWidgetContext(monitor *gdk.Monitor) widget.Context {
 
 	return widget.Context{
 		Config:                   s.cfg,
-		Niri:                     s.niriSvc,
+		Compositor:               s.compositorSvc,
 		Output:                   connector,
 		ShowOSD:                  s.ShowOSD,
 		TogglePowerMenu:          s.TogglePowerMenu,
