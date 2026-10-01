@@ -51,4 +51,4 @@
 
 - [X] Settings app.
 - [X] Adding support for other compositors.
-- [ ] `--json` flag for status queries in ipc.
+- [X] `--json` flag for status queries in ipc.

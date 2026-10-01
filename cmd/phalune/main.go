@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -235,8 +236,28 @@ func main() {
 			case ipc.ActionUnlock, "unlock-screen":
 				sh.Unlock()
 				respCh <- ipc.Response{OK: true, Message: "screen unlocked"}
+			case ipc.ActionStatus, "shell-status":
+				st := sh.Status()
+				data, _ := json.Marshal(st)
+				comp := st.Compositor
+				if comp == "" {
+					comp = "none"
+				}
+				msg := fmt.Sprintf("status: running\nlocked: %v\ncompositor: %s\nbars: %d\ndnd: %v\nnotifications: %d",
+					st.Locked, comp, st.Bars, st.DND, st.Notifications)
+				respCh <- ipc.Response{
+					OK:      true,
+					Message: msg,
+					Data:    data,
+				}
 			case ipc.ActionIsLocked, "lock-status":
-				respCh <- ipc.Response{OK: true, Message: fmt.Sprintf("%v", sh.IsLocked())}
+				locked := sh.IsLocked()
+				data, _ := json.Marshal(map[string]any{"locked": locked})
+				respCh <- ipc.Response{
+					OK:      true,
+					Message: fmt.Sprintf("%v", locked),
+					Data:    data,
+				}
 			case ipc.ActionSuspend, "sleep":
 				go func() { _ = sh.Suspend() }()
 				respCh <- ipc.Response{OK: true, Message: "suspending"}
@@ -364,7 +385,8 @@ func main() {
 					Message: fmt.Sprintf("notify logs enabled: %v (level=%s)", newState, logHandler.NotifyLevel()),
 				}
 			case ipc.ActionPing:
-				respCh <- ipc.Response{OK: true, Message: "pong"}
+				data, _ := json.Marshal(map[string]any{"ping": "pong"})
+				respCh <- ipc.Response{OK: true, Message: "pong", Data: data}
 			default:
 				respCh <- ipc.Response{OK: false, Error: fmt.Sprintf("unknown command %q", req.Action)}
 			}

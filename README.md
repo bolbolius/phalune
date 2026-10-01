@@ -165,7 +165,10 @@ phalune msg test-notify
 phalune msg reload-config
 phalune msg reload-style
 
-# Ping the running daemon
+# Status & Diagnostics (supports --json / -j flag)
+phalune msg status
+phalune msg status --json
+phalune msg is-locked --json
 phalune msg ping
 ```
 

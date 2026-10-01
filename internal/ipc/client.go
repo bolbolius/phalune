@@ -51,10 +51,25 @@ func SendCommand(socketPath string, action string, args map[string]string) (*Res
 }
 
 func RunClient(args []string) int {
+	jsonOutput := false
+	filteredArgs := make([]string, 0, len(args))
+	for _, arg := range args {
+		if arg == "--json" || arg == "-j" {
+			jsonOutput = true
+		} else {
+			filteredArgs = append(filteredArgs, arg)
+		}
+	}
+	args = filteredArgs
+
 	if len(args) == 0 || args[0] == "help" || args[0] == "--help" || args[0] == "-h" {
-		fmt.Println("Usage: phalune msg <command> [args...]")
+		fmt.Println("Usage: phalune msg [flags] <command> [args...]")
+		fmt.Println()
+		fmt.Println("Flags:")
+		fmt.Println("  -j, --json                  Format output as JSON")
 		fmt.Println()
 		fmt.Println("Commands:")
+		fmt.Println("  status                      Show shell status summary")
 		fmt.Println("  toggle-launcher             Toggle application launcher")
 		fmt.Println("  open-launcher               Open application launcher")
 		fmt.Println("  close-launcher              Close application launcher")
@@ -66,6 +81,7 @@ func RunClient(args []string) int {
 		fmt.Println("  close-notification-center   Close notification center")
 		fmt.Println("  toggle-power-menu           Toggle power menu overlay")
 		fmt.Println("  open-power-menu             Open power menu overlay")
+		fmt.Println("  close-power-menu            Close power menu overlay")
 		fmt.Println("  toggle-clipboard            Toggle clipboard history overlay")
 		fmt.Println("  open-clipboard              Open clipboard history overlay")
 		fmt.Println("  close-clipboard             Close clipboard history overlay")
@@ -146,17 +162,64 @@ func RunClient(args []string) int {
 
 	resp, err := SendCommand("", action, reqArgs)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		if jsonOutput {
+			out, _ := json.MarshalIndent(map[string]any{
+				"ok":    false,
+				"error": err.Error(),
+			}, "", "  ")
+			fmt.Println(string(out))
+		} else {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		}
 		return 1
 	}
 
 	if !resp.OK {
-		if resp.Error != "" {
-			fmt.Fprintf(os.Stderr, "error: %s\n", resp.Error)
+		if jsonOutput {
+			errStr := resp.Error
+			if errStr == "" {
+				errStr = "command failed"
+			}
+			out, _ := json.MarshalIndent(map[string]any{
+				"ok":    false,
+				"error": errStr,
+			}, "", "  ")
+			fmt.Println(string(out))
 		} else {
-			fmt.Fprintf(os.Stderr, "command failed\n")
+			if resp.Error != "" {
+				fmt.Fprintf(os.Stderr, "error: %s\n", resp.Error)
+			} else {
+				fmt.Fprintf(os.Stderr, "command failed\n")
+			}
 		}
 		return 1
+	}
+
+	if jsonOutput {
+		if len(resp.Data) > 0 {
+			var obj map[string]any
+			if err := json.Unmarshal(resp.Data, &obj); err == nil {
+				obj["ok"] = true
+				out, _ := json.MarshalIndent(obj, "", "  ")
+				fmt.Println(string(out))
+				return 0
+			}
+			var generic any
+			if err := json.Unmarshal(resp.Data, &generic); err == nil {
+				out, _ := json.MarshalIndent(map[string]any{
+					"ok":   true,
+					"data": generic,
+				}, "", "  ")
+				fmt.Println(string(out))
+				return 0
+			}
+		}
+		out, _ := json.MarshalIndent(map[string]any{
+			"ok":      true,
+			"message": resp.Message,
+		}, "", "  ")
+		fmt.Println(string(out))
+		return 0
 	}
 
 	if resp.Message != "" {

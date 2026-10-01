@@ -229,6 +229,45 @@ func (s *Shell) IsLocked() bool {
 	return false
 }
 
+type Status struct {
+	Running       bool   `json:"running"`
+	Locked        bool   `json:"locked"`
+	Compositor    string `json:"compositor,omitempty"`
+	Bars          int    `json:"bars"`
+	DND           bool   `json:"dnd"`
+	Notifications int    `json:"notifications"`
+}
+
+func (s *Shell) Status() Status {
+	s.mu.Lock()
+	barsCount := len(s.barsByConnector)
+	if barsCount == 0 && s.fallbackBar != nil {
+		barsCount = 1
+	}
+	compKind := ""
+	if s.compositorSvc != nil {
+		compKind = string(s.compositorSvc.Kind())
+	}
+	dnd := false
+	notifs := 0
+	if s.notifyMgr != nil {
+		dnd = s.notifyMgr.IsDND()
+		if store := s.notifyMgr.Store(); store != nil {
+			notifs = store.Count()
+		}
+	}
+	s.mu.Unlock()
+
+	return Status{
+		Running:       true,
+		Locked:        s.IsLocked(),
+		Compositor:    compKind,
+		Bars:          barsCount,
+		DND:           dnd,
+		Notifications: notifs,
+	}
+}
+
 func (s *Shell) Suspend() error {
 	if s.sessionMgr != nil {
 		return s.sessionMgr.Suspend()

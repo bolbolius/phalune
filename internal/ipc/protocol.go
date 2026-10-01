@@ -1,6 +1,7 @@
 package ipc
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,12 +13,14 @@ type Request struct {
 }
 
 type Response struct {
-	OK      bool   `json:"ok"`
-	Message string `json:"message,omitempty"`
-	Error   string `json:"error,omitempty"`
+	OK      bool            `json:"ok"`
+	Message string          `json:"message,omitempty"`
+	Error   string          `json:"error,omitempty"`
+	Data    json.RawMessage `json:"data,omitempty"`
 }
 
 const (
+	ActionStatus                   = "status"
 	ActionToggleLauncher           = "toggle-launcher"
 	ActionOpenLauncher             = "open-launcher"
 	ActionCloseLauncher            = "close-launcher"

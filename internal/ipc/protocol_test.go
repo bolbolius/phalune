@@ -1,6 +1,7 @@
 package ipc
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,7 +14,14 @@ func TestIPCServerClient(t *testing.T) {
 	handler := func(req Request) Response {
 		switch req.Action {
 		case ActionPing:
-			return Response{OK: true, Message: "pong"}
+			data, _ := json.Marshal(map[string]any{"ping": "pong"})
+			return Response{OK: true, Message: "pong", Data: data}
+		case ActionStatus:
+			data, _ := json.Marshal(map[string]any{"running": true, "locked": false})
+			return Response{OK: true, Message: "status: running", Data: data}
+		case ActionIsLocked:
+			data, _ := json.Marshal(map[string]any{"locked": false})
+			return Response{OK: true, Message: "false", Data: data}
 		case ActionToggleLauncher:
 			return Response{OK: true, Message: "toggled"}
 		case ActionShowOSD:
@@ -43,8 +51,24 @@ func TestIPCServerClient(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SendCommand ping failed: %v", err)
 	}
-	if !resp.OK || resp.Message != "pong" {
+	if !resp.OK || resp.Message != "pong" || len(resp.Data) == 0 {
 		t.Errorf("unexpected ping response: %+v", resp)
+	}
+
+	resp, err = SendCommand(sockPath, ActionStatus, nil)
+	if err != nil {
+		t.Fatalf("SendCommand status failed: %v", err)
+	}
+	if !resp.OK || resp.Message != "status: running" || len(resp.Data) == 0 {
+		t.Errorf("unexpected status response: %+v", resp)
+	}
+
+	resp, err = SendCommand(sockPath, ActionIsLocked, nil)
+	if err != nil {
+		t.Fatalf("SendCommand is-locked failed: %v", err)
+	}
+	if !resp.OK || resp.Message != "false" || len(resp.Data) == 0 {
+		t.Errorf("unexpected is-locked response: %+v", resp)
 	}
 
 	resp, err = SendCommand(sockPath, ActionToggleLauncher, nil)
