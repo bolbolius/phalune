@@ -56,7 +56,7 @@
 ### Beta 0.4
 
 - [X] Better support for themes and color palletes and customization.
-- [ ] Extensibility Tier 1: Custom script bar modules (command execution, interval polling, JSON streaming, on_click actions).
+- [X] Extensibility Tier 1: Custom script bar modules (command execution, interval polling, JSON streaming, on_click actions).
 - [ ] Making UX better.
 - [ ] Scripts for installation.
 - [ ] Usage documents.
