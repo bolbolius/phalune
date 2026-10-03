@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"reflect"
 	"sync"
 
 	"phalune/internal/clipboard"
@@ -313,7 +314,7 @@ func (s *Shell) ReloadConfig() {
 		return
 	}
 	glib.IdleAdd(func() {
-		if err := LoadStyle(); err != nil {
+		if err := LoadStyle(s.cfg.Theme.Name, s.cfg.Theme.Values); err != nil {
 			slog.Warn("launcher reload: style reload warning", "error", err)
 		}
 	})
@@ -755,9 +756,10 @@ func (s *Shell) Reload(newCfg *config.Config) error {
 	if newCfg == nil {
 		return fmt.Errorf("new config is nil")
 	}
+	oldCfg := s.cfg
 	s.cfg = newCfg
 
-	if err := LoadStyle(); err != nil {
+	if err := LoadStyle(newCfg.Theme.Name, newCfg.Theme.Values); err != nil {
 		slog.Warn("reload: style reload warning", "error", err)
 	}
 
@@ -798,18 +800,20 @@ func (s *Shell) Reload(newCfg *config.Config) error {
 		s.windowSwitcher.UpdateConfig(newCfg.WindowSwitcher)
 	}
 
-	s.mu.Lock()
-	for conn, b := range s.barsByConnector {
-		b.Destroy()
-		delete(s.barsByConnector, conn)
-	}
-	if s.fallbackBar != nil {
-		s.fallbackBar.Destroy()
-		s.fallbackBar = nil
-	}
-	s.mu.Unlock()
+	if oldCfg == nil || !reflect.DeepEqual(oldCfg.Bar, newCfg.Bar) {
+		s.mu.Lock()
+		for conn, b := range s.barsByConnector {
+			b.Destroy()
+			delete(s.barsByConnector, conn)
+		}
+		if s.fallbackBar != nil {
+			s.fallbackBar.Destroy()
+			s.fallbackBar = nil
+		}
+		s.mu.Unlock()
 
-	s.syncBars()
+		s.syncBars()
+	}
 
 	slog.Info("shell: configuration hot-reloaded successfully")
 	return nil

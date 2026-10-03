@@ -7,6 +7,19 @@
 # Unknown fields are silently ignored (and logged).
 # Invalid values fall back to defaults (and logged).
 
+# ─── Theme ─────────────────────────────────────────────────────────────────────
+
+[theme]
+# Color palette: built-in ("phalune", "tokyo-night", "dracula") or
+# ~/.config/phalune/themes/<name>.toml
+name = "phalune"
+
+# Optional token overrides:
+# [theme.values]
+# accent = "#ff79c6"
+# surface = [40, 42, 54]
+# text = "#f8f8f2"
+
 # ─── Bar ───────────────────────────────────────────────────────────────────────
 
 [bar]

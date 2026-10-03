@@ -1,0 +1,32 @@
+# Tokyo Night theme
+name = "tokyo-night"
+description = "Tokyo Night: deep indigo with calm storm-blue accents"
+dark = true
+
+[opacity]
+bar = 0.75
+overlay = 0.93
+solid = 0.98
+scrim = 0.55
+shadow = 0.45
+
+[colors]
+surface = "#1a1b26"
+surface-raised = "#24283b"
+surface-solid = "#16161e"
+
+text = "#c0caf5"
+text-dim = "#a9b1d6"
+text-faint = "#565f89"
+text-bright = "#ffffff"
+
+accent = "#7aa2f7"
+accent-hover = "#89b4fa"
+accent-active = "#b4befe"
+accent-contrast = "#15161e"
+muted = "#565f89"
+
+success = "#9ece6a"
+warning = "#e0af68"
+error = "#f7768e"
+error-bright = "#ff9eaf"

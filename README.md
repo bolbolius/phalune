@@ -190,8 +190,29 @@ phalune msg ping
 
 ## Styling
 
-Embeds a default dark theme (`default.css`). Custom CSS overrides can be placed at:
-`~/.config/phalune/style.css`
+Shell colors come from **themes**. Built-ins: `phalune` (default, luna moth), `tokyo-night`, `dracula`.
+
+```toml
+# config.toml
+[theme]
+name = "dracula"          # built-in or ~/.config/phalune/themes/<name>.toml
+
+# optional: override individual tokens on top of the theme
+[theme.values]
+accent = "#ff79c6"
+surface = [40, 42, 54]    # "r g b" triplet; the opacity ladder is applied by phalune
+```
+
+Theme files accept a `[colors]` table of tokens (`surface`, `text`, `accent`,
+`error`, `success`, ...), an `[opacity]` table (`bar`, `overlay`, `solid`,
+`scrim`, `shadow`), and `name` / `description` / `dark` metadata. See the
+embedded copies in [`internal/theme/themes/`](internal/theme/themes/) for
+working examples. Settings → Appearance lists every available theme.
+
+Custom CSS still works and overrides everything (append-only):
+`~/.config/phalune/style.css` — the default stylesheet references theme
+tokens through CSS variables, so hardcoding colors there is no longer
+necessary.
 
 ---
 

@@ -1,0 +1,35 @@
+/* Theme token defaults. */
+:root {
+    /* Surfaces */
+    --surface: rgba(26, 27, 38, 0.75);
+    --surface-raised: rgba(26, 27, 38, 0.85);
+    --surface-overlay: rgba(26, 27, 38, 0.94);
+    --surface-solid: rgba(22, 22, 30, 0.98);
+    --surface-solid-color: #16161e;
+
+    /* Text */
+    --text: #c0caf5;
+    --text-dim: #a9b1d6;
+    --text-faint: #787c99;
+    --text-bright: #ffffff;
+
+    /* Accent */
+    --accent-rgb: 122 162 247;
+    --accent: #7aa2f7;
+    --accent-hover: #89b4fa;
+    --accent-active: #b4befe;
+    --accent-contrast: #1a1b26;
+    --accent-contrast-rgb: 26 27 38;
+    --muted: #565f89;
+
+    /* Status */
+    --error-rgb: 247 118 142;
+    --error: #f7768e;
+    --error-bright: #ff9eaf;
+    --success: #9ece6a;
+    --warning: #e0af68;
+
+    /* Overlays & shadows */
+    --hover-rgb: 255 255 255;
+    --shadow-rgb: 0 0 0;
+}

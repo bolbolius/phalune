@@ -642,3 +642,33 @@ show_hibernate = false
 		t.Errorf("expected show_hibernate false, got %v", cfg.PowerMenu.ShowHibernate)
 	}
 }
+
+func TestThemeConfig(t *testing.T) {
+	content := `
+[theme]
+name = "dracula"
+
+[theme.values]
+accent = "#ff79c6"
+surface = [40, 42, 54]
+`
+	tmpFile := filepath.Join(t.TempDir(), "config.toml")
+	if err := os.WriteFile(tmpFile, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := Load(tmpFile)
+	if err != nil {
+		t.Fatalf("unexpected error loading config: %v", err)
+	}
+
+	if cfg.Theme.Name != "dracula" {
+		t.Errorf("expected theme name 'dracula', got %q", cfg.Theme.Name)
+	}
+	if cfg.Theme.Values["accent"] != "#ff79c6" {
+		t.Errorf("expected accent '#ff79c6', got %q", cfg.Theme.Values["accent"])
+	}
+	if cfg.Theme.Values["surface"] != "40 42 54" {
+		t.Errorf("expected surface '40 42 54', got %q", cfg.Theme.Values["surface"])
+	}
+}

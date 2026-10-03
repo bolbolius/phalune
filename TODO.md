@@ -52,3 +52,11 @@
 - [X] Settings app.
 - [X] Adding support for other compositors.
 - [X] `--json` flag for status queries in ipc.
+
+### Beta 0.4
+
+- [X] Better support for themes and color palletes and customization.
+- [] Making Phalune extensible/support for plugins.
+- [] Making UX better.
+- [] Scripts for installation.
+- [] Usage documents.

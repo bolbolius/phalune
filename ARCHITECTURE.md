@@ -18,8 +18,9 @@ Go code shouldn't construct GTK layouts manually. We load `.blp` templates via `
     - `detect/` — Environment-based backend auto-detection (`NIRI_SOCKET`, `SWAYSOCK`, `HYPRLAND_INSTANCE_SIGNATURE`).
   - `config/` — Parses `config.toml` and validates widget names.
   - `ipc/` — Unix socket server and client at `$XDG_RUNTIME_DIR/phalune.sock`.
-  - `shell/` — Glues the bar, launcher, OSD, notifications, and CSS together.
+  - `shell/` — Glues the bar, launcher, OSD, notifications, and CSS together (style pipeline: `default.css` component rules + `tokens.css` fallbacks + generated theme block + user `style.css`, in cascade order).
     - `bar/` — Top bar layer surface created for each connected monitor.
+  - `theme/` — Color palette engine: TOML theme files (`[colors]`, `[opacity]`) parsed into semantic tokens; three built-ins embedded (`phalune`, `tokyo-night`, `dracula`); user themes in `$XDG_CONFIG_HOME/phalune/themes/`. Renders the `:root` CSS variable block that recolors `shell/default.css`.
   - `widget/` — Bar widget interface and registry (`clock`, `workspaces`, `audio`, `battery`, `tray`, `bluetooth`, `wifi`, `keyboard`, `power`, `notifications`, `privacy`).
   - `launcher/` — App launcher overlay with fuzzy search, frecency ranking, and `.desktop` parsing.
   - `controlcenter/` — Quick settings overlay (Wi-Fi, Bluetooth, DND, power profiles, volume and brightness sliders, media stream routing).

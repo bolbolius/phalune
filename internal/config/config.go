@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -33,6 +34,7 @@ var KnownWidgets = map[string]bool{
 
 type Config struct {
 	Bar            BarConfig            `toml:"bar"`
+	Theme          ThemeConfig          `toml:"theme"`
 	Notifications  NotificationsConfig  `toml:"notifications"`
 	OSD            OSDConfig            `toml:"osd"`
 	ControlCenter  ControlCenterConfig  `toml:"control_center"`
@@ -44,6 +46,17 @@ type Config struct {
 	Session        SessionConfig        `toml:"session"`
 	PowerMenu      PowerMenuConfig      `toml:"power_menu"`
 	Logging        LogConfig            `toml:"logging"`
+}
+
+// ──────────────────────────── Theme ────────────────────────────
+
+type ThemeConfig struct {
+	// Name selects a built-in theme or a file in ~/.config/phalune/themes/<name>.toml.
+	Name string `toml:"name"`
+	// Values overrides individual color tokens.
+	Values map[string]string `toml:"-"`
+
+	RawValues map[string]any `toml:"values"`
 }
 
 // ──────────────────────────── Bar ────────────────────────────
@@ -229,6 +242,9 @@ type LogConfig struct {
 
 func Default() *Config {
 	return &Config{
+		Theme: ThemeConfig{
+			Name: "phalune",
+		},
 		Bar: BarConfig{
 			Height:   32,
 			Position: "top",
@@ -375,6 +391,12 @@ func Load(path string) (*Config, error) {
 // It never returns an error — invalid config never crashes the shell.
 func (c *Config) validate() {
 	d := Default()
+
+	if strings.TrimSpace(c.Theme.Name) == "" {
+		c.Theme.Name = d.Theme.Name
+	}
+	c.Theme.Name = strings.ToLower(strings.TrimSpace(c.Theme.Name))
+	c.Theme.normalize()
 
 	if c.Bar.Height <= 0 {
 		slog.Warn("config: bar.height must be > 0, using default", "got", c.Bar.Height, "default", d.Bar.Height)
@@ -575,4 +597,62 @@ func ParseAnchor(anchor string) (top, bottom, left, right bool) {
 		right = true
 	}
 	return
+}
+
+// normalize folds RawValues into Values: hex strings pass through,
+// 3-channel int arrays become "r g b" strings.
+func (t *ThemeConfig) normalize() {
+	t.Values = make(map[string]string, len(t.RawValues))
+	for key, v := range t.RawValues {
+		switch val := v.(type) {
+		case string:
+			t.Values[key] = val
+		case []any:
+			if len(val) != 3 {
+				slog.Warn("config: theme.values array must have 3 channels, ignoring", "token", key)
+				continue
+			}
+			bad := false
+			b := make([]string, 3)
+			for i, c := range val {
+				n, ok := channel255(c)
+				if !ok {
+					bad = true
+					break
+				}
+				b[i] = strconv.FormatInt(n, 10)
+			}
+			if bad {
+				slog.Warn("config: theme.values channels must be integers 0-255, ignoring", "token", key)
+				continue
+			}
+			t.Values[key] = strings.Join(b, " ")
+		default:
+			slog.Warn("config: theme.values token must be a string or [r, g, b], ignoring", "token", key)
+		}
+	}
+	t.RawValues = nil
+}
+
+// channel255 converts a decoded channel value to an integer in 0-255.
+func channel255(v any) (int64, bool) {
+	switch n := v.(type) {
+	case int64:
+		if n < 0 || n > 255 {
+			return 0, false
+		}
+		return n, true
+	case int:
+		if n < 0 || n > 255 {
+			return 0, false
+		}
+		return int64(n), true
+	case float64:
+		i := int64(n)
+		if n != float64(i) || i < 0 || i > 255 {
+			return 0, false
+		}
+		return i, true
+	}
+	return 0, false
 }

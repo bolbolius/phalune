@@ -1,0 +1,32 @@
+# Dracula theme
+name = "dracula"
+description = "Dracula: vampire dark purple with vivid pink and cyan accents"
+dark = true
+
+[opacity]
+bar = 0.78
+overlay = 0.94
+solid = 0.98
+scrim = 0.55
+shadow = 0.45
+
+[colors]
+surface = "#282a36"
+surface-raised = "#44475a"
+surface-solid = "#21222c"
+
+text = "#f8f8f2"
+text-dim = "#bfbfd0"
+text-faint = "#6272a4"
+text-bright = "#ffffff"
+
+accent = "#bd93f9"
+accent-hover = "#d1b3ff"
+accent-active = "#a77be8"
+accent-contrast = "#21222c"
+muted = "#6272a4"
+
+success = "#50fa7b"
+warning = "#ffb86c"
+error = "#ff5555"
+error-bright = "#ff6e6e"

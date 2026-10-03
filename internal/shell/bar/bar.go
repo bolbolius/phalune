@@ -51,13 +51,7 @@ func New(app *gtk.Application, monitor *gdk.Monitor, cfg *config.Config, registr
 	} else if height >= 38 {
 		fontSize = 13
 	}
-	dynamicCSS := fmt.Sprintf(":root {\n  --bar-height: %dpx;\n  --bar-unit: %dpx;\n  --bar-text-unit: %dpx;\n  --bar-font-size: %dpx;\n}\n", height, unit, textUnit, fontSize)
-	dynProvider := gtk.NewCSSProvider()
-	dynProvider.LoadFromString(dynamicCSS)
-	display := gdk.DisplayGetDefault()
-	if display != nil {
-		gtk.StyleContextAddProviderForDisplay(display, dynProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-	}
+	applyBarMetrics(height, unit, textUnit, fontSize)
 
 	position := cfg.Bar.Position
 	if position == "" {
@@ -136,4 +130,18 @@ func (b *Bar) Destroy() {
 		}
 		b.window = nil
 	}
+}
+
+var barMetricsProvider *gtk.CSSProvider
+
+func applyBarMetrics(height, unit, textUnit, fontSize int) {
+	dynamicCSS := fmt.Sprintf(":root {\n  --bar-height: %dpx;\n  --bar-unit: %dpx;\n  --bar-text-unit: %dpx;\n  --bar-font-size: %dpx;\n}\n", height, unit, textUnit, fontSize)
+	if barMetricsProvider == nil {
+		barMetricsProvider = gtk.NewCSSProvider()
+		display := gdk.DisplayGetDefault()
+		if display != nil {
+			gtk.StyleContextAddProviderForDisplay(display, barMetricsProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+		}
+	}
+	barMetricsProvider.LoadFromString(dynamicCSS)
 }

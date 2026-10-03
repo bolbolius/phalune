@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"reflect"
 	"strings"
 	"syscall"
 	"time"
@@ -106,6 +107,9 @@ func main() {
 	var ipcServer *ipc.Server
 	var cfgWatcher *config.Watcher
 
+	var lastReloadTime time.Time
+	var lastReloadCfg *config.Config
+
 	doReload := func(newCfg *config.Config) error {
 		if newCfg == nil {
 			var err error
@@ -114,6 +118,14 @@ func main() {
 				return fmt.Errorf("failed to load config: %w", err)
 			}
 		}
+
+		now := time.Now()
+		if lastReloadCfg != nil && now.Sub(lastReloadTime) < 500*time.Millisecond && reflect.DeepEqual(lastReloadCfg, newCfg) {
+			slog.Debug("config: ignoring duplicate reload request")
+			return nil
+		}
+		lastReloadTime = now
+		lastReloadCfg = newCfg
 
 		// Update logging configuration if specified
 		if newCfg.Logging.ConsoleLevel != "" {
@@ -335,7 +347,7 @@ func main() {
 				})
 				respCh <- ipc.Response{OK: true, Message: "notification sent"}
 			case ipc.ActionReloadStyle:
-				if err := shell.LoadStyle(); err != nil {
+				if err := shell.LoadStyle(cfg.Theme.Name, cfg.Theme.Values); err != nil {
 					respCh <- ipc.Response{OK: false, Error: err.Error()}
 				} else {
 					respCh <- ipc.Response{OK: true, Message: "style reloaded"}
@@ -395,7 +407,7 @@ func main() {
 	}
 
 	app.ConnectActivate(func() {
-		if err := shell.LoadStyle(); err != nil {
+		if err := shell.LoadStyle(cfg.Theme.Name, cfg.Theme.Values); err != nil {
 			slog.Warn("style warning", "error", err)
 		}
 

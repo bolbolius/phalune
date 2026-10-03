@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"phalune/internal/config"
+	"phalune/internal/theme"
 )
 
 // Kind is the widget type used to render a row in the settings UI.
@@ -83,6 +84,7 @@ func (p *Page) groups() [][2]int {
 // Pages returns the full settings schema in sidebar order.
 func Pages() []Page {
 	return []Page{
+		appearancePage(),
 		barPage(),
 		toastsPage(),
 		launcherPage(),
@@ -90,6 +92,17 @@ func Pages() []Page {
 		windowSwitcherPage(),
 		sessionPage(),
 		loggingPage(),
+	}
+}
+
+func appearancePage() Page {
+	return Page{
+		ID:    "appearance",
+		Title: "Appearance",
+		Icon:  "preferences-desktop-appearance-symbolic",
+		Rows: []Row{
+			{Key: "theme.name", Label: "Theme", Hint: "Built-in or ~/.config/phalune/themes/<name>.toml", Kind: KindChoice, Choices: theme.Available()},
+		},
 	}
 }
 
@@ -214,6 +227,8 @@ func loggingPage() Page {
 func readString(cfg *config.Config, key string) string {
 	parts := strings.Split(key, ".")
 	switch key {
+	case "theme.name":
+		return cfg.Theme.Name
 	case "bar.height":
 		return strconv.Itoa(cfg.Bar.Height)
 	case "bar.position":

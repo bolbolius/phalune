@@ -80,7 +80,7 @@ func StartWatcher(configPath string, onReload func(newCfg *Config)) (*Watcher, e
 		fd:            fd,
 		wdDir:         wdDir,
 		wdFile:        wdFile,
-		debounceDelay: 100 * time.Millisecond,
+		debounceDelay: 200 * time.Millisecond,
 		done:          make(chan struct{}),
 	}
 
