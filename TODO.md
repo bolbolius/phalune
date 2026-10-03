@@ -56,7 +56,11 @@
 ### Beta 0.4
 
 - [X] Better support for themes and color palletes and customization.
-- [] Making Phalune extensible/support for plugins.
-- [] Making UX better.
-- [] Scripts for installation.
-- [] Usage documents.
+- [ ] Extensibility Tier 1: Custom script bar modules (command execution, interval polling, JSON streaming, on_click actions).
+- [ ] Making UX better.
+- [ ] Scripts for installation.
+- [ ] Usage documents.
+
+### Beta 0.5
+
+- [ ] Extensibility Tier 2: Real-time IPC event bus and dynamic widget feed (event subscription stream, push updates).

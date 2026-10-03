@@ -13,9 +13,12 @@ type Widget interface {
 }
 
 type Context struct {
-	Config                   *config.Config
-	Compositor               compositor.Service
-	Output                   string
+	Config     *config.Config
+	Compositor compositor.Service
+	Output     string
+	// WidgetName is the exact name from the bar section list ("custom.weather"
+	// → "weather"). Factory implementations that serve several names must use it.
+	WidgetName               string
 	ShowOSD                  func(icon, label string, value float64)
 	TogglePowerMenu          func()
 	OpenPowerMenu            func()

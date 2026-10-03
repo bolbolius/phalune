@@ -672,3 +672,68 @@ surface = [40, 42, 54]
 		t.Errorf("expected surface '40 42 54', got %q", cfg.Theme.Values["surface"])
 	}
 }
+
+func TestCustomWidgetConfig(t *testing.T) {
+	content := `
+[bar.right]
+widgets = ["custom.weather", "custom.log", "custom.noinverval"]
+
+[bar.custom.weather]
+exec = "curl -s 'wttr.in/?format=1'"
+interval = "15m"
+on_click = "xdg-open https://weather.com"
+format = "{}"
+icon = "weather-clear-symbolic"
+
+[bar.custom.log]
+exec = "journalctl -f -n0"
+tail = true
+return_type = "json"
+format = "{text}"
+`
+	tmpFile := filepath.Join(t.TempDir(), "config.toml")
+	if err := os.WriteFile(tmpFile, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := Load(tmpFile)
+	if err != nil {
+		t.Fatalf("unexpected error loading config: %v", err)
+	}
+
+	w, ok := cfg.Bar.Custom["weather"]
+	if !ok {
+		t.Fatalf("expected bar.custom.weather to parse, got %v", cfg.Bar.Custom)
+	}
+	if w.Exec != "curl -s 'wttr.in/?format=1'" || w.Interval.Duration != 15*time.Minute {
+		t.Errorf("unexpected weather exec/interval: %q %v", w.Exec, w.Interval.Duration)
+	}
+	if w.OnClick != "xdg-open https://weather.com" || w.Icon != "weather-clear-symbolic" {
+		t.Errorf("unexpected weather actions/icon: %q %q", w.OnClick, w.Icon)
+	}
+
+	lg := cfg.Bar.Custom["log"]
+	if !lg.Tail || lg.ReturnType != "json" || lg.Interval.Duration != 0 {
+		t.Errorf("unexpected log widget: tail=%v rt=%q interval=%v", lg.Tail, lg.ReturnType, lg.Interval)
+	}
+
+	// Invalid return_type resets to text.
+	cfg2 := Default()
+	cfg2.Bar.Custom = map[string]CustomWidgetConfig{
+		"bad": {Exec: "true", ReturnType: "yaml"},
+	}
+	cfg2.validate()
+	if cfg2.Bar.Custom["bad"].ReturnType != "" {
+		t.Errorf("expected invalid return_type reset, got %q", cfg2.Bar.Custom["bad"].ReturnType)
+	}
+
+	// Negative command timeout resets to default.
+	cfg3 := Default()
+	cfg3.Bar.Custom = map[string]CustomWidgetConfig{
+		"neg": {Exec: "true", CommandTimeout: Duration{-time.Second}},
+	}
+	cfg3.validate()
+	if cfg3.Bar.Custom["neg"].CommandTimeout.Duration != 10*time.Second {
+		t.Errorf("expected default command timeout, got %v", cfg3.Bar.Custom["neg"].CommandTimeout.Duration)
+	}
+}

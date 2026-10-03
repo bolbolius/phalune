@@ -120,6 +120,25 @@ window.bar-window {
     color: var(--text);
 }
 
+/* Custom Script Widgets */
+.widget-custom {
+    color: var(--text);
+}
+
+.widget-custom image {
+    color: var(--accent);
+}
+
+.widget-custom .widget-label {
+    font-size: var(--bar-font-size);
+    font-weight: 600;
+}
+
+/* ── Audio Widget ── */
+.widget-audio {
+    color: var(--text);
+}
+
 .widget-audio image {
     color: var(--accent);
 }

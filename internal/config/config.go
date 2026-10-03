@@ -30,6 +30,19 @@ var KnownWidgets = map[string]bool{
 	"privacy":       true,
 }
 
+const customPrefix = "custom."
+
+const defaultCommandTimeout = 10 * time.Second
+
+// customWidgetName returns the config key of "custom.weather" -> "weather".
+func customWidgetName(listName string) string {
+	return strings.TrimPrefix(listName, customPrefix)
+}
+
+func isCustomWidget(listName string) bool {
+	return strings.HasPrefix(listName, customPrefix) && len(listName) > len(customPrefix)
+}
+
 // ──────────────────────────── Top-level Config ────────────────────────────
 
 type Config struct {
@@ -69,15 +82,16 @@ type BarConfig struct {
 	Right    SectionConfig `toml:"right"`
 
 	// Per-widget configuration
-	Workspaces WorkspacesConfig  `toml:"workspaces"`
-	Clock      ClockConfig       `toml:"clock"`
-	Audio      AudioConfig       `toml:"audio"`
-	Battery    BatteryConfig     `toml:"battery"`
-	Tray       TrayConfig        `toml:"tray"`
-	Bluetooth  BluetoothConfig   `toml:"bluetooth"`
-	Wifi       WifiConfig        `toml:"wifi"`
-	Keyboard   KeyboardConfig    `toml:"keyboard"`
-	Power      PowerWidgetConfig `toml:"power"`
+	Workspaces WorkspacesConfig              `toml:"workspaces"`
+	Clock      ClockConfig                   `toml:"clock"`
+	Audio      AudioConfig                   `toml:"audio"`
+	Battery    BatteryConfig                 `toml:"battery"`
+	Tray       TrayConfig                    `toml:"tray"`
+	Bluetooth  BluetoothConfig               `toml:"bluetooth"`
+	Wifi       WifiConfig                    `toml:"wifi"`
+	Keyboard   KeyboardConfig                `toml:"keyboard"`
+	Power      PowerWidgetConfig             `toml:"power"`
+	Custom     map[string]CustomWidgetConfig `toml:"custom"`
 }
 
 type SectionConfig struct {
@@ -131,6 +145,25 @@ type KeyboardConfig struct {
 
 type PowerWidgetConfig struct {
 	Icon string `toml:"icon"` // Icon for the power bar widget
+}
+
+// CustomWidgetConfig defines a user script widget ("custom.<name>" in a bar section).
+// Output is plain text or a line of JSON (return_type = "json") with text/tooltip/class keys.
+type CustomWidgetConfig struct {
+	Exec             string   `toml:"exec"`               // Command run by the shell
+	Interval         Duration `toml:"interval"`           // Poll period; unset = run once
+	Tail             bool     `toml:"tail"`               // Stream mode: read stdout line-by-line, ignore interval
+	ReturnType       string   `toml:"return_type"`        // "text" (default) or "json"
+	Format           string   `toml:"format"`             // Template; {text}/{tooltip}/{class} in json, {} in text
+	Icon             string   `toml:"icon"`               // Optional icon name shown before the label
+	HideEmpty        bool     `toml:"hide_empty"`         // Hide widget when text output is empty
+	OnClick          string   `toml:"on_click"`           // Left-click command
+	OnClickRight     string   `toml:"on_click_right"`     // Right-click command
+	OnClickMiddle    string   `toml:"on_click_middle"`    // Middle-click command
+	OnScrollUp       string   `toml:"on_scroll_up"`       // Scroll-up command
+	OnScrollDown     string   `toml:"on_scroll_down"`     // Scroll-down command
+	ScrollDebounceMs int      `toml:"scroll_debounce_ms"` // Scroll rate limit (ms); <= 0 uses default (100)
+	CommandTimeout   Duration `toml:"command_timeout"`    // Per-command timeout (clicks/scrolls), default 10s
 }
 
 // ──────────────────────────── Lock Screen ────────────────────────────
@@ -408,12 +441,40 @@ func (c *Config) validate() {
 		c.Bar.Position = d.Bar.Position
 	}
 
+	for name, cw := range c.Bar.Custom {
+		if cw.Exec == "" {
+			slog.Warn("config: custom widget has no exec, ignoring", "widget", name)
+			delete(c.Bar.Custom, name)
+			continue
+		}
+		if !cw.Tail && cw.Interval.Duration < 0 {
+			slog.Warn("config: custom widget interval must be positive, running once", "widget", name, "got", cw.Interval.Duration)
+			cw.Interval = Duration{}
+			c.Bar.Custom[name] = cw
+		}
+		if rt := strings.ToLower(strings.TrimSpace(cw.ReturnType)); rt != "" && rt != "json" && rt != "text" {
+			slog.Warn("config: custom widget return_type must be \"text\" or \"json\", using text", "widget", name, "got", cw.ReturnType)
+			cw.ReturnType = ""
+			c.Bar.Custom[name] = cw
+		}
+		if cw.CommandTimeout.Duration < 0 {
+			cw.CommandTimeout = Duration{defaultCommandTimeout}
+			c.Bar.Custom[name] = cw
+		}
+	}
+
 	for section, list := range map[string][]string{
 		"bar.left":   c.Bar.Left.Widgets,
 		"bar.center": c.Bar.Center.Widgets,
 		"bar.right":  c.Bar.Right.Widgets,
 	} {
 		for _, name := range list {
+			if isCustomWidget(name) {
+				if _, ok := c.Bar.Custom[customWidgetName(name)]; !ok {
+					slog.Warn("config: custom widget has no [bar.custom.<name>] section, ignoring", "widget", name, "section", section)
+				}
+				continue
+			}
 			if !KnownWidgets[name] {
 				slog.Warn("config: unknown widget in section, ignoring", "widget", name, "section", section)
 			}

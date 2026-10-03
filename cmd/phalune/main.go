@@ -25,6 +25,7 @@ import (
 	"phalune/internal/widget/bluetooth"
 	widgetClipboard "phalune/internal/widget/clipboard"
 	"phalune/internal/widget/clock"
+	widgetCustom "phalune/internal/widget/custom"
 	"phalune/internal/widget/keyboard"
 	widgetNotifications "phalune/internal/widget/notifications"
 	"phalune/internal/widget/power"
@@ -100,6 +101,7 @@ func main() {
 	reg.Register("clipboard", widgetClipboard.New)
 	reg.Register("notifications", widgetNotifications.New)
 	reg.Register("privacy", widgetPrivacy.New)
+	reg.RegisterPrefix("custom.", widgetCustom.New)
 
 	app := gtk.NewApplication("org.phalune.shell", gio.ApplicationNonUnique)
 
