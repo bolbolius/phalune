@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"phalune/internal/config"
+	"phalune/internal/style"
 	"phalune/ui"
 
 	"github.com/diamondburned/gotk4/pkg/core/glib"
@@ -20,6 +21,7 @@ type OSD struct {
 	label               *gtk.Label
 	progress            *gtk.ProgressBar
 	valueLbl            *gtk.Label
+	styleName           string
 	timeout             time.Duration
 	animate             bool
 	animationDurationMs int
@@ -76,12 +78,10 @@ func New(app *gtk.Application, cfg config.OSDConfig) (*OSD, error) {
 		return nil, fmt.Errorf("failed to configure OSD surface: %w", err)
 	}
 
-	builder := gtk.NewBuilderFromString(ui.OSD)
-	card := builder.GetObject("osd_card").Cast().(*gtk.Box)
-	icon := builder.GetObject("osd_icon").Cast().(*gtk.Image)
-	label := builder.GetObject("osd_label").Cast().(*gtk.Label)
-	progress := builder.GetObject("osd_progress").Cast().(*gtk.ProgressBar)
-	valueLbl := builder.GetObject("osd_value").Cast().(*gtk.Label)
+	styleName, styleClass := style.Resolve(style.OSD, cfg.Style)
+
+	card, icon, label, progress, valueLbl := createOSDWidgets(styleName)
+	card.AddCSSClass(styleClass)
 
 	win.SetChild(card)
 
@@ -101,6 +101,7 @@ func New(app *gtk.Application, cfg config.OSDConfig) (*OSD, error) {
 		label:               label,
 		progress:            progress,
 		valueLbl:            valueLbl,
+		styleName:           styleName,
 		timeout:             timeout,
 		animate:             cfg.Animate,
 		animationDurationMs: animDuration,
@@ -124,12 +125,60 @@ func (o *OSD) UpdateConfig(cfg config.OSDConfig) error {
 		o.animationDurationMs = cfg.AnimationDurationMs
 	}
 	win := o.window
+	styleName, styleClass := style.Resolve(style.OSD, cfg.Style)
+	styleChanged := styleName != o.styleName
+	if styleChanged {
+		// Set under lock so rapid reloads don't queue duplicate rebuilds.
+		o.styleName = styleName
+	}
 	o.mu.Unlock()
+
+	// Style swaps rebuild the widget tree; state (fraction etc.) re-syncs
+	// on the next Show call.
+	if styleChanged {
+		glib.IdleAdd(func() {
+			o.rebuildChild(styleName, styleClass)
+		})
+	}
 
 	if win != nil {
 		return ConfigureOSDSurface(win, cfg)
 	}
 	return nil
+}
+
+// rebuildChild swaps the OSD layout tree for a new style. Main thread only.
+func (o *OSD) rebuildChild(styleName, styleClass string) {
+	o.mu.Lock()
+	if o.window == nil {
+		o.mu.Unlock()
+		return
+	}
+	card, icon, label, progress, valueLbl := createOSDWidgets(styleName)
+	card.AddCSSClass(styleClass)
+
+	// SetChild implicitly unparents any previous child.
+	o.window.SetChild(card)
+
+	o.icon, o.label, o.progress, o.valueLbl = icon, label, progress, valueLbl
+	o.lastIcon, o.lastLabel, o.lastValueText = "", "", ""
+	o.stopAnimation()
+	o.currentFraction, o.targetFraction, o.lastFraction = -1.0, -1.0, -1.0
+	o.mu.Unlock()
+}
+
+// createOSDWidgets builds the widget tree for a style: template-based when
+// one exists, otherwise the default Blueprint UI. Main thread only.
+func createOSDWidgets(styleName string) (card *gtk.Box, icon *gtk.Image, label *gtk.Label, progress *gtk.ProgressBar, valueLbl *gtk.Label) {
+	if style.HasTemplate(style.OSD, styleName) {
+		return buildOSDLayout(styleName)
+	}
+	builder := gtk.NewBuilderFromString(ui.OSD)
+	return builder.GetObject("osd_card").Cast().(*gtk.Box),
+		builder.GetObject("osd_icon").Cast().(*gtk.Image),
+		builder.GetObject("osd_label").Cast().(*gtk.Label),
+		builder.GetObject("osd_progress").Cast().(*gtk.ProgressBar),
+		builder.GetObject("osd_value").Cast().(*gtk.Label)
 }
 
 func (o *OSD) Show(iconName string, labelText string, value float64) {
@@ -243,13 +292,13 @@ func (o *OSD) ShowCustom(iconName string, labelText string, value float64, custo
 		}
 
 		// Only recalculate text layout when label changes
-		if o.lastLabel != label {
+		if o.label != nil && o.lastLabel != label {
 			o.label.SetText(label)
 			o.lastLabel = label
 		}
 
 		// Only update custom value text when changed
-		if o.lastValueText != custom {
+		if o.valueLbl != nil && o.lastValueText != custom {
 			o.valueLbl.SetText(custom)
 			o.lastValueText = custom
 		}

@@ -121,15 +121,7 @@ func runBacklightListener(ctx context.Context, o *OSD) {
 		}
 		lastBrightness = pct
 
-		var icon string
-		if pct < 33 {
-			icon = "display-brightness-low-symbolic"
-		} else if pct < 66 {
-			icon = "display-brightness-medium-symbolic"
-		} else {
-			icon = "display-brightness-high-symbolic"
-		}
-		o.Show(icon, "Brightness", pct)
+		o.Show("display-brightness-symbolic", "Brightness", pct)
 	}
 
 	checkKbd := func(initial bool) {

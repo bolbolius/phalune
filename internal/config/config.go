@@ -77,6 +77,7 @@ type ThemeConfig struct {
 type BarConfig struct {
 	Height   int           `toml:"height"`
 	Position string        `toml:"position"` // "top" or "bottom"
+	Style    string        `toml:"style"`    // "bubble", "solid", "minimal"
 	Left     SectionConfig `toml:"left"`
 	Center   SectionConfig `toml:"center"`
 	Right    SectionConfig `toml:"right"`
@@ -195,6 +196,7 @@ type PowerMenuConfig struct {
 // ──────────────────────────── Notifications ────────────────────────────
 
 type NotificationsConfig struct {
+	Style          string   `toml:"style"`           // "bubbles", "compact"
 	Anchor         string   `toml:"anchor"`          // "top-right", "top-left", "bottom-right", "bottom-left", "top", "bottom", "center"
 	TimeoutLow     Duration `toml:"timeout_low"`     // Auto-dismiss for low urgency
 	TimeoutNormal  Duration `toml:"timeout_normal"`  // Auto-dismiss for normal urgency
@@ -208,6 +210,7 @@ type NotificationsConfig struct {
 // ──────────────────────────── OSD ────────────────────────────
 
 type OSDConfig struct {
+	Style               string   `toml:"style"`                 // "pill", "bar", "minimal"
 	Anchor              string   `toml:"anchor"`                // "bottom", "top", "center", "bottom-left", "bottom-right", "top-left", "top-right"
 	Timeout             Duration `toml:"timeout"`               // Auto-hide duration
 	MarginBottom        int      `toml:"margin_bottom"`         // Pixels from bottom edge
@@ -221,12 +224,13 @@ type OSDConfig struct {
 // ──────────────────────────── Control Center ────────────────────────────
 
 type ControlCenterConfig struct {
-	// Reserved for future use.
+	Style string `toml:"style"` // "cards", "compact"
 }
 
 // ──────────────────────────── Launcher ────────────────────────────
 
 type LauncherConfig struct {
+	Style    string         `toml:"style"`     // "centered", "fullscreen", "compact"
 	PageSize int            `toml:"page_size"` // Rows jumped on Page Up/Down
 	Terminal string         `toml:"terminal"`  // Preferred terminal emulator (empty = auto-detect)
 	Frecency FrecencyConfig `toml:"frecency"`
@@ -532,6 +536,16 @@ func (c *Config) validate() {
 
 	if c.Bar.Power.Icon == "" {
 		c.Bar.Power.Icon = d.Bar.Power.Icon
+	}
+
+	// Pluggable UI styles: invalid names fall back to default inside the
+	// component; here only whitespace is normalized.
+	cfgs := []struct{ ptr *string }{
+		{&c.Bar.Style}, {&c.ControlCenter.Style}, {&c.Launcher.Style},
+		{&c.OSD.Style}, {&c.Notifications.Style},
+	}
+	for i := range cfgs {
+		*cfgs[i].ptr = strings.ToLower(strings.TrimSpace(*cfgs[i].ptr))
 	}
 
 	if c.LockScreen.TimeFormat == "" {

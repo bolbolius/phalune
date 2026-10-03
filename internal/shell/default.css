@@ -689,6 +689,417 @@ window.osd-window > contents {
     min-width: 32px;
 }
 
+/* ── Pluggable UI Styles ── */
+
+/* 1. OSD Styles */
+.osd-layout-pill {
+    border-radius: 9999px;
+    padding: 8px 18px;
+    box-shadow: 0 8px 28px rgba(var(--shadow-rgb), 0.55);
+}
+
+.osd-layout-bar {
+    min-width: 320px;
+    padding: 8px 16px;
+    border-radius: 12px;
+    box-shadow: 0 10px 32px rgba(var(--shadow-rgb), 0.6);
+}
+
+.osd-layout-bar .osd-value {
+    font-size: 13px;
+    font-weight: 700;
+    min-width: 44px;
+    color: var(--text);
+}
+
+.osd-layout-minimal {
+    min-width: 80px;
+    min-height: 72px;
+    padding: 10px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(var(--shadow-rgb), 0.5);
+}
+
+.osd-layout-minimal .osd-icon {
+    margin-right: 0;
+}
+
+/* 2. Bar Styles: bubble (default) vs solid vs minimal */
+.bar-style-bubble.bar {
+    background-color: transparent;
+    border-bottom: none;
+    box-shadow: none;
+    padding: 4px 10px;
+}
+
+.bar-style-bubble .bar-section {
+    background-color: var(--surface-overlay);
+    border: 1px solid rgba(var(--hover-rgb), 0.14);
+    border-radius: 9999px;
+    box-shadow: 0 4px 14px rgba(var(--shadow-rgb), 0.35);
+    padding: 2px 8px;
+    margin: 0 4px;
+}
+
+.bar-style-bubble .bar-section:empty {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+}
+
+.bar-style-bubble .widget-pill {
+    border-radius: 9999px;
+    padding: 1px 4px;
+}
+
+.bar-style-solid.bar {
+    background-color: var(--surface);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(var(--shadow-rgb), 0.25);
+    padding: 0 12px;
+}
+
+.bar-style-solid .bar-section {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0 4px;
+    margin: 0;
+}
+
+.bar-style-solid .widget-pill {
+    background-color: rgba(var(--hover-rgb), 0.04);
+    border-radius: 6px;
+    padding: 1px 4px;
+    margin: 0 1px;
+}
+
+.bar-style-minimal.bar {
+    background-color: rgba(0, 0, 0, 0.35);
+    border-bottom: none;
+    box-shadow: none;
+    padding: 0 8px;
+}
+
+.bar-style-minimal .bar-section {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+}
+
+.bar-style-minimal .widget-pill {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0 3px;
+    margin: 0;
+}
+
+.bar-style-minimal .widget-label {
+    font-weight: 500;
+}
+
+/* 3. Control Center Styles: cards (GNOME-like) vs compact (Minimalist Tray) */
+
+/* ── Cards Style: Modern GNOME 43+ Quick Settings Aesthetic ── */
+.control-center-style-cards.control-center-card {
+    min-width: 390px;
+    padding: 18px;
+    border-radius: 24px;
+    background-color: var(--surface-overlay);
+    box-shadow: 0 16px 48px rgba(var(--shadow-rgb), 0.65);
+    border: 1px solid rgba(var(--hover-rgb), 0.14);
+}
+
+/* GNOME Pill Quick Toggles (capsule 9999px) */
+.control-center-style-cards .quick-toggle {
+    border-radius: 9999px;
+    background-color: rgba(var(--hover-rgb), 0.08);
+    border: 1px solid rgba(var(--hover-rgb), 0.06);
+    min-height: 48px;
+    padding: 0;
+}
+
+.control-center-style-cards .quick-toggle-body {
+    border-radius: 9999px 0 0 9999px;
+    padding: 8px 12px 8px 16px;
+}
+
+.control-center-style-cards .quick-toggle-arrow-button {
+    border-radius: 0 9999px 9999px 0;
+    padding: 8px 12px;
+}
+
+.control-center-style-cards .quick-toggle.active {
+    background-color: var(--accent);
+    color: var(--accent-contrast);
+    box-shadow: 0 4px 14px rgba(var(--accent-rgb), 0.35);
+}
+
+/* GNOME Sliders Container Card */
+.control-center-style-cards .sliders-box {
+    background-color: rgba(var(--hover-rgb), 0.05);
+    border-radius: 18px;
+    padding: 10px 14px;
+    border: 1px solid rgba(var(--hover-rgb), 0.04);
+}
+
+.control-center-style-cards .slider-row {
+    padding: 4px 0;
+}
+
+.control-center-style-cards .slider-scale trough {
+    min-height: 10px;
+    border-radius: 9999px;
+    background-color: rgba(var(--hover-rgb), 0.12);
+}
+
+.control-center-style-cards .slider-scale progress {
+    border-radius: 9999px;
+    background-color: var(--accent);
+}
+
+/* GNOME Media Player Card */
+.control-center-style-cards .mpris-card {
+    background-color: rgba(var(--hover-rgb), 0.06);
+    border-radius: 18px;
+    padding: 14px;
+    border: 1px solid rgba(var(--hover-rgb), 0.06);
+}
+
+.control-center-style-cards .mpris-art {
+    min-width: 56px;
+    min-height: 56px;
+    border-radius: 14px;
+}
+
+/* ── Compact Style: Streamlined Minimalist Tray Flyout ── */
+.control-center-style-compact.control-center-card {
+    min-width: 320px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background-color: var(--surface);
+    box-shadow: 0 8px 24px rgba(var(--shadow-rgb), 0.4);
+    border: 1px solid var(--border);
+}
+
+.control-center-style-compact .quick-toggles-grid {
+    column-spacing: 6px;
+    row-spacing: 6px;
+    margin-bottom: 0;
+}
+
+.control-center-style-compact .quick-toggle {
+    border-radius: 6px;
+    background-color: rgba(var(--hover-rgb), 0.04);
+    border: 1px solid rgba(var(--hover-rgb), 0.08);
+    min-height: 34px;
+    padding: 0;
+}
+
+.control-center-style-compact .quick-toggle-body {
+    border-radius: 6px 0 0 6px;
+    padding: 4px 6px;
+}
+
+.control-center-style-compact .quick-toggle-arrow-button {
+    border-radius: 0 6px 6px 0;
+    padding: 4px 6px;
+    min-width: 22px;
+    color: var(--text-faint);
+}
+
+.control-center-style-compact .quick-toggle-arrow-button image {
+    pixel-size: 12;
+}
+
+.control-center-style-compact .quick-toggle-arrow-button:hover {
+    background-color: rgba(var(--hover-rgb), 0.1);
+    color: var(--text);
+}
+
+.control-center-style-compact .quick-toggle-separator {
+    background-color: rgba(var(--hover-rgb), 0.08);
+    min-width: 1px;
+    margin: 4px 0;
+}
+
+.control-center-style-compact .quick-toggle-icon {
+    pixel-size: 16;
+}
+
+.control-center-style-compact .quick-toggle-title {
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.control-center-style-compact .quick-toggle.active {
+    background-color: rgba(var(--accent-rgb), 0.18);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.control-center-style-compact .quick-toggle.active .quick-toggle-title {
+    color: var(--accent);
+}
+
+.control-center-style-compact .quick-toggle.active image {
+    color: var(--accent);
+}
+
+.control-center-style-compact .sliders-box {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    spacing: 4px;
+}
+
+.control-center-style-compact .slider-row {
+    padding: 2px 0;
+    margin-bottom: 0;
+}
+
+.control-center-style-compact .slider-icon {
+    pixel-size: 16;
+}
+
+.control-center-style-compact .slider-value-label {
+    font-size: 11px;
+    min-width: 30px;
+}
+
+.control-center-style-compact .slider-scale trough {
+    min-height: 4px;
+    border-radius: 2px;
+}
+
+.control-center-style-compact .slider-scale progress {
+    border-radius: 2px;
+}
+
+.control-center-style-compact .slider-arrow-button {
+    padding: 2px 4px;
+}
+
+.control-center-style-compact .slider-arrow-button image {
+    pixel-size: 12;
+}
+
+.control-center-style-compact .mpris-card {
+    background-color: rgba(var(--hover-rgb), 0.03);
+    border: 1px solid rgba(var(--hover-rgb), 0.06);
+    border-radius: 8px;
+    padding: 8px;
+}
+
+.control-center-style-compact .mpris-art {
+    min-width: 38px;
+    min-height: 38px;
+    border-radius: 6px;
+}
+
+.control-center-style-compact .mpris-title {
+    font-size: 12px;
+}
+
+.control-center-style-compact .mpris-artist {
+    font-size: 10px;
+}
+
+.control-center-style-compact .mpris-btn {
+    padding: 2px;
+}
+
+/* 4. Notifications Styles: bubbles (default) vs compact */
+.notifications-style-bubbles .notify-card {
+    padding: 14px 18px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(var(--shadow-rgb), 0.5);
+    margin-bottom: 10px;
+}
+
+.notifications-style-compact .notify-card {
+    padding: 6px 12px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(var(--shadow-rgb), 0.35);
+    margin-bottom: 4px;
+}
+
+.notifications-style-compact .notify-app-icon {
+    min-width: 22px;
+    min-height: 22px;
+}
+
+.notifications-style-compact .notify-summary {
+    font-size: 12px;
+}
+
+.notifications-style-compact .notify-body {
+    font-size: 11px;
+}
+
+/* 5. Launcher Styles: centered (default) vs fullscreen vs compact */
+.launcher-style-centered.launcher-card {
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 16px 48px rgba(var(--shadow-rgb), 0.6);
+}
+
+.launcher-style-fullscreen.launcher-card {
+    background-color: rgba(var(--bg-rgb), 0.94);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px 48px;
+    box-shadow: 0 24px 64px rgba(var(--shadow-rgb), 0.7);
+}
+
+.launcher-style-fullscreen .launcher-search {
+    font-size: 18px;
+    padding: 14px 20px;
+    border-radius: 14px;
+    margin-bottom: 12px;
+}
+
+.launcher-style-fullscreen .launcher-item {
+    padding: 12px 18px;
+    border-radius: 12px;
+}
+
+.launcher-style-fullscreen .launcher-item-name {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.launcher-style-compact.launcher-card {
+    border-radius: 12px;
+    padding: 8px 10px;
+    box-shadow: 0 8px 24px rgba(var(--shadow-rgb), 0.45);
+}
+
+.launcher-style-compact .launcher-search {
+    font-size: 12px;
+    padding: 6px 10px;
+}
+
+.launcher-style-compact .launcher-item {
+    padding: 5px 8px;
+    border-radius: 6px;
+}
+
+.launcher-style-compact .launcher-item-name {
+    font-size: 12px;
+}
+
+.launcher-style-compact .launcher-item-comment {
+    font-size: 10px;
+}
+
 /* Notification Surface */
 window.notify-window,
 window.notify-window.background,

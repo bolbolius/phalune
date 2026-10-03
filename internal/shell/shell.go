@@ -458,7 +458,7 @@ func (s *Shell) Start() error {
 	}
 
 	// Control Center
-	ccInstance, err := controlcenter.New(s.app, s.notifyMgr)
+	ccInstance, err := controlcenter.New(s.app, s.notifyMgr, s.cfg.ControlCenter)
 	if err != nil {
 		return fmt.Errorf("failed to create control center: %w", err)
 	}
@@ -777,6 +777,10 @@ func (s *Shell) Reload(newCfg *config.Config) error {
 
 	if s.launcher != nil {
 		s.launcher.UpdateConfig(newCfg.Launcher)
+	}
+
+	if s.controlCenter != nil {
+		s.controlCenter.UpdateConfig(newCfg.ControlCenter)
 	}
 
 	if s.clipboardWatcher != nil {

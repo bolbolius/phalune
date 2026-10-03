@@ -29,6 +29,9 @@ height = 32
 # Bar position on screen: "top" or "bottom"
 position = "top"
 
+# Bar UI style: "bubble" (default), "solid", "minimal"
+style = "bubble"
+
 # Left section widgets (arranged horizontally from left to right)
 [bar.left]
 widgets = ["workspaces"]
@@ -172,6 +175,9 @@ show_hibernate = true
 # ─── Notifications ────────────────────────────────────────────────────────────
 
 [notifications]
+# Popup UI style: "bubbles" (default), "compact"
+style = "bubbles"
+
 # Screen anchor position: "top-right", "top-left", "bottom-right", "bottom-left", "top", "bottom", "center"
 anchor = "top-right"
 
@@ -193,6 +199,9 @@ margin_left = 16
 # ─── OSD (On-Screen Display) ──────────────────────────────────────────────────
 
 [osd]
+# OSD UI style: "pill" (rounded), "bar" (wide strip), "minimal" (icon + bar)
+style = "pill"
+
 # Screen anchor position: "bottom", "top", "center", "bottom-left", "bottom-right", "top-left", "top-right"
 anchor = "bottom"
 
@@ -214,11 +223,15 @@ animation_duration_ms = 120
 # ─── Control Center ───────────────────────────────────────────────────────────
 
 [control_center]
-# Reserved for future configuration options.
+# Control center UI style: "cards" (default), "compact"
+style = "cards"
 
 # ─── Launcher ─────────────────────────────────────────────────────────────────
 
 [launcher]
+# Launcher UI style: "centered" (default), "fullscreen", "compact"
+style = "centered"
+
 # Number of rows jumped on Page Up / Page Down
 page_size = 6
 

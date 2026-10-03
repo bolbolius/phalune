@@ -5,8 +5,10 @@ import (
 	"log/slog"
 
 	"phalune/internal/config"
+	"phalune/internal/style"
 	"phalune/ui"
 
+	"github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
@@ -68,6 +70,9 @@ func New(app *gtk.Application, cfg config.LauncherConfig) (*Launcher, error) {
 		frecency:       frecency,
 		commands:       commandList(nil),
 	}
+
+	styleName, styleClass := style.Resolve(style.Launcher, cfg.Style)
+	l.applyStyle(styleName, styleClass)
 
 	l.setupKeyNavigation()
 	l.setupInteractivity(overlayBox, card)
@@ -318,6 +323,54 @@ func (l *Launcher) UpdateConfig(cfg config.LauncherConfig) {
 	l.terminal = cfg.Terminal
 	if l.frecency != nil {
 		l.frecency.SetParams(cfg.Frecency.HalfLifeDays, cfg.Frecency.MaxBoost)
+	}
+
+	styleName, styleClass := style.Resolve(style.Launcher, cfg.Style)
+	glib.IdleAdd(func() {
+		l.applyStyle(styleName, styleClass)
+	})
+}
+
+func (l *Launcher) applyStyle(styleName, styleClass string) {
+	if l.card == nil {
+		return
+	}
+	for _, s := range []string{"launcher-style-centered", "launcher-style-fullscreen", "launcher-style-compact", "launcher-style-default"} {
+		l.card.RemoveCSSClass(s)
+	}
+	l.card.AddCSSClass(styleClass)
+
+	switch styleName {
+	case "fullscreen":
+		l.card.SetSizeRequest(-1, -1)
+		l.card.SetHAlign(gtk.AlignFill)
+		l.card.SetVAlign(gtk.AlignFill)
+		l.card.SetHExpand(true)
+		l.card.SetVExpand(true)
+		l.card.SetMarginTop(32)
+		l.card.SetMarginBottom(32)
+		l.card.SetMarginStart(48)
+		l.card.SetMarginEnd(48)
+	case "compact":
+		l.card.SetHAlign(gtk.AlignCenter)
+		l.card.SetVAlign(gtk.AlignCenter)
+		l.card.SetHExpand(false)
+		l.card.SetVExpand(false)
+		l.card.SetSizeRequest(380, 320)
+		l.card.SetMarginTop(0)
+		l.card.SetMarginBottom(0)
+		l.card.SetMarginStart(0)
+		l.card.SetMarginEnd(0)
+	default: // "centered"
+		l.card.SetHAlign(gtk.AlignCenter)
+		l.card.SetVAlign(gtk.AlignCenter)
+		l.card.SetHExpand(false)
+		l.card.SetVExpand(false)
+		l.card.SetSizeRequest(520, 500)
+		l.card.SetMarginTop(0)
+		l.card.SetMarginBottom(0)
+		l.card.SetMarginStart(0)
+		l.card.SetMarginEnd(0)
 	}
 }
 

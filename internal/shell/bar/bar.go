@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"phalune/internal/config"
+	"phalune/internal/style"
 	"phalune/internal/widget"
 	"phalune/ui"
 
@@ -63,6 +64,12 @@ func New(app *gtk.Application, monitor *gdk.Monitor, cfg *config.Config, registr
 
 	builder := gtk.NewBuilderFromString(ui.Bar)
 	centerBox := builder.GetObject("bar_root").Cast().(*gtk.CenterBox)
+
+	// Style class drives presentation-only variants (CSS) today; layouts
+	// with dedicated structure plug in via templates later.
+	_, styleClass := style.Resolve(style.Bar, cfg.Bar.Style)
+	win.AddCSSClass(styleClass)
+	centerBox.AddCSSClass(styleClass)
 
 	leftBox := newBarSection("bar-left")
 	centerBoxWidget := newBarSection("bar-center")

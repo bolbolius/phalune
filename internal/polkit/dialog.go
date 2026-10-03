@@ -28,14 +28,14 @@ type AuthDialog struct {
 	cancelBtn        *gtk.Button
 	authBtn          *gtk.Button
 
-	taskId      uintptr
-	cookie      string
-	identities  []string
-	selectedIdx int
-	onResponse  func(taskId uintptr, password string)
-	onCancel    func(taskId uintptr)
+	taskId       uintptr
+	cookie       string
+	identities   []string
+	selectedIdx  int
+	onResponse   func(taskId uintptr, password string)
+	onCancel     func(taskId uintptr)
 	onSwitchUser func(taskId uintptr, identityIdx int)
-	closed      bool
+	closed       bool
 }
 
 func NewAuthDialog(app *gtk.Application) (*AuthDialog, error) {

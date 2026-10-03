@@ -101,27 +101,14 @@ func NewSlidersController(
 		Icon:    briIcon,
 		OnApply: sc.setSystemBrightness,
 		GetIcon: func(pct int, muted bool) string {
-			if pct < 33 {
-				return "display-brightness-low-symbolic"
-			} else if pct < 66 {
-				return "display-brightness-medium-symbolic"
-			}
-			return "display-brightness-high-symbolic"
+			return "display-brightness-symbolic"
 		},
 		OnNotify: func(pct int) {
 			sc.mu.Lock()
 			fn := sc.showOSD
 			sc.mu.Unlock()
 			if fn != nil {
-				var icon string
-				if pct < 33 {
-					icon = "display-brightness-low-symbolic"
-				} else if pct < 66 {
-					icon = "display-brightness-medium-symbolic"
-				} else {
-					icon = "display-brightness-high-symbolic"
-				}
-				fn(icon, "Brightness", float64(pct))
+				fn("display-brightness-symbolic", "Brightness", float64(pct))
 			}
 		},
 	})

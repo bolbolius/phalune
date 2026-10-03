@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"phalune/internal/config"
+	"phalune/internal/style"
 	"phalune/ui"
 
 	"github.com/diamondburned/gotk4/pkg/core/glib"
@@ -52,8 +53,9 @@ type notificationItem struct {
 }
 
 type Manager struct {
-	window    *gtk.Window
-	container *gtk.Box
+	window     *gtk.Window
+	container  *gtk.Box
+	styleClass string
 
 	timeoutLow     time.Duration
 	timeoutNormal  time.Duration
@@ -84,6 +86,9 @@ func New(app *gtk.Application, cfg config.NotificationsConfig) (*Manager, error)
 	builder := gtk.NewBuilderFromString(ui.Notify)
 	container := builder.GetObject("notify_container").Cast().(*gtk.Box)
 
+	_, styleClass := style.Resolve(style.Notifications, cfg.Style)
+	container.AddCSSClass(styleClass)
+
 	win.SetChild(container)
 
 	timeoutLow := cfg.TimeoutLow.Duration
@@ -98,6 +103,7 @@ func New(app *gtk.Application, cfg config.NotificationsConfig) (*Manager, error)
 	return &Manager{
 		window:         win,
 		container:      container,
+		styleClass:     styleClass,
 		timeoutLow:     timeoutLow,
 		timeoutNormal:  timeoutNormal,
 		criticalSticky: cfg.CriticalSticky,
@@ -124,7 +130,20 @@ func (m *Manager) UpdateConfig(cfg config.NotificationsConfig) error {
 	m.timeoutNormal = timeoutNormal
 	m.criticalSticky = cfg.CriticalSticky
 	win := m.window
+
+	_, styleClass := style.Resolve(style.Notifications, cfg.Style)
+	oldStyleClass := m.styleClass
+	m.styleClass = styleClass
 	m.mu.Unlock()
+
+	if m.container != nil && oldStyleClass != styleClass {
+		glib.IdleAdd(func() {
+			if oldStyleClass != "" {
+				m.container.RemoveCSSClass(oldStyleClass)
+			}
+			m.container.AddCSSClass(styleClass)
+		})
+	}
 
 	if win != nil {
 		return ConfigureNotifySurface(win, cfg)
@@ -223,6 +242,7 @@ func (m *Manager) Show(n Notification) uint32 {
 		actionsBox := cardBuilder.GetObject("actions_box").Cast().(*gtk.Box)
 		replyBox := cardBuilder.GetObject("reply_box").Cast().(*gtk.Box)
 		replyEntry := cardBuilder.GetObject("reply_entry").Cast().(*gtk.Entry)
+		card.AddCSSClass(m.styleClass)
 		replyBtn := cardBuilder.GetObject("reply_button").Cast().(*gtk.Button)
 
 		if strings.HasPrefix(n.Icon, "/") || strings.HasPrefix(n.Icon, "file://") {

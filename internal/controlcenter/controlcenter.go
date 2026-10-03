@@ -9,8 +9,10 @@ import (
 	"strings"
 	"sync"
 
+	"phalune/internal/config"
 	"phalune/internal/mpris"
 	"phalune/internal/notify"
+	"phalune/internal/style"
 	"phalune/ui"
 
 	"github.com/diamondburned/gotk4/pkg/core/glib"
@@ -45,7 +47,8 @@ type ControlCenter struct {
 	powerIcon            *gtk.Image
 	powerStatus          *gtk.Label
 
-	// Volume slider arrow button
+	// Volume slider controls
+	volumeButton      *gtk.Button
 	volumeArrowButton *gtk.Button
 
 	// Wi-Fi subview widgets
@@ -134,7 +137,7 @@ type streamRow struct {
 	muteIcon     *gtk.Image
 }
 
-func New(app *gtk.Application, notifyMgr *notify.Manager) (*ControlCenter, error) {
+func New(app *gtk.Application, notifyMgr *notify.Manager, cfg config.ControlCenterConfig) (*ControlCenter, error) {
 	win := gtk.NewWindow()
 	win.SetApplication(app)
 	win.SetTitle("phalune-control-center")
@@ -252,6 +255,7 @@ func New(app *gtk.Application, notifyMgr *notify.Manager) (*ControlCenter, error
 		powerArrowButton:        powerArrowBtn,
 		powerIcon:               powerIcon,
 		powerStatus:             powerStatus,
+		volumeButton:            volBtn,
 		volumeArrowButton:       volArrowBtn,
 		powerBackButton:         powerBackBtn,
 		powerPerfBtn:            powerPerfBtn,
@@ -295,6 +299,9 @@ func New(app *gtk.Application, notifyMgr *notify.Manager) (*ControlCenter, error
 		mprisTexCache:           make(map[string]*gdk.Texture),
 		notifyMgr:               notifyMgr,
 	}
+
+	styleName, styleClass := style.Resolve(style.ControlCenter, cfg.Style)
+	cc.applyStyle(styleName, styleClass)
 
 	cc.wifiCtrl = NewWiFiController(func(enabled bool, available bool, subtitle, icon string) {
 		cc.wifiStatus.SetText(subtitle)
@@ -404,10 +411,25 @@ func New(app *gtk.Application, notifyMgr *notify.Manager) (*ControlCenter, error
 	return cc, nil
 }
 
+func attachSecondaryClick(btn *gtk.Button, onSecondary func()) {
+	if btn == nil {
+		return
+	}
+	gesture := gtk.NewGestureClick()
+	gesture.SetButton(gdk.BUTTON_SECONDARY)
+	gesture.ConnectReleased(func(n int, x, y float64) {
+		onSecondary()
+	})
+	btn.AddController(gesture)
+}
+
 func (cc *ControlCenter) setupInteractivity() {
-	// Wi-Fi tile main button (toggle radio)
+	// Wi-Fi tile main button (toggle radio on left click, open subpage on right click)
 	cc.wifiButton.ConnectClicked(func() {
 		cc.wifiCtrl.Toggle()
+	})
+	attachSecondaryClick(cc.wifiButton, func() {
+		cc.OpenSubpage("wifi")
 	})
 
 	// Wi-Fi arrow button (open subview)
@@ -432,9 +454,12 @@ func (cc *ControlCenter) setupInteractivity() {
 		return false
 	})
 
-	// Bluetooth tile main button (toggle adapter)
+	// Bluetooth tile main button (toggle adapter on left click, open subpage on right click)
 	cc.bluetoothButton.ConnectClicked(func() {
 		cc.btCtrl.Toggle()
+	})
+	attachSecondaryClick(cc.bluetoothButton, func() {
+		cc.OpenSubpage("bluetooth")
 	})
 
 	// Bluetooth arrow button (open subview)
@@ -464,9 +489,12 @@ func (cc *ControlCenter) setupInteractivity() {
 		cc.toggleDND()
 	})
 
-	// Power Mode click (cycle profile)
+	// Power Mode click (cycle profile on left click, open subpage on right click)
 	cc.powerButton.ConnectClicked(func() {
 		cc.powerCtrl.Toggle()
+	})
+	attachSecondaryClick(cc.powerButton, func() {
+		cc.OpenSubpage("power")
 	})
 
 	// Power arrow button (open subview)
@@ -488,6 +516,13 @@ func (cc *ControlCenter) setupInteractivity() {
 	cc.powerSaverBtn.ConnectClicked(func() {
 		cc.powerCtrl.SetProfile(ProfilePowerSaver)
 	})
+
+	// Volume button (toggle mute on left click, open audio subview on right click)
+	if cc.volumeButton != nil {
+		attachSecondaryClick(cc.volumeButton, func() {
+			cc.OpenSubpage("audio")
+		})
+	}
 
 	// Volume arrow button (open subview)
 	cc.volumeArrowButton.ConnectClicked(func() {
@@ -1349,6 +1384,61 @@ func (cc *ControlCenter) croppedTexture(path string, targetSize int) *gdk.Textur
 		cc.mprisTexPath = path
 	}
 	return tex
+}
+
+func (cc *ControlCenter) applyStyle(styleName, styleClass string) {
+	if cc.card == nil {
+		return
+	}
+	for _, s := range []string{"control-center-style-cards", "control-center-style-compact", "control-center-style-default"} {
+		cc.card.RemoveCSSClass(s)
+	}
+	cc.card.AddCSSClass(styleClass)
+
+	isCompact := styleName == "compact"
+	if isCompact {
+		cc.card.SetSizeRequest(320, -1)
+	} else {
+		cc.card.SetSizeRequest(390, -1)
+	}
+
+	// Always keep the subpanel arrow buttons visible in both styles
+	if cc.wifiArrowButton != nil {
+		cc.wifiArrowButton.SetVisible(true)
+	}
+	if cc.bluetoothArrowButton != nil {
+		cc.bluetoothArrowButton.SetVisible(true)
+	}
+	if cc.powerArrowButton != nil {
+		cc.powerArrowButton.SetVisible(true)
+	}
+	if cc.volumeArrowButton != nil {
+		cc.volumeArrowButton.SetVisible(true)
+	}
+
+	// In compact style, collapse the extra subtitle labels to keep tiles slim & clean
+	if cc.wifiStatus != nil {
+		cc.wifiStatus.SetVisible(!isCompact)
+	}
+	if cc.bluetoothStatus != nil {
+		cc.bluetoothStatus.SetVisible(!isCompact)
+	}
+	if cc.powerStatus != nil {
+		cc.powerStatus.SetVisible(!isCompact)
+	}
+	if cc.dndStatus != nil {
+		cc.dndStatus.SetVisible(!isCompact)
+	}
+}
+
+func (cc *ControlCenter) UpdateConfig(cfg config.ControlCenterConfig) {
+	if cc == nil {
+		return
+	}
+	styleName, styleClass := style.Resolve(style.ControlCenter, cfg.Style)
+	glib.IdleAdd(func() {
+		cc.applyStyle(styleName, styleClass)
+	})
 }
 
 func (cc *ControlCenter) Destroy() {

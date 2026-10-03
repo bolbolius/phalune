@@ -102,6 +102,7 @@ func appearancePage() Page {
 		Icon:  "preferences-desktop-appearance-symbolic",
 		Rows: []Row{
 			{Key: "theme.name", Label: "Theme", Hint: "Built-in or ~/.config/phalune/themes/<name>.toml", Kind: KindChoice, Choices: theme.Available()},
+			{Key: "control_center.style", Label: "Control center style", Hint: "Presentation: cards or compact", Kind: KindChoice, Choices: []string{"cards", "compact"}},
 		},
 	}
 }
@@ -112,6 +113,7 @@ func barPage() Page {
 		Title: "Bar",
 		Icon:  "view-dual-symbolic",
 		Rows: []Row{
+			{Key: "bar.style", Label: "Style", Hint: "Presentation: bubble, solid or minimal", Kind: KindChoice, Choices: []string{"bubble", "solid", "minimal"}},
 			{Key: "bar.height", Label: "Height", Hint: "Bar thickness in pixels", Kind: KindNumber, Min: 16, Max: 96, Unit: "px"},
 			{Key: "bar.position", Label: "Position", Hint: "Edge of the screen", Kind: KindChoice, Choices: []string{"top", "bottom"}},
 			{Key: "bar.clock.format", Label: "Clock format", Hint: "Go time layout, e.g. 15:04 or 3:04 PM", Kind: KindText},
@@ -122,7 +124,7 @@ func barPage() Page {
 			{Key: "bar.tray.icon_size", Label: "Tray icon size", Hint: "Pixel size", Kind: KindNumber, Min: 12, Max: 48, Unit: "px"},
 		},
 		Titles: []string{"Layout", "Clock", "Audio", "Battery", "Keyboard & Tray"},
-		Cuts:   []int{2, 3, 5, 6, 8},
+		Cuts:   []int{3, 4, 6, 7, 9},
 	}
 }
 
@@ -132,10 +134,12 @@ func toastsPage() Page {
 		Title: "Notifications & OSD",
 		Icon:  "system-lock-screen-symbolic",
 		Rows: []Row{
+			{Key: "notifications.style", Label: "Toast style", Hint: "Presentation: bubbles or compact", Kind: KindChoice, Choices: []string{"bubbles", "compact"}},
 			{Key: "notifications.anchor", Label: "Position", Hint: "Where toasts appear", Kind: KindChoice, Choices: []string{"top-right", "top-left", "bottom-right", "bottom-left", "top", "bottom", "center"}},
 			{Key: "notifications.critical_sticky", Label: "Critical toasts persist", Hint: "Critical notifications never auto-dismiss", Kind: KindToggle},
 			{Key: "notifications.timeout_low", Label: "Low urgency timeout", Hint: "Auto-dismiss delay", Kind: KindText},
 			{Key: "notifications.timeout_normal", Label: "Normal timeout", Hint: "Auto-dismiss delay", Kind: KindText},
+			{Key: "osd.style", Label: "OSD style", Hint: "Presentation: pill, bar or minimal", Kind: KindChoice, Choices: []string{"pill", "bar", "minimal"}},
 			{Key: "osd.anchor", Label: "OSD position", Hint: "Where on-screen displays appear", Kind: KindChoice, Choices: []string{"bottom", "top", "center", "bottom-left", "bottom-right", "top-left", "top-right"}},
 			{Key: "osd.timeout", Label: "OSD timeout", Hint: "Auto-hide delay", Kind: KindText},
 			{Key: "osd.animate", Label: "OSD animations", Hint: "Smooth value morphing", Kind: KindToggle},
@@ -144,7 +148,7 @@ func toastsPage() Page {
 			{Key: "screenshot.toast_timeout", Label: "Preview timeout", Hint: "Screenshot toast auto-dismiss", Kind: KindText},
 		},
 		Titles: []string{"Notifications", "OSD", "Screenshots"},
-		Cuts:   []int{4, 7},
+		Cuts:   []int{5, 9},
 	}
 }
 
@@ -154,13 +158,14 @@ func launcherPage() Page {
 		Title: "Launcher",
 		Icon:  "system-search-symbolic",
 		Rows: []Row{
+			{Key: "launcher.style", Label: "Style", Hint: "Presentation: centered, fullscreen or compact", Kind: KindChoice, Choices: []string{"centered", "fullscreen", "compact"}},
 			{Key: "launcher.page_size", Label: "Page size", Hint: "Rows per launcher page", Kind: KindNumber, Min: 3, Max: 20},
 			{Key: "launcher.terminal", Label: "Terminal", Hint: "Terminal emulator command (empty = auto-detect)", Kind: KindText},
 			{Key: "launcher.frecency.half_life_days", Label: "Frecency decay", Hint: "Usage memory half-life in days", Kind: KindText},
 			{Key: "launcher.frecency.max_boost", Label: "Frecency boost", Hint: "Maximum score bonus from recent use", Kind: KindText},
 		},
 		Titles: []string{"General", "Frecency"},
-		Cuts:   []int{2},
+		Cuts:   []int{3},
 	}
 }
 
@@ -233,6 +238,8 @@ func readString(cfg *config.Config, key string) string {
 		return strconv.Itoa(cfg.Bar.Height)
 	case "bar.position":
 		return cfg.Bar.Position
+	case "bar.style":
+		return cfg.Bar.Style
 	case "bar.clock.format":
 		return cfg.Bar.Clock.Format
 	case "bar.audio.step":
@@ -253,6 +260,10 @@ func readString(cfg *config.Config, key string) string {
 		return strconv.Itoa(cfg.Clipboard.MaxImageBytes)
 	case "clipboard.max_text_bytes":
 		return strconv.Itoa(cfg.Clipboard.MaxTextBytes)
+	case "control_center.style":
+		return cfg.ControlCenter.Style
+	case "launcher.style":
+		return cfg.Launcher.Style
 	case "launcher.page_size":
 		return strconv.Itoa(cfg.Launcher.PageSize)
 	case "launcher.terminal":
@@ -273,6 +284,8 @@ func readString(cfg *config.Config, key string) string {
 		return cfg.LockScreen.DateFormat
 	case "notifications.anchor":
 		return cfg.Notifications.Anchor
+	case "notifications.style":
+		return cfg.Notifications.Style
 	case "notifications.critical_sticky":
 		return boolStr(cfg.Notifications.CriticalSticky)
 	case "notifications.timeout_low":
@@ -281,6 +294,8 @@ func readString(cfg *config.Config, key string) string {
 		return cfg.Notifications.TimeoutNormal.Duration.String()
 	case "osd.anchor":
 		return cfg.OSD.Anchor
+	case "osd.style":
+		return cfg.OSD.Style
 	case "osd.timeout":
 		return cfg.OSD.Timeout.Duration.String()
 	case "osd.animate":
