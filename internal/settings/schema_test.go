@@ -11,6 +11,7 @@ import (
 var optionalEmpty = map[string]bool{
 	"launcher.terminal":   true,
 	"screenshot.save_dir": true,
+	"wallpaper.path":      true,
 }
 
 func TestAllRowsResolveAgainstConfig(t *testing.T) {

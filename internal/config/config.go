@@ -86,6 +86,7 @@ type Config struct {
 	LockScreen     LockScreenConfig     `toml:"lockscreen"`
 	Session        SessionConfig        `toml:"session"`
 	PowerMenu      PowerMenuConfig      `toml:"power_menu"`
+	Wallpaper      WallpaperConfig      `toml:"wallpaper"`
 	Logging        LogConfig            `toml:"logging"`
 }
 
@@ -227,6 +228,16 @@ type SessionConfig struct {
 
 type PowerMenuConfig struct {
 	ShowHibernate bool `toml:"show_hibernate"` // Show Hibernate action in the power menu
+}
+
+// ──────────────────────────── Wallpaper ────────────────────────────
+
+type WallpaperConfig struct {
+	Enabled   bool              `toml:"enabled"`   // Enable built-in wallpaper management
+	Path      string            `toml:"path"`      // Default wallpaper path or directory
+	Mode      string            `toml:"mode"`      // Scaling mode: "fill" (crop), "fit" (contain), "center", "stretch"
+	Interval  Duration          `toml:"interval"`  // Auto-slideshow interval when path is a directory (0 to disable)
+	Outputs   map[string]string `toml:"outputs"`   // Per-connector wallpaper overrides ("DP-1" = "/path/to/img.jpg")
 }
 
 // ──────────────────────────── Notifications ────────────────────────────
@@ -409,6 +420,13 @@ func Default() *Config {
 		},
 		PowerMenu: PowerMenuConfig{
 			ShowHibernate: true,
+		},
+		Wallpaper: WallpaperConfig{
+			Enabled:  false,
+			Path:     "",
+			Mode:     "fill",
+			Interval: Duration{0},
+			Outputs:  make(map[string]string),
 		},
 		Logging: LogConfig{
 			Level:       "info",
@@ -680,6 +698,26 @@ func (c *Config) validate() {
 	}
 	if c.Screenshot.ToastTimeout.Duration <= 0 {
 		c.Screenshot.ToastTimeout = d.Screenshot.ToastTimeout
+	}
+
+	wallMode := strings.ToLower(strings.TrimSpace(c.Wallpaper.Mode))
+	switch wallMode {
+	case "fill", "crop", "cover":
+		c.Wallpaper.Mode = "fill"
+	case "fit", "contain":
+		c.Wallpaper.Mode = "fit"
+	case "center":
+		c.Wallpaper.Mode = "center"
+	case "stretch":
+		c.Wallpaper.Mode = "stretch"
+	case "":
+		c.Wallpaper.Mode = d.Wallpaper.Mode
+	default:
+		slog.Warn("config: wallpaper.mode must be \"fill\", \"fit\", \"center\" or \"stretch\", using default", "got", c.Wallpaper.Mode, "default", d.Wallpaper.Mode)
+		c.Wallpaper.Mode = d.Wallpaper.Mode
+	}
+	if c.Wallpaper.Outputs == nil {
+		c.Wallpaper.Outputs = make(map[string]string)
 	}
 
 	if c.Logging.Level != "" {

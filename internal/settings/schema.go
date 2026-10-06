@@ -85,6 +85,7 @@ func (p *Page) groups() [][2]int {
 func Pages() []Page {
 	return []Page{
 		appearancePage(),
+		wallpaperPage(),
 		barPage(),
 		toastsPage(),
 		launcherPage(),
@@ -104,6 +105,22 @@ func appearancePage() Page {
 			{Key: "theme.name", Label: "Theme", Hint: "Built-in or ~/.config/phalune/themes/<name>.toml", Kind: KindChoice, Choices: theme.Available()},
 			{Key: "control_center.style", Label: "Control center style", Hint: "Presentation: cards or compact", Kind: KindChoice, Choices: []string{"cards", "compact"}},
 		},
+	}
+}
+
+func wallpaperPage() Page {
+	return Page{
+		ID:    "wallpaper",
+		Title: "Wallpaper",
+		Icon:  "preferences-desktop-wallpaper-symbolic",
+		Rows: []Row{
+			{Key: "wallpaper.enabled", Label: "Enable wallpaper", Hint: "Built-in background surface manager", Kind: KindToggle},
+			{Key: "wallpaper.path", Label: "Wallpaper path", Hint: "Image file or directory for slideshow", Kind: KindText},
+			{Key: "wallpaper.mode", Label: "Scaling mode", Hint: "fill, fit, center, stretch", Kind: KindChoice, Choices: []string{"fill", "fit", "center", "stretch"}},
+			{Key: "wallpaper.interval", Label: "Slideshow interval", Hint: "Auto-rotation frequency (e.g. 15m, 1h, 0 to disable)", Kind: KindText},
+		},
+		Titles: []string{"General", "Slideshow"},
+		Cuts:   []int{3},
 	}
 }
 
@@ -312,6 +329,14 @@ func readString(cfg *config.Config, key string) string {
 		return cfg.Screenshot.ToastTimeout.Duration.String()
 	case "session.lock_on_sleep":
 		return boolStr(cfg.Session.LockOnSleep)
+	case "wallpaper.enabled":
+		return boolStr(cfg.Wallpaper.Enabled)
+	case "wallpaper.path":
+		return cfg.Wallpaper.Path
+	case "wallpaper.mode":
+		return cfg.Wallpaper.Mode
+	case "wallpaper.interval":
+		return cfg.Wallpaper.Interval.Duration.String()
 	case "window_switcher.all_workspaces":
 		return boolStr(cfg.WindowSwitcher.AllWorkspaces)
 	}
@@ -378,7 +403,7 @@ func ParseValue(row Row, value string) (parsed string, err error) {
 func isDurationField(key string) bool {
 	switch key {
 	case "notifications.timeout_low", "notifications.timeout_normal",
-		"osd.timeout", "screenshot.toast_timeout":
+		"osd.timeout", "screenshot.toast_timeout", "wallpaper.interval":
 		return true
 	}
 	return false

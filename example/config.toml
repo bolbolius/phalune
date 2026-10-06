@@ -302,6 +302,29 @@ max_text_bytes = 1048576
 # ignored_apps = ["KeePassXC", "Bitwarden"]
 # blacklist = ["1Password"]
 
+# ─── Wallpaper ────────────────────────────────────────────────────────────────
+# Built-in background wallpaper manager rendered on layer-shell background.
+
+[wallpaper]
+# Enable built-in wallpaper management (false by default)
+enabled = false
+
+# Path to a wallpaper image or a folder of images for slideshow
+# Supports PNG, JPEG, WebP, SVG, AVIF, etc.
+path = ""
+
+# Scaling mode: "fill" (crop & cover), "fit" (contain), "center", "stretch"
+mode = "fill"
+
+# Auto-rotation slideshow interval when path points to a directory
+# Set to "0" or empty to disable rotation. Examples: "15m", "1h", "30s"
+interval = "0s"
+
+# Per-output custom wallpapers (overrides path for specific monitors)
+# [wallpaper.outputs]
+# "eDP-1" = "~/Pictures/Wallpapers/laptop.png"
+# "DP-1" = "~/Pictures/Wallpapers/desktop.png"
+
 # ─── Logging ──────────────────────────────────────────────────────────────────
 
 [logging]

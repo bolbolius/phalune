@@ -60,7 +60,8 @@
 - [X] Extensibility Tier 2: Real-time IPC event bus and dynamic widget feed (event subscription stream, push updates).
 - [X] Pluggable UI Styles (independent presentation & layout per component):
 - [ ] Wallpaper Manager:
-  - [ ] Static wallpaper setting per monitor (layer-shell background).
+  - [X] Static wallpaper setting per monitor.
+  - [X] Slideshow / auto-rotation.
   - [ ] Dynamic color extraction.
 - [ ] Making UX better.
 - [ ] Scripts for installation.

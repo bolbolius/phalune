@@ -24,6 +24,7 @@ import (
 	"phalune/internal/screenshot"
 	"phalune/internal/session"
 	"phalune/internal/shell/bar"
+	"phalune/internal/wallpaper"
 	"phalune/internal/widget"
 	"phalune/internal/windowswitcher"
 
@@ -61,6 +62,7 @@ type Shell struct {
 	screenshotSvc      *screenshot.Service
 	screenshotToast    *screenshot.Toast
 	polkitAgent        *polkit.Agent
+	wallpaperMgr       *wallpaper.Manager
 	sessionCancel      context.CancelFunc
 	configReloader     func()
 	mu                 sync.Mutex
@@ -546,6 +548,10 @@ func (s *Shell) Start() error {
 		s.polkitAgent = pkAgent
 	}
 
+	// Wallpaper manager
+	s.wallpaperMgr = wallpaper.New(s.app, s.cfg.Wallpaper)
+	s.wallpaperMgr.Start()
+
 	// Top bars with multi-monitor hotplug
 	s.syncBars()
 	monitorsList := display.Monitors()
@@ -616,8 +622,6 @@ func (s *Shell) syncBars() {
 		}
 
 		s.mu.Lock()
-		defer s.mu.Unlock()
-
 		for conn, b := range s.barsByConnector {
 			if _, exists := currentMonitors[conn]; !exists {
 				b.Destroy()
@@ -648,6 +652,11 @@ func (s *Shell) syncBars() {
 		} else if len(currentMonitors) > 0 && s.fallbackBar != nil {
 			s.fallbackBar.Destroy()
 			s.fallbackBar = nil
+		}
+		s.mu.Unlock()
+
+		if s.wallpaperMgr != nil {
+			s.wallpaperMgr.SyncMonitors(currentMonitors)
 		}
 	})
 }
@@ -718,6 +727,11 @@ func (s *Shell) Stop() {
 	if s.polkitAgent != nil {
 		s.polkitAgent.Stop()
 		s.polkitAgent = nil
+	}
+
+	if s.wallpaperMgr != nil {
+		s.wallpaperMgr.Stop()
+		s.wallpaperMgr = nil
 	}
 
 	if s.windowSwitcher != nil {
@@ -818,6 +832,13 @@ func (s *Shell) Reload(newCfg *config.Config) error {
 	}
 	if s.windowSwitcher != nil {
 		s.windowSwitcher.UpdateConfig(newCfg.WindowSwitcher)
+	}
+
+	if s.wallpaperMgr != nil {
+		s.wallpaperMgr.UpdateConfig(newCfg.Wallpaper)
+	} else if newCfg.Wallpaper.Enabled {
+		s.wallpaperMgr = wallpaper.New(s.app, newCfg.Wallpaper)
+		s.wallpaperMgr.Start()
 	}
 
 	if oldCfg == nil || !reflect.DeepEqual(oldCfg.Bar, newCfg.Bar) {
