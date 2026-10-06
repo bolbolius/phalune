@@ -1,0 +1,11 @@
+prefix=/usr
+includedir=${prefix}/include
+
+Name: Pango
+Description: Internationalized text handling (with phalune compat shim for gotk4)
+Version: 1.56.3
+Requires: gobject-2.0 >=  2.80, harfbuzz >=  8.4.0
+Requires.private: glib-2.0 >=  2.80, gio-2.0 >=  2.80, fribidi >=  1.0.6, libthai >=  0.1.9, fontconfig >=  2.15.0, freetype2, xrender, xft >=  2.0.0, cairo >=  1.18.0
+Libs: -lpango-1.0
+Libs.private: -lm
+Cflags: -I${pcfiledir}/.. -I${includedir}/pango-1.0

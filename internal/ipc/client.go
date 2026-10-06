@@ -6,224 +6,250 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/signal"
+	"strconv"
+	"strings"
+	"syscall"
 )
 
-func SendCommand(socketPath string, action string, args map[string]string) (*Response, error) {
+// Client is a connection to the running shell. One-shot requests use
+// SendCommand; long-lived consumers use Dial and stream.
+type Client struct {
+	conn   net.Conn
+	writer *bufio.Writer
+	reader *bufio.Scanner
+}
+
+func Dial(socketPath string) (*Client, error) {
 	if socketPath == "" {
 		socketPath = DefaultSocketPath()
 	}
-
 	conn, err := net.Dial("unix", socketPath)
 	if err != nil {
 		return nil, fmt.Errorf("could not connect to phalune socket at %s: %w", socketPath, err)
 	}
-	defer conn.Close()
+	return &Client{
+		conn:   conn,
+		writer: bufio.NewWriter(conn),
+		reader: bufio.NewScanner(conn),
+	}, nil
+}
 
-	req := Request{
-		Action: action,
-		Args:   args,
-	}
-
+// Request writes one NDJSON request line.
+func (c *Client) Request(req Request) error {
 	data, err := json.Marshal(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to encode request: %w", err)
+		return fmt.Errorf("failed to encode request: %w", err)
 	}
-
-	data = append(data, '\n')
-	if _, err := conn.Write(data); err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+	if _, err := c.writer.Write(append(data, '\n')); err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
 	}
+	return c.writer.Flush()
+}
 
-	scanner := bufio.NewScanner(conn)
-	if !scanner.Scan() {
-		if err := scanner.Err(); err != nil {
+// RawLine writes one raw NDJSON line (widget pushes from a daemon).
+func (c *Client) RawLine(line []byte) error {
+	if _, err := c.writer.Write(append(line, '\n')); err != nil {
+		return fmt.Errorf("failed to send line: %w", err)
+	}
+	return c.writer.Flush()
+}
+
+// Response reads one NDJSON reply line.
+func (c *Client) Response() (*Response, error) {
+	if !c.reader.Scan() {
+		if err := c.reader.Err(); err != nil {
 			return nil, fmt.Errorf("failed to read response: %w", err)
 		}
-		return nil, fmt.Errorf("empty response from server")
+		return nil, fmt.Errorf("connection closed by server")
 	}
-
 	var resp Response
-	if err := json.Unmarshal(scanner.Bytes(), &resp); err != nil {
+	if err := json.Unmarshal(c.reader.Bytes(), &resp); err != nil {
 		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
-
 	return &resp, nil
 }
 
-func RunClient(args []string) int {
-	jsonOutput := false
-	filteredArgs := make([]string, 0, len(args))
-	for _, arg := range args {
-		if arg == "--json" || arg == "-j" {
-			jsonOutput = true
-		} else {
-			filteredArgs = append(filteredArgs, arg)
-		}
-	}
-	args = filteredArgs
+// Close ends the connection.
+func (c *Client) Close() error {
+	return c.conn.Close()
+}
 
-	if len(args) == 0 || args[0] == "help" || args[0] == "--help" || args[0] == "-h" {
-		fmt.Println("Usage: phalune msg [flags] <command> [args...]")
-		fmt.Println()
-		fmt.Println("Flags:")
-		fmt.Println("  -j, --json                  Format output as JSON")
-		fmt.Println()
-		fmt.Println("Commands:")
-		fmt.Println("  status                      Show shell status summary")
-		fmt.Println("  toggle-launcher             Toggle application launcher")
-		fmt.Println("  open-launcher               Open application launcher")
-		fmt.Println("  close-launcher              Close application launcher")
-		fmt.Println("  toggle-control-center       Toggle control center (quick settings)")
-		fmt.Println("  open-control-center         Open control center")
-		fmt.Println("  close-control-center        Close control center")
-		fmt.Println("  toggle-notification-center  Toggle notification center")
-		fmt.Println("  open-notification-center    Open notification center")
-		fmt.Println("  close-notification-center   Close notification center")
-		fmt.Println("  toggle-power-menu           Toggle power menu overlay")
-		fmt.Println("  open-power-menu             Open power menu overlay")
-		fmt.Println("  close-power-menu            Close power menu overlay")
-		fmt.Println("  toggle-clipboard            Toggle clipboard history overlay")
-		fmt.Println("  open-clipboard              Open clipboard history overlay")
-		fmt.Println("  close-clipboard             Close clipboard history overlay")
-		fmt.Println("  window-switcher [next|prev|close]  Alt-Tab window switcher (opens/steps)")
-		fmt.Println("  toggle-window-switcher      Toggle window switcher overlay")
-		fmt.Println("  open-window-switcher        Open window switcher overlay")
-		fmt.Println("  close-window-switcher       Close window switcher overlay")
-		fmt.Println("  next-window                 Switch to next window")
-		fmt.Println("  prev-window                 Switch to previous window")
-		fmt.Println("  lock                        Lock session and show lock screen")
-		fmt.Println("  unlock                      Unlock session")
-		fmt.Println("  is-locked                   Check if screen is locked")
-		fmt.Println("  suspend                     Suspend computer")
-		fmt.Println("  hibernate                   Hibernate computer")
-		fmt.Println("  reboot                      Restart computer")
-		fmt.Println("  poweroff                    Power off computer")
-		fmt.Println("  logout                      Log out of current session")
-		fmt.Println("  osd <type> <value>          Show OSD (e.g. 'osd volume 75' or 'osd brightness 50')")
-		fmt.Println("  screenshot [mode]           Take screenshot (area, window, display)")
-		fmt.Println("  test-osd                    Show sample volume OSD")
-		fmt.Println("  notify <summary> [body]     Show notification toast")
-		fmt.Println("  test-notify                 Show sample notification toast")
-		fmt.Println("  reload-config               Reload configuration and apply changes")
-		fmt.Println("  reload-style                Reload CSS stylesheet")
-		fmt.Println("  set-log-level <level> [notify_level]  Set console and optional notify log level")
-		fmt.Println("  toggle-notify-logs [on|off] Toggle forwarding logs to desktop notifications")
-		fmt.Println("  ping                        Ping running phalune daemon")
-		return 0
-	}
-
-	action := args[0]
-	var reqArgs map[string]string
-
-	switch action {
-	case ActionWindowSwitcher, "alt-tab", "switch-window":
-		reqArgs = make(map[string]string)
-		if len(args) > 1 {
-			reqArgs["action"] = args[1]
-		}
-	case ActionSetLogLevel:
-		reqArgs = make(map[string]string)
-		if len(args) > 1 {
-			reqArgs["level"] = args[1]
-		}
-		if len(args) > 2 {
-			reqArgs["notify_level"] = args[2]
-		}
-	case ActionToggleNotifyLogs:
-		reqArgs = make(map[string]string)
-		if len(args) > 1 {
-			reqArgs["state"] = args[1]
-		}
-	case ActionScreenshot:
-		reqArgs = make(map[string]string)
-		if len(args) > 1 {
-			reqArgs["mode"] = args[1]
-		}
-	case ActionShowOSD:
-		reqArgs = make(map[string]string)
-		if len(args) > 1 {
-			reqArgs["type"] = args[1]
-		}
-		if len(args) > 2 {
-			reqArgs["value"] = args[2]
-		}
-	case ActionNotify:
-		reqArgs = make(map[string]string)
-		if len(args) > 1 {
-			reqArgs["summary"] = args[1]
-		}
-		if len(args) > 2 {
-			reqArgs["body"] = args[2]
-		}
-		if len(args) > 3 {
-			reqArgs["icon"] = args[3]
-		}
-	}
-
-	resp, err := SendCommand("", action, reqArgs)
+// SendCommand performs one one-shot request/response round trip.
+func SendCommand(socketPath, action string, args map[string]string) (*Response, error) {
+	client, err := Dial(socketPath)
 	if err != nil {
-		if jsonOutput {
-			out, _ := json.MarshalIndent(map[string]any{
-				"ok":    false,
-				"error": err.Error(),
-			}, "", "  ")
-			fmt.Println(string(out))
-		} else {
-			fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		}
-		return 1
+		return nil, err
+	}
+	defer client.Close()
+
+	if err := client.Request(Request{Action: action, Args: args}); err != nil {
+		return nil, err
+	}
+	return client.Response()
+}
+
+// PushWidget sends a one-shot widget state push (widget-push action).
+func PushWidget(socketPath string, st WidgetState) (*Response, error) {
+	if !ValidWidgetID(st.ID) {
+		return nil, fmt.Errorf("invalid widget id %q", st.ID)
+	}
+	data, err := json.Marshal(st)
+	if err != nil {
+		return nil, err
+	}
+	return SendCommand(socketPath, ActionWidgetPush, map[string]string{
+		"id":   st.ID,
+		"json": string(data),
+	})
+}
+
+// ClearWidget sends a one-shot widget clear.
+func ClearWidget(socketPath, id string) (*Response, error) {
+	if !ValidWidgetID(id) {
+		return nil, fmt.Errorf("invalid widget id %q", id)
+	}
+	return SendCommand(socketPath, ActionWidgetClear, map[string]string{"id": id})
+}
+
+// StreamEvents subscribes and prints matching events as NDJSON on stdout
+// until SIGINT/SIGTERM. Pattern matching happens client-side on the wire
+// envelopes.
+func StreamEvents(socketPath string, patterns []string) error {
+	client, err := Dial(socketPath)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	req := Request{Action: ActionSubscribeEvents}
+	if len(patterns) > 0 {
+		req.Args = map[string]string{"events": strings.Join(patterns, ",")}
+	}
+	if err := client.Request(req); err != nil {
+		return err
 	}
 
+	resp, err := client.Response()
+	if err != nil {
+		return err
+	}
 	if !resp.OK {
-		if jsonOutput {
-			errStr := resp.Error
-			if errStr == "" {
-				errStr = "command failed"
-			}
-			out, _ := json.MarshalIndent(map[string]any{
-				"ok":    false,
-				"error": errStr,
-			}, "", "  ")
-			fmt.Println(string(out))
-		} else {
-			if resp.Error != "" {
-				fmt.Fprintf(os.Stderr, "error: %s\n", resp.Error)
-			} else {
-				fmt.Fprintf(os.Stderr, "command failed\n")
-			}
-		}
-		return 1
+		return fmt.Errorf("%s", resp.Error)
 	}
 
-	if jsonOutput {
-		if len(resp.Data) > 0 {
-			var obj map[string]any
-			if err := json.Unmarshal(resp.Data, &obj); err == nil {
-				obj["ok"] = true
-				out, _ := json.MarshalIndent(obj, "", "  ")
-				fmt.Println(string(out))
-				return 0
-			}
-			var generic any
-			if err := json.Unmarshal(resp.Data, &generic); err == nil {
-				out, _ := json.MarshalIndent(map[string]any{
-					"ok":   true,
-					"data": generic,
-				}, "", "  ")
-				fmt.Println(string(out))
-				return 0
+	// Ctrl-C ends the stream promptly instead of leaving ^C half-printed.
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	stopSig := make(chan struct{})
+	defer func() {
+		signal.Stop(sigCh)
+		close(stopSig)
+	}()
+	go func() {
+		select {
+		case <-sigCh:
+			client.Close()
+		case <-stopSig:
+		}
+	}()
+
+	for client.reader.Scan() {
+		line := client.reader.Bytes()
+		var env eventEnvelope
+		if err := json.Unmarshal(line, &env); err != nil {
+			fmt.Println(string(line))
+			continue
+		}
+		matched := len(patterns) == 0
+		for _, p := range patterns {
+			if MatchTopic(env.Event, p) {
+				matched = true
+				break
 			}
 		}
-		out, _ := json.MarshalIndent(map[string]any{
-			"ok":      true,
-			"message": resp.Message,
-		}, "", "  ")
-		fmt.Println(string(out))
-		return 0
+		if matched {
+			fmt.Println(string(line))
+		}
+	}
+	return nil
+}
+
+// WatchWidget claims a widget id over a persistent connection: it pushes
+// state from stdin (NDJSON, one state per line) and prints interaction
+// events received from the shell. Interrupt ends the watch.
+func WatchWidget(socketPath, id string) error {
+	if !ValidWidgetID(id) {
+		return fmt.Errorf("invalid widget id %q", id)
 	}
 
-	if resp.Message != "" {
-		fmt.Println(resp.Message)
+	client, err := Dial(socketPath)
+	if err != nil {
+		return err
 	}
-	return 0
+	defer client.Close()
+
+	if err := client.Request(Request{Action: ActionWidgetWatch, Args: map[string]string{"id": id}}); err != nil {
+		return err
+	}
+
+	resp, err := client.Response()
+	if err != nil {
+		return err
+	}
+	if !resp.OK {
+		return fmt.Errorf("%s", resp.Error)
+	}
+
+	// Ctrl-C: release the widget cleanly.
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	stopSig := make(chan struct{})
+	defer func() {
+		signal.Stop(sigCh)
+		close(stopSig)
+	}()
+	go func() {
+		select {
+		case <-sigCh:
+			client.Close()
+			os.Exit(0)
+		case <-stopSig:
+		}
+	}()
+
+	go func() {
+		for client.reader.Scan() {
+			fmt.Println(string(client.reader.Bytes()))
+		}
+	}()
+
+	stdin := bufio.NewScanner(os.Stdin)
+	stdin.Buffer(make([]byte, 0, 64*1024), maxLineSize)
+	for stdin.Scan() {
+		line := strings.TrimSpace(stdin.Text())
+		if line == "" || line == "clear" {
+			if err := client.RawLine([]byte(`{"id":"` + id + `"}`)); err != nil {
+				return nil
+			}
+			continue
+		}
+		if !json.Valid([]byte(line)) {
+			fmt.Fprintf(os.Stderr, "invalid JSON: %s\n", line)
+			continue
+		}
+		if err := client.RawLine([]byte(line)); err != nil {
+			return nil
+		}
+	}
+	return nil
+}
+
+// parseFloatArg parses a percentage flag value.
+func parseFloatArg(raw string) (float64, bool) {
+	v, err := strconv.ParseFloat(strings.TrimSpace(raw), 64)
+	if err != nil {
+		return 0, false
+	}
+	return v, true
 }

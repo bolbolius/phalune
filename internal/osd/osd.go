@@ -30,6 +30,7 @@ type OSD struct {
 	timer          *time.Timer
 	suppressFn     func() bool
 	lastDirectUser time.Time
+	eventHook      func(icon, label string, value float64, customText string)
 
 	// Cached UI state to prevent redundant GTK redraws and icon reloads
 	lastIcon      string
@@ -56,6 +57,15 @@ func (o *OSD) SetSuppressFunc(fn func() bool) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	o.suppressFn = fn
+}
+
+// SetEventHook registers a callback fired for every OSD show, including
+// suppressed ones. Runs on the caller goroutine; used by the shell to
+// mirror state onto the IPC event bus.
+func (o *OSD) SetEventHook(fn func(icon, label string, value float64, customText string)) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	o.eventHook = fn
 }
 
 func (o *OSD) IsInDirectUserLockout() bool {
@@ -251,12 +261,19 @@ func (o *OSD) ShowCustom(iconName string, labelText string, value float64, custo
 		})
 	})
 
-	if o.hasPending {
-		o.mu.Unlock()
+	hook := o.eventHook
+	isPending := o.hasPending
+	if !isPending {
+		o.hasPending = true
+	}
+	o.mu.Unlock()
+
+	if hook != nil {
+		hook(iconName, labelText, value, customText)
+	}
+	if isPending {
 		return
 	}
-	o.hasPending = true
-	o.mu.Unlock()
 
 	glib.IdleAdd(func() {
 		o.mu.Lock()

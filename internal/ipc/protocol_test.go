@@ -37,7 +37,7 @@ func TestIPCServerClient(t *testing.T) {
 		}
 	}
 
-	server, err := NewServer(sockPath, handler)
+	server, err := NewServer(sockPath, handler, nil, nil)
 	if err != nil {
 		t.Fatalf("failed to create server: %v", err)
 	}

@@ -42,7 +42,7 @@ widgets = ["clock"]
 
 # Right section widgets (arranged horizontally on the far right)
 [bar.right]
-widgets = ["privacy", "tray", "wifi", "bluetooth", "audio", "battery", "keyboard", "clipboard", "notifications", "power"]
+widgets = ["privacy", "tray", "wifi", "bluetooth", "audio", "battery", "keyboard", "clipboard", "notifications", "ipc:demo", "power"]
 
 # ─── Widget: Workspaces ───────────────────────────────────────────────────────
 
@@ -137,6 +137,25 @@ show_icon = true
 [bar.power]
 # Icon name for the power widget button on the bar
 icon = "system-shutdown-symbolic"
+
+# ─── Widget: IPC (Tier 2 extensions) ──────────────────────────────────────────
+# "ipc:<id>" entries in a bar section render state pushed by external
+# programs over the IPC socket ($XDG_RUNTIME_DIR/phalune.sock).
+# See docs/IPC.md for the protocol and scripts/ipc_showcase.py for an interactive demo.
+#
+# Push updates from any script:
+#   phalune msg widget push --id=demo --text="🍅 18:42" --class=running
+# Long-running daemons stream NDJSON on:
+#   phalune msg widget watch --id=demo
+# Or run the showcase:
+#   python3 scripts/ipc_showcase.py --id demo
+
+[bar.ipc.demo]
+# Tooltip fallback when a push carries none
+tooltip = "IPC Demo Showcase"
+# Hide the pill once it is cleared (default true)
+hide_when_clear = true
+
 
 # ─── Lock Screen ──────────────────────────────────────────────────────────────
 

@@ -129,6 +129,46 @@ window.bar-window {
     color: var(--accent);
 }
 
+/* IPC (Tier 2) Push Widgets */
+.widget-ipc {
+    color: var(--text);
+}
+
+.widget-ipc image {
+    color: var(--accent);
+}
+
+.widget-ipc .ipc-progress {
+    margin: 0 8px;
+    color: var(--accent);
+}
+
+/* Pushed state classes land on the pill itself: .ipc-<id>.<class> */
+.ipc-popover {
+    padding: 10px;
+}
+
+.ipc-popover-title {
+    font-weight: 700;
+    color: var(--text-bright);
+}
+
+.ipc-popover-label {
+    color: var(--text);
+}
+
+.ipc-popover-list {
+    color: var(--text-dim);
+}
+
+.ipc-popover-progress {
+    margin: 2px 0;
+}
+
+.ipc-popover-buttons {
+    margin-top: 4px;
+}
+
 .widget-custom .widget-label {
     font-size: var(--bar-font-size);
     font-weight: 600;

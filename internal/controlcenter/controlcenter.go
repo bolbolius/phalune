@@ -905,6 +905,12 @@ func (cc *ControlCenter) SetShowOSD(fn func(icon, label string, value float64)) 
 	}
 }
 
+// Mpris exposes the shared MPRIS controller for event mirroring; nil when
+// the session bus has no media players support.
+func (cc *ControlCenter) Mpris() *mpris.Controller {
+	return cc.mprisCtrl
+}
+
 func (cc *ControlCenter) Start(ctx context.Context) {
 	if cc.notifyMgr != nil {
 		cc.updateDNDUI(cc.notifyMgr.IsDND())

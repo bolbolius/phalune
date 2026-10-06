@@ -30,7 +30,10 @@ var KnownWidgets = map[string]bool{
 	"privacy":       true,
 }
 
-const customPrefix = "custom."
+const (
+	customPrefix = "custom."
+	ipcPrefix    = "ipc:"
+)
 
 const defaultCommandTimeout = 10 * time.Second
 
@@ -41,6 +44,31 @@ func customWidgetName(listName string) string {
 
 func isCustomWidget(listName string) bool {
 	return strings.HasPrefix(listName, customPrefix) && len(listName) > len(customPrefix)
+}
+
+// ipcWidgetName returns the id of "ipc:pomodoro" -> "pomodoro".
+func ipcWidgetName(listName string) string {
+	return strings.TrimPrefix(listName, ipcPrefix)
+}
+
+func isIPCWidget(listName string) bool {
+	return strings.HasPrefix(listName, ipcPrefix) && len(listName) > len(ipcPrefix)
+}
+
+// ipcValidID mirrors ipc.ValidWidgetID without importing ipc (avoids a
+// config -> ipc dependency cycle risk and keeps config leaf-simple).
+func ipcValidID(id string) bool {
+	if id == "" || len(id) > 64 {
+		return false
+	}
+	for _, r := range id {
+		switch {
+		case r >= 'a' && r <= 'z', r >= '0' && r <= '9', r == '-', r == '_', r == '.':
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 // ──────────────────────────── Top-level Config ────────────────────────────
@@ -93,6 +121,7 @@ type BarConfig struct {
 	Keyboard   KeyboardConfig                `toml:"keyboard"`
 	Power      PowerWidgetConfig             `toml:"power"`
 	Custom     map[string]CustomWidgetConfig `toml:"custom"`
+	IPC        map[string]IPCWidgetConfig    `toml:"ipc"`
 }
 
 type SectionConfig struct {
@@ -165,6 +194,13 @@ type CustomWidgetConfig struct {
 	OnScrollDown     string   `toml:"on_scroll_down"`     // Scroll-down command
 	ScrollDebounceMs int      `toml:"scroll_debounce_ms"` // Scroll rate limit (ms); <= 0 uses default (100)
 	CommandTimeout   Duration `toml:"command_timeout"`    // Per-command timeout (clicks/scrolls), default 10s
+}
+
+// IPCWidgetConfig configures an "ipc:<id>" bar widget. All fields optional:
+// the widget is hidden until an external daemon pushes state.
+type IPCWidgetConfig struct {
+	Tooltip       string `toml:"tooltip"`         // Fallback tooltip
+	HideWhenClear bool   `toml:"hide_when_clear"` // Hide pill when state is cleared (default true)
 }
 
 // ──────────────────────────── Lock Screen ────────────────────────────
@@ -467,20 +503,33 @@ func (c *Config) validate() {
 		}
 	}
 
+	for id := range c.Bar.IPC {
+		if !ipcValidID(id) {
+			slog.Warn("config: ipc widget section key must be 1-64 chars of letters, digits, '-', '_', '.', ignoring", "section", "bar.ipc."+id)
+			delete(c.Bar.IPC, id)
+		}
+	}
+
 	for section, list := range map[string][]string{
 		"bar.left":   c.Bar.Left.Widgets,
 		"bar.center": c.Bar.Center.Widgets,
 		"bar.right":  c.Bar.Right.Widgets,
 	} {
 		for _, name := range list {
-			if isCustomWidget(name) {
+			switch {
+			case isCustomWidget(name):
 				if _, ok := c.Bar.Custom[customWidgetName(name)]; !ok {
 					slog.Warn("config: custom widget has no [bar.custom.<name>] section, ignoring", "widget", name, "section", section)
 				}
-				continue
-			}
-			if !KnownWidgets[name] {
-				slog.Warn("config: unknown widget in section, ignoring", "widget", name, "section", section)
+			case isIPCWidget(name):
+				id := ipcWidgetName(name)
+				if !ipcValidID(id) {
+					slog.Warn("config: ipc widget id must be 1-64 chars of letters, digits, '-', '_', '.', ignoring", "widget", name, "section", section)
+				}
+			default:
+				if !KnownWidgets[name] {
+					slog.Warn("config: unknown widget in section, ignoring", "widget", name, "section", section)
+				}
 			}
 		}
 	}

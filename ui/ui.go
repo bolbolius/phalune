@@ -10,6 +10,9 @@ var Bar string
 //go:embed bar/bar_section.ui
 var BarSection string
 
+//go:embed bar/ipc_pill.ui
+var IPCPill string
+
 // Launcher
 //
 //go:embed launcher/launcher.ui

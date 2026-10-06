@@ -26,6 +26,7 @@ import (
 	widgetClipboard "phalune/internal/widget/clipboard"
 	"phalune/internal/widget/clock"
 	widgetCustom "phalune/internal/widget/custom"
+	widgetIPCX "phalune/internal/widget/ipcx"
 	"phalune/internal/widget/keyboard"
 	widgetNotifications "phalune/internal/widget/notifications"
 	"phalune/internal/widget/power"
@@ -102,6 +103,10 @@ func main() {
 	reg.Register("notifications", widgetNotifications.New)
 	reg.Register("privacy", widgetPrivacy.New)
 	reg.RegisterPrefix("custom.", widgetCustom.New)
+
+	eventBus := ipc.NewEventBus()
+	widgetHub := ipc.NewWidgetHub()
+	reg.RegisterPrefix("ipc:", widgetIPCX.New)
 
 	app := gtk.NewApplication("org.phalune.shell", gio.ApplicationNonUnique)
 
@@ -401,6 +406,46 @@ func main() {
 			case ipc.ActionPing:
 				data, _ := json.Marshal(map[string]any{"ping": "pong"})
 				respCh <- ipc.Response{OK: true, Message: "pong", Data: data}
+			case ipc.ActionWidgetPush:
+				id := req.Args["id"]
+				if !ipc.ValidWidgetID(id) {
+					respCh <- ipc.Response{OK: false, Error: "invalid or missing widget id"}
+					return
+				}
+				var st ipc.WidgetState
+				if raw := req.Args["json"]; raw != "" {
+					if err := json.Unmarshal([]byte(raw), &st); err != nil {
+						respCh <- ipc.Response{OK: false, Error: fmt.Sprintf("invalid state JSON: %v", err)}
+						return
+					}
+				} else {
+					st = ipc.WidgetState{
+						ID:      id,
+						Text:    req.Args["text"],
+						Tooltip: req.Args["tooltip"],
+						Class:   req.Args["class"],
+						Icon:    req.Args["icon"],
+					}
+					if raw := req.Args["percentage"]; raw != "" {
+						var pct float64
+						if _, err := fmt.Sscanf(raw, "%g", &pct); err != nil {
+							respCh <- ipc.Response{OK: false, Error: fmt.Sprintf("invalid percentage %q", raw)}
+							return
+						}
+						st.Percent = &pct
+					}
+				}
+				st.ID = id
+				widgetHub.Push(st)
+				respCh <- ipc.Response{OK: true, Message: "widget pushed"}
+			case ipc.ActionWidgetClear:
+				id := req.Args["id"]
+				if !ipc.ValidWidgetID(id) {
+					respCh <- ipc.Response{OK: false, Error: "invalid or missing widget id"}
+					return
+				}
+				widgetHub.Clear(id)
+				respCh <- ipc.Response{OK: true, Message: "widget cleared"}
 			default:
 				respCh <- ipc.Response{OK: false, Error: fmt.Sprintf("unknown command %q", req.Action)}
 			}
@@ -413,7 +458,7 @@ func main() {
 			slog.Warn("style warning", "error", err)
 		}
 
-		sh = shell.New(app, cfg, reg, compositorSvc)
+		sh = shell.New(app, cfg, reg, compositorSvc, eventBus, widgetHub)
 		logging.SetNotifier(sh)
 		sh.SetConfigReloader(func() {
 			glib.IdleAdd(func() {
@@ -429,7 +474,7 @@ func main() {
 			return
 		}
 
-		server, err := ipc.NewServer("", ipcHandler)
+		server, err := ipc.NewServer("", ipcHandler, eventBus, widgetHub)
 		if err != nil {
 			slog.Warn("ipc server error", "error", err)
 		} else {

@@ -1,6 +1,7 @@
 .PHONY: all build shell settings test clean tidy ui clean-ui
 
 export CGO_ENABLED := 1
+export PKG_CONFIG_PATH := $(CURDIR)/compat/pkgconfig:$(PKG_CONFIG_PATH)
 
 BLP_FILES := $(shell find ui -name "*.blp")
 UI_FILES := $(BLP_FILES:.blp=.ui)

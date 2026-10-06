@@ -11,6 +11,7 @@ import (
 	"phalune/internal/compositor"
 	"phalune/internal/config"
 	"phalune/internal/controlcenter"
+	"phalune/internal/ipc"
 	"phalune/internal/launcher"
 	"phalune/internal/lockscreen"
 	"phalune/internal/notificationcenter"
@@ -36,6 +37,8 @@ type Shell struct {
 	cfg                *config.Config
 	registry           *widget.Registry
 	compositorSvc      compositor.Service
+	eventBus           *ipc.EventBus
+	widgetHub          *ipc.WidgetHub
 	barsByConnector    map[string]*bar.Bar
 	fallbackBar        *bar.Bar
 	launcher           *launcher.Launcher
@@ -48,6 +51,7 @@ type Shell struct {
 	privacyMonitor     *privacy.Monitor
 	removableMonitor   *removable.Monitor
 	ccCancel           context.CancelFunc
+	emittersCancel     context.CancelFunc
 	sessionMgr         *session.Manager
 	lockscreenMgr      *lockscreen.Manager
 	powerMenu          *powermenu.PowerMenu
@@ -62,12 +66,14 @@ type Shell struct {
 	mu                 sync.Mutex
 }
 
-func New(app *gtk.Application, cfg *config.Config, registry *widget.Registry, compositorSvc compositor.Service) *Shell {
+func New(app *gtk.Application, cfg *config.Config, registry *widget.Registry, compositorSvc compositor.Service, eventBus *ipc.EventBus, widgetHub *ipc.WidgetHub) *Shell {
 	return &Shell{
 		app:             app,
 		cfg:             cfg,
 		registry:        registry,
 		compositorSvc:   compositorSvc,
+		eventBus:        eventBus,
+		widgetHub:       widgetHub,
 		barsByConnector: make(map[string]*bar.Bar),
 	}
 }
@@ -393,6 +399,10 @@ func (s *Shell) Start() error {
 	s.osdMgr = osdInstance
 	s.osdListeners = osd.StartListeners(osdInstance)
 
+	emitterCtx, stopEmitters := context.WithCancel(context.Background())
+	s.emittersCancel = stopEmitters
+	s.startEventEmitters(emitterCtx)
+
 	s.sessionMgr = session.New(s.cfg.Session, s.compositorSvc, func() {
 		if s.lockscreenMgr != nil {
 			s.lockscreenMgr.Lock()
@@ -563,6 +573,7 @@ func (s *Shell) buildWidgetContext(monitor *gdk.Monitor) widget.Context {
 		Config:                   s.cfg,
 		Compositor:               s.compositorSvc,
 		Output:                   connector,
+		WidgetHub:                s.widgetHub,
 		ShowOSD:                  s.ShowOSD,
 		TogglePowerMenu:          s.TogglePowerMenu,
 		OpenPowerMenu:            s.OpenPowerMenu,
@@ -642,6 +653,11 @@ func (s *Shell) syncBars() {
 }
 
 func (s *Shell) Stop() {
+	if s.emittersCancel != nil {
+		s.emittersCancel()
+		s.emittersCancel = nil
+	}
+
 	if s.ccCancel != nil {
 		s.ccCancel()
 		s.ccCancel = nil

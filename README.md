@@ -170,7 +170,32 @@ phalune msg status
 phalune msg status --json
 phalune msg is-locked --json
 phalune msg ping
+
+# Dynamic bar widgets pushed by external programs (see docs/IPC.md)
+phalune msg widget push --id=pomodoro --text="🍅 18:42" --class=running --percentage=65
+phalune msg widget clear --id=pomodoro
+phalune msg widget watch --id=pomodoro
+
+# Stream shell events as NDJSON (Ctrl-C to stop)
+phalune msg subscribe
+phalune msg subscribe --events=workspaces,volume,mpris
 ```
+
+---
+
+## Extensibility
+
+Two tiers, same socket:
+
+* **Tier 1 — script bar modules**: `custom.<name>` widgets run shell
+  commands on an interval, tail streams, or feed JSON, with click/scroll
+  actions.
+* **Tier 2 — IPC event bus & dynamic widgets**: external daemons claim
+  bar slots (`ipc:<id>`) over a persistent socket and push state, receive
+  click callbacks, and subscribe to a real-time shell event stream
+  (workspaces, volume, mpris, brightness, notifications, battery).
+
+Protocol reference for third-party developers: **[docs/IPC.md](docs/IPC.md)**.
 
 ---
 
@@ -185,6 +210,7 @@ phalune msg ping
 - Notifications & Notification Center
 - Screenshots (area/window/display with actionable Copy / Save / Open preview toast)
 - Settings App (`phalune-settings`, edits config.toml with line-preserving writes + hot-reload)
+- Tier 1 script widgets + Tier 2 IPC event bus and dynamic widget push
 
 ---
 

@@ -3,6 +3,7 @@ package widget
 import (
 	"phalune/internal/compositor"
 	"phalune/internal/config"
+	"phalune/internal/ipc"
 
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
@@ -18,7 +19,10 @@ type Context struct {
 	Output     string
 	// WidgetName is the exact name from the bar section list ("custom.weather"
 	// → "weather"). Factory implementations that serve several names must use it.
-	WidgetName               string
+	WidgetName string
+	// WidgetHub receives state pushed by external programs for "ipc:<id>"
+	// widgets; nil when the hub is unavailable.
+	WidgetHub                *ipc.WidgetHub
 	ShowOSD                  func(icon, label string, value float64)
 	TogglePowerMenu          func()
 	OpenPowerMenu            func()
