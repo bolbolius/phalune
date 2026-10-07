@@ -38,12 +38,14 @@ type monitorSurface struct {
 
 // Manager coordinates wallpaper rendering across monitors and handles slideshow rotation.
 type Manager struct {
-	mu         sync.Mutex
-	app        *gtk.Application
-	cfg        config.WallpaperConfig
-	surfaces   map[string]*monitorSurface
-	tickerStop chan struct{}
-	fileIndex  int
+	mu                 sync.Mutex
+	app                *gtk.Application
+	cfg                config.WallpaperConfig
+	surfaces           map[string]*monitorSurface
+	tickerStop         chan struct{}
+	fileIndex          int
+	currentWallpaper   string
+	onWallpaperChanged func(path string)
 }
 
 func New(app *gtk.Application, cfg config.WallpaperConfig) *Manager {
@@ -52,6 +54,20 @@ func New(app *gtk.Application, cfg config.WallpaperConfig) *Manager {
 		cfg:      cfg,
 		surfaces: make(map[string]*monitorSurface),
 	}
+}
+
+// SetOnWallpaperChanged sets a callback fired whenever a new wallpaper is loaded onto the primary/active surface.
+func (m *Manager) SetOnWallpaperChanged(fn func(path string)) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.onWallpaperChanged = fn
+}
+
+// CurrentWallpaper returns the active wallpaper image path.
+func (m *Manager) CurrentWallpaper() string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.currentWallpaper
 }
 
 // Start begins wallpaper presentation and slideshow tickers if enabled.
@@ -288,6 +304,13 @@ func (m *Manager) loadImageOnSurface(surf *monitorSurface) {
 	}
 
 	surf.picture.SetFilename(filePath)
+
+	if m.currentWallpaper != filePath {
+		m.currentWallpaper = filePath
+		if m.onWallpaperChanged != nil {
+			go m.onWallpaperChanged(filePath)
+		}
+	}
 }
 
 func (m *Manager) advanceSlideshow() {

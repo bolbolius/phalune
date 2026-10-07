@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"reflect"
+	"strings"
 	"sync"
 
 	"phalune/internal/clipboard"
@@ -24,6 +25,8 @@ import (
 	"phalune/internal/screenshot"
 	"phalune/internal/session"
 	"phalune/internal/shell/bar"
+	"phalune/internal/theme"
+	"phalune/internal/theme/matugen"
 	"phalune/internal/wallpaper"
 	"phalune/internal/widget"
 	"phalune/internal/windowswitcher"
@@ -550,6 +553,88 @@ func (s *Shell) Start() error {
 
 	// Wallpaper manager
 	s.wallpaperMgr = wallpaper.New(s.app, s.cfg.Wallpaper)
+
+	var (
+		dynMu       sync.Mutex
+		dynCached   *theme.Theme
+		dynWallPath string
+	)
+
+	// Dynamic theme provider: serves cached Material You palette extracted via matugen.
+	theme.DynamicProvider = func(name string) (*theme.Theme, error) {
+		dynMu.Lock()
+		defer dynMu.Unlock()
+
+		wallPath := ""
+		if s.wallpaperMgr != nil {
+			wallPath = s.wallpaperMgr.CurrentWallpaper()
+		}
+		if wallPath == "" && s.cfg.Wallpaper.Path != "" {
+			wallPath = s.cfg.Wallpaper.Path
+		}
+		if wallPath == "" {
+			return nil, fmt.Errorf("no active wallpaper to extract theme from")
+		}
+
+		if dynCached != nil && dynWallPath == wallPath {
+			return dynCached, nil
+		}
+
+		colors, err := matugen.Extract(wallPath, true)
+		if err != nil {
+			return nil, fmt.Errorf("matugen extract from %q: %w", wallPath, err)
+		}
+
+		th := &theme.Theme{
+			Name:           theme.FromWallpaper,
+			Description:    "Material You palette extracted from wallpaper by matugen",
+			Dark:           true,
+			OpacityBar:     0.75,
+			OpacityOverlay: 0.94,
+			OpacitySolid:   0.98,
+			OpacityScrim:   0.55,
+			OpacityShadow:  0.45,
+			Colors:         colors,
+		}
+		dynCached = th
+		dynWallPath = wallPath
+		return th, nil
+	}
+
+	s.wallpaperMgr.SetOnWallpaperChanged(func(path string) {
+		if strings.ToLower(s.cfg.Theme.Name) != theme.FromWallpaper {
+			return
+		}
+		go func(wallPath string) {
+			colors, err := matugen.Extract(wallPath, true)
+			if err != nil {
+				slog.Warn("wallpaper: matugen extraction failed", "path", wallPath, "error", err)
+				return
+			}
+			th := &theme.Theme{
+				Name:           theme.FromWallpaper,
+				Description:    "Material You palette extracted from wallpaper by matugen",
+				Dark:           true,
+				OpacityBar:     0.75,
+				OpacityOverlay: 0.94,
+				OpacitySolid:   0.98,
+				OpacityScrim:   0.55,
+				OpacityShadow:  0.45,
+				Colors:         colors,
+			}
+			dynMu.Lock()
+			dynCached = th
+			dynWallPath = wallPath
+			dynMu.Unlock()
+
+			glib.IdleAdd(func() {
+				if err := LoadStyle(s.cfg.Theme.Name, s.cfg.Theme.Values); err != nil {
+					slog.Warn("wallpaper: failed to reapply dynamic theme on change", "error", err)
+				}
+			})
+		}(path)
+	})
+
 	s.wallpaperMgr.Start()
 
 	// Top bars with multi-monitor hotplug

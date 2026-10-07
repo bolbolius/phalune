@@ -29,6 +29,9 @@ var builtinRaw = map[string]string{
 	"dracula":     builtinDracula,
 }
 
+// FromWallpaper is the special theme slug that extracts colors dynamically from the active wallpaper.
+const FromWallpaper = "from-wallpaper"
+
 // Builtins returns the names of embedded themes, sorted.
 func Builtins() []string {
 	names := make([]string, 0, len(builtinRaw))
@@ -39,13 +42,14 @@ func Builtins() []string {
 	return names
 }
 
-// Available returns all selectable theme names (built-ins and user themes), sorted.
+// Available returns all selectable theme names (built-ins, from-wallpaper, and user themes), sorted.
 func Available() []string {
 	seen := make(map[string]bool)
 	for _, b := range Builtins() {
 		seen[b] = true
 	}
-	extra := []string{}
+	seen[FromWallpaper] = true
+	extra := []string{FromWallpaper}
 
 	dir := ""
 	if xdg := os.Getenv("XDG_CONFIG_HOME"); xdg != "" {
@@ -294,7 +298,10 @@ func clamp01(v, fallback float64) float64 {
 	return v
 }
 
-// Get resolves a theme by name: built-ins first, then user theme directory.
+// DynamicProvider is an optional callback that supplies a dynamically generated theme (e.g. from active wallpaper).
+var DynamicProvider func(name string) (*Theme, error)
+
+// Get resolves a theme by name: dynamic provider, built-ins first, then user theme directory.
 func Get(name string) (*Theme, error) {
 	name = strings.TrimSpace(strings.ToLower(name))
 	if name == "" {
@@ -302,6 +309,12 @@ func Get(name string) (*Theme, error) {
 	}
 	if !validSlug(name) {
 		return nil, fmt.Errorf("invalid theme name %q", name)
+	}
+
+	if name == FromWallpaper && DynamicProvider != nil {
+		if th, err := DynamicProvider(name); err == nil && th != nil {
+			return th, nil
+		}
 	}
 
 	if raw, ok := builtinRaw[name]; ok {
@@ -315,6 +328,14 @@ func Get(name string) (*Theme, error) {
 			return Parse(name, string(data))
 		}
 	}
+
+	// If from-wallpaper was requested but extraction failed, fall back to default theme.
+	if name == FromWallpaper {
+		if raw, ok := builtinRaw["phalune"]; ok {
+			return Parse("phalune", raw)
+		}
+	}
+
 	return nil, fmt.Errorf("theme %q not found (built-ins: %s)", name, strings.Join(Builtins(), ", "))
 }
 

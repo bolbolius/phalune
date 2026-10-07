@@ -346,3 +346,51 @@ func TestGetRejectsSlugViolations(t *testing.T) {
 		t.Error("non-lowercase slug should be rejected before file lookup")
 	}
 }
+
+func TestFromWallpaperAvailable(t *testing.T) {
+	avail := Available()
+	found := false
+	for _, n := range avail {
+		if n == FromWallpaper {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected %q in Available(), got %v", FromWallpaper, avail)
+	}
+}
+
+func TestFromWallpaperDynamicProvider(t *testing.T) {
+	prev := DynamicProvider
+	defer func() { DynamicProvider = prev }()
+
+	DynamicProvider = func(name string) (*Theme, error) {
+		return &Theme{
+			Name:   FromWallpaper,
+			Colors: map[string]string{"surface.rgb": "10 20 30", "text": "#ffffff", "accent": "#00ff00"},
+		}, nil
+	}
+
+	th, err := Get(FromWallpaper)
+	if err != nil {
+		t.Fatalf("Get(from-wallpaper) failed: %v", err)
+	}
+	if th.Name != FromWallpaper || th.Colors["accent"] != "#00ff00" {
+		t.Errorf("unexpected theme returned: %+v", th)
+	}
+}
+
+func TestFromWallpaperFallbackWhenNoProvider(t *testing.T) {
+	prev := DynamicProvider
+	defer func() { DynamicProvider = prev }()
+	DynamicProvider = nil
+
+	th, err := Get(FromWallpaper)
+	if err != nil {
+		t.Fatalf("expected fallback to default theme, got error: %v", err)
+	}
+	if th.Name != "phalune" {
+		t.Errorf("expected fallback to phalune, got %q", th.Name)
+	}
+}

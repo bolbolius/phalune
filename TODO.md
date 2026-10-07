@@ -59,10 +59,10 @@
 - [X] Extensibility Tier 1: Custom script bar modules (command execution, interval polling, JSON streaming, on_click actions).
 - [X] Extensibility Tier 2: Real-time IPC event bus and dynamic widget feed (event subscription stream, push updates).
 - [X] Pluggable UI Styles (independent presentation & layout per component):
-- [ ] Wallpaper Manager:
+- [X] Wallpaper Manager:
   - [X] Static wallpaper setting per monitor.
   - [X] Slideshow / auto-rotation.
-  - [ ] Dynamic color extraction.
+  - [X] Dynamic color extraction.
 - [ ] Making UX better.
 - [ ] Scripts for installation.
 - [ ] Usage documents.

@@ -10,8 +10,8 @@
 # ─── Theme ─────────────────────────────────────────────────────────────────────
 
 [theme]
-# Color palette: built-in ("phalune", "tokyo-night", "dracula") or
-# ~/.config/phalune/themes/<name>.toml
+# Color palette: built-in ("phalune", "tokyo-night", "dracula"),
+# dynamic ("from-wallpaper" via matugen), or ~/.config/phalune/themes/<name>.toml
 name = "phalune"
 
 # Optional token overrides:
