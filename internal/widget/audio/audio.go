@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"phalune/internal/sound"
 	"phalune/internal/widget"
 	"phalune/ui"
 
@@ -228,6 +229,7 @@ func (a *Audio) stepVolume(delta int) {
 
 	// Instant optimistic UI update for butter-smooth scrolling
 	a.renderUI(newVol, muted)
+	sound.Play(sound.CueTick)
 	if a.showOSD != nil {
 		pct := int(math.Round(newVol))
 		icon := VolumeIconName(pct, muted)

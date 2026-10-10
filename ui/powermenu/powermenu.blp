@@ -38,7 +38,7 @@ Overlay overlay_box {
       styles ["powermenu-grid"]
 
       Button lock_button {
-        tooltip-text: _("Lock Screen (L)");
+        tooltip-text: _("Lock Screen (1 or L)");
         styles ["powermenu-action-btn"]
         layout {
           row: 0;
@@ -47,7 +47,7 @@ Overlay overlay_box {
 
         child: Box {
           orientation: vertical;
-          spacing: 8;
+          spacing: 6;
           halign: center;
           valign: center;
 
@@ -62,11 +62,16 @@ Overlay overlay_box {
             label: _("Lock");
             styles ["powermenu-action-title"]
           }
+
+          Label {
+            label: "1 / L";
+            styles ["powermenu-key-hint"]
+          }
         };
       }
 
       Button suspend_button {
-        tooltip-text: _("Suspend / Sleep (S)");
+        tooltip-text: _("Suspend / Sleep (2 or S)");
         styles ["powermenu-action-btn"]
         layout {
           row: 0;
@@ -75,7 +80,7 @@ Overlay overlay_box {
 
         child: Box {
           orientation: vertical;
-          spacing: 8;
+          spacing: 6;
           halign: center;
           valign: center;
 
@@ -90,11 +95,16 @@ Overlay overlay_box {
             label: _("Suspend");
             styles ["powermenu-action-title"]
           }
+
+          Label {
+            label: "2 / S";
+            styles ["powermenu-key-hint"]
+          }
         };
       }
 
       Button hibernate_button {
-        tooltip-text: _("Hibernate (H)");
+        tooltip-text: _("Hibernate (3 or H)");
         styles ["powermenu-action-btn"]
         layout {
           row: 0;
@@ -103,7 +113,7 @@ Overlay overlay_box {
 
         child: Box {
           orientation: vertical;
-          spacing: 8;
+          spacing: 6;
           halign: center;
           valign: center;
 
@@ -118,11 +128,16 @@ Overlay overlay_box {
             label: _("Hibernate");
             styles ["powermenu-action-title"]
           }
+
+          Label {
+            label: "3 / H";
+            styles ["powermenu-key-hint"]
+          }
         };
       }
 
       Button logout_button {
-        tooltip-text: _("Log Out (O)");
+        tooltip-text: _("Log Out (4 or O)");
         styles ["powermenu-action-btn"]
         layout {
           row: 1;
@@ -131,7 +146,7 @@ Overlay overlay_box {
 
         child: Box {
           orientation: vertical;
-          spacing: 8;
+          spacing: 6;
           halign: center;
           valign: center;
 
@@ -146,11 +161,16 @@ Overlay overlay_box {
             label: _("Log Out");
             styles ["powermenu-action-title"]
           }
+
+          Label {
+            label: "4 / O";
+            styles ["powermenu-key-hint"]
+          }
         };
       }
 
       Button reboot_button {
-        tooltip-text: _("Restart (R)");
+        tooltip-text: _("Restart (5 or R)");
         styles ["powermenu-action-btn"]
         layout {
           row: 1;
@@ -159,7 +179,7 @@ Overlay overlay_box {
 
         child: Box {
           orientation: vertical;
-          spacing: 8;
+          spacing: 6;
           halign: center;
           valign: center;
 
@@ -174,11 +194,16 @@ Overlay overlay_box {
             label: _("Restart");
             styles ["powermenu-action-title"]
           }
+
+          Label {
+            label: "5 / R";
+            styles ["powermenu-key-hint"]
+          }
         };
       }
 
       Button shutdown_button {
-        tooltip-text: _("Shut Down (P)");
+        tooltip-text: _("Shut Down (6 or P)");
         styles ["powermenu-action-btn", "destructive-action"]
         layout {
           row: 1;
@@ -187,7 +212,7 @@ Overlay overlay_box {
 
         child: Box {
           orientation: vertical;
-          spacing: 8;
+          spacing: 6;
           halign: center;
           valign: center;
 
@@ -201,6 +226,11 @@ Overlay overlay_box {
           Label {
             label: _("Shut Down");
             styles ["powermenu-action-title"]
+          }
+
+          Label {
+            label: "6 / P";
+            styles ["powermenu-key-hint"]
           }
         };
       }

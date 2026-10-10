@@ -31,6 +31,12 @@ type NotificationCenter struct {
 	notifyMgr *notify.Manager
 	store     *notify.Store
 
+	undoBox   *gtk.Box
+	undoBtn   *gtk.Button
+	undoItems []notify.StoredItem
+	undoTimer *time.Timer
+	undoSeq   uint64
+
 	mu          sync.Mutex
 	visible     bool
 	unsubscribe func()
@@ -60,6 +66,21 @@ func New(app *gtk.Application, notifyMgr *notify.Manager) (*NotificationCenter, 
 	listBox := builder.GetObject("list_box").Cast().(*gtk.ListBox)
 	emptyLabel := builder.GetObject("empty_label").Cast().(*gtk.Label)
 
+	// Create floating undo bar inside notification center card
+	undoBox := gtk.NewBox(gtk.OrientationHorizontal, 8)
+	undoBox.AddCSSClass("notification-undo-bar")
+	undoBox.SetHAlign(gtk.AlignCenter)
+	undoBox.SetVisible(false)
+
+	undoMsg := gtk.NewLabel("Notifications cleared")
+	undoMsg.AddCSSClass("notification-undo-label")
+	undoBtn := gtk.NewButtonWithLabel("Undo")
+	undoBtn.AddCSSClass("notification-undo-btn")
+
+	undoBox.Append(undoMsg)
+	undoBox.Append(undoBtn)
+	card.Append(undoBox)
+
 	win.SetChild(overlayBox)
 
 	nc := &NotificationCenter{
@@ -74,6 +95,8 @@ func New(app *gtk.Application, notifyMgr *notify.Manager) (*NotificationCenter, 
 		scrolledWindow: scrolledWin,
 		listBox:        listBox,
 		emptyLabel:     emptyLabel,
+		undoBox:        undoBox,
+		undoBtn:        undoBtn,
 		notifyMgr:      notifyMgr,
 	}
 
@@ -100,10 +123,53 @@ func (nc *NotificationCenter) setupInteractivity() {
 	})
 
 	nc.clearButton.ConnectClicked(func() {
+		if nc.store == nil {
+			return
+		}
+		items := nc.store.All()
+		if len(items) == 0 {
+			return
+		}
+		nc.mu.Lock()
+		nc.undoSeq++
+		seq := nc.undoSeq
+		nc.undoItems = items
+		if nc.undoTimer != nil {
+			nc.undoTimer.Stop()
+		}
+		nc.undoTimer = time.AfterFunc(6*time.Second, func() {
+			glib.IdleAdd(func() {
+				nc.mu.Lock()
+				if nc.undoSeq == seq {
+					nc.undoItems = nil
+					nc.undoBox.SetVisible(false)
+				}
+				nc.mu.Unlock()
+			})
+		})
+		nc.mu.Unlock()
+
+		nc.undoBox.SetVisible(true)
 		if nc.notifyMgr != nil {
 			nc.notifyMgr.ClearAll()
-		} else if nc.store != nil {
+		} else {
 			nc.store.Clear()
+		}
+	})
+
+	nc.undoBtn.ConnectClicked(func() {
+		nc.mu.Lock()
+		if nc.undoTimer != nil {
+			nc.undoTimer.Stop()
+			nc.undoTimer = nil
+		}
+		items := nc.undoItems
+		nc.undoItems = nil
+		nc.mu.Unlock()
+
+		nc.undoBox.SetVisible(false)
+		if len(items) > 0 && nc.store != nil {
+			nc.store.Restore(items)
 		}
 	})
 
@@ -170,6 +236,7 @@ func (nc *NotificationCenter) Render() {
 	count := len(items)
 
 	if count == 0 {
+		nc.emptyLabel.SetText("No new notifications\nYou're all caught up")
 		nc.emptyLabel.SetVisible(true)
 		nc.scrolledWindow.SetVisible(false)
 		nc.countBadge.SetVisible(false)

@@ -25,6 +25,7 @@ import (
 	"phalune/internal/screenshot"
 	"phalune/internal/session"
 	"phalune/internal/shell/bar"
+	"phalune/internal/sound"
 	"phalune/internal/theme"
 	"phalune/internal/theme/matugen"
 	"phalune/internal/wallpaper"
@@ -241,6 +242,41 @@ func (s *Shell) IsLocked() bool {
 	return false
 }
 
+func (s *Shell) StepVolume(delta int) (int, bool) {
+	if s.controlCenter != nil {
+		return s.controlCenter.StepVolume(delta)
+	}
+	return 0, false
+}
+
+func (s *Shell) SetVolume(target int) (int, bool) {
+	if s.controlCenter != nil {
+		return s.controlCenter.SetVolume(target)
+	}
+	return 0, false
+}
+
+func (s *Shell) ToggleVolumeMute() bool {
+	if s.controlCenter != nil {
+		return s.controlCenter.ToggleMute()
+	}
+	return false
+}
+
+func (s *Shell) StepBrightness(delta int) int {
+	if s.controlCenter != nil {
+		return s.controlCenter.StepBrightness(delta)
+	}
+	return 0
+}
+
+func (s *Shell) SetBrightness(target int) int {
+	if s.controlCenter != nil {
+		return s.controlCenter.SetBrightness(target)
+	}
+	return 0
+}
+
 type Status struct {
 	Running       bool   `json:"running"`
 	Locked        bool   `json:"locked"`
@@ -396,6 +432,8 @@ func (s *Shell) Start() error {
 	if display == nil {
 		return fmt.Errorf("no default GDK display available")
 	}
+
+	sound.Init(s.cfg.Sound.Enabled)
 
 	osdInstance, err := osd.New(s.app, s.cfg.OSD)
 	if err != nil {
@@ -918,6 +956,8 @@ func (s *Shell) Reload(newCfg *config.Config) error {
 	if s.windowSwitcher != nil {
 		s.windowSwitcher.UpdateConfig(newCfg.WindowSwitcher)
 	}
+
+	sound.SetEnabled(newCfg.Sound.Enabled)
 
 	if s.wallpaperMgr != nil {
 		s.wallpaperMgr.UpdateConfig(newCfg.Wallpaper)

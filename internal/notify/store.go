@@ -169,6 +169,20 @@ func (s *Store) Clear() {
 	s.notifySubscribers()
 }
 
+// Restore resets the store items with a given list.
+func (s *Store) Restore(items []StoredItem) {
+	s.mu.Lock()
+	if len(items) > maxStoredNotifications {
+		items = items[:maxStoredNotifications]
+	}
+	s.items = make([]StoredItem, len(items))
+	copy(s.items, items)
+	s.mu.Unlock()
+
+	_ = s.Save()
+	s.notifySubscribers()
+}
+
 // Count returns the total number of notifications in history.
 func (s *Store) Count() int {
 	s.mu.RLock()

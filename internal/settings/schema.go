@@ -18,6 +18,8 @@ const (
 	KindNumber Kind = "number"
 	KindText   Kind = "text"
 	KindChoice Kind = "choice"
+	KindFile   Kind = "file"
+	KindDir    Kind = "dir"
 )
 
 // Row describes one editable config field.
@@ -104,7 +106,10 @@ func appearancePage() Page {
 		Rows: []Row{
 			{Key: "theme.name", Label: "Theme", Hint: "Built-in or ~/.config/phalune/themes/<name>.toml", Kind: KindChoice, Choices: theme.Available()},
 			{Key: "control_center.style", Label: "Control center style", Hint: "Presentation: cards or compact", Kind: KindChoice, Choices: []string{"cards", "compact"}},
+			{Key: "sound.enabled", Label: "Sound effects", Hint: "Audio feedback for volume, screenshots, and toggles", Kind: KindToggle},
 		},
+		Titles: []string{"Theme & Style", "Feedback"},
+		Cuts:   []int{2},
 	}
 }
 
@@ -115,7 +120,7 @@ func wallpaperPage() Page {
 		Icon:  "preferences-desktop-wallpaper-symbolic",
 		Rows: []Row{
 			{Key: "wallpaper.enabled", Label: "Enable wallpaper", Hint: "Built-in background surface manager", Kind: KindToggle},
-			{Key: "wallpaper.path", Label: "Wallpaper path", Hint: "Image file or directory for slideshow", Kind: KindText},
+			{Key: "wallpaper.path", Label: "Wallpaper path", Hint: "Image file or directory for slideshow", Kind: KindFile},
 			{Key: "wallpaper.mode", Label: "Scaling mode", Hint: "fill, fit, center, stretch", Kind: KindChoice, Choices: []string{"fill", "fit", "center", "stretch"}},
 			{Key: "wallpaper.interval", Label: "Slideshow interval", Hint: "Auto-rotation frequency (e.g. 15m, 1h, 0 to disable)", Kind: KindText},
 		},
@@ -161,7 +166,7 @@ func toastsPage() Page {
 			{Key: "osd.timeout", Label: "OSD timeout", Hint: "Auto-hide delay", Kind: KindText},
 			{Key: "osd.animate", Label: "OSD animations", Hint: "Smooth value morphing", Kind: KindToggle},
 			{Key: "screenshot.default_mode", Label: "Screenshot mode", Hint: "Fallback capture mode", Kind: KindChoice, Choices: []string{"area", "window", "display"}},
-			{Key: "screenshot.save_dir", Label: "Screenshot folder", Hint: "Where saved shots go (empty = ~/Pictures/Screenshots)", Kind: KindText},
+			{Key: "screenshot.save_dir", Label: "Screenshot folder", Hint: "Where saved shots go (empty = ~/Pictures/Screenshots)", Kind: KindDir},
 			{Key: "screenshot.toast_timeout", Label: "Preview timeout", Hint: "Screenshot toast auto-dismiss", Kind: KindText},
 		},
 		Titles: []string{"Notifications", "OSD", "Screenshots"},
@@ -337,6 +342,8 @@ func readString(cfg *config.Config, key string) string {
 		return cfg.Wallpaper.Mode
 	case "wallpaper.interval":
 		return cfg.Wallpaper.Interval.Duration.String()
+	case "sound.enabled":
+		return boolStr(cfg.Sound.Enabled)
 	case "window_switcher.all_workspaces":
 		return boolStr(cfg.WindowSwitcher.AllWorkspaces)
 	}

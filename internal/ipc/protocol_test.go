@@ -32,6 +32,20 @@ func TestIPCServerClient(t *testing.T) {
 			return Response{OK: true, Message: "locked"}
 		case ActionTogglePowerMenu:
 			return Response{OK: true, Message: "power menu toggled"}
+		case ActionVolumeUp:
+			return Response{OK: true, Message: "volume: 55% (muted=false)"}
+		case ActionVolumeDown:
+			return Response{OK: true, Message: "volume: 45% (muted=false)"}
+		case ActionVolumeMute:
+			return Response{OK: true, Message: "muted: true"}
+		case ActionVolumeSet:
+			return Response{OK: true, Message: "volume: " + req.Args["value"] + "% (muted=false)"}
+		case ActionBrightnessUp:
+			return Response{OK: true, Message: "brightness: 55%"}
+		case ActionBrightnessDown:
+			return Response{OK: true, Message: "brightness: 45%"}
+		case ActionBrightnessSet:
+			return Response{OK: true, Message: "brightness: " + req.Args["value"] + "%"}
 		default:
 			return Response{OK: false, Error: "unknown action"}
 		}
@@ -103,6 +117,41 @@ func TestIPCServerClient(t *testing.T) {
 	resp, err = SendCommand(sockPath, ActionTogglePowerMenu, nil)
 	if err != nil {
 		t.Fatalf("SendCommand toggle-power-menu failed: %v", err)
+	}
+
+	resp, err = SendCommand(sockPath, ActionVolumeUp, map[string]string{"step": "5"})
+	if err != nil || !resp.OK || resp.Message != "volume: 55% (muted=false)" {
+		t.Errorf("unexpected volume-up response: %+v, err=%v", resp, err)
+	}
+
+	resp, err = SendCommand(sockPath, ActionVolumeDown, map[string]string{"step": "5"})
+	if err != nil || !resp.OK || resp.Message != "volume: 45% (muted=false)" {
+		t.Errorf("unexpected volume-down response: %+v, err=%v", resp, err)
+	}
+
+	resp, err = SendCommand(sockPath, ActionVolumeMute, nil)
+	if err != nil || !resp.OK || resp.Message != "muted: true" {
+		t.Errorf("unexpected volume-mute response: %+v, err=%v", resp, err)
+	}
+
+	resp, err = SendCommand(sockPath, ActionVolumeSet, map[string]string{"value": "80"})
+	if err != nil || !resp.OK || resp.Message != "volume: 80% (muted=false)" {
+		t.Errorf("unexpected volume-set response: %+v, err=%v", resp, err)
+	}
+
+	resp, err = SendCommand(sockPath, ActionBrightnessUp, map[string]string{"step": "5"})
+	if err != nil || !resp.OK || resp.Message != "brightness: 55%" {
+		t.Errorf("unexpected brightness-up response: %+v, err=%v", resp, err)
+	}
+
+	resp, err = SendCommand(sockPath, ActionBrightnessDown, map[string]string{"step": "5"})
+	if err != nil || !resp.OK || resp.Message != "brightness: 45%" {
+		t.Errorf("unexpected brightness-down response: %+v, err=%v", resp, err)
+	}
+
+	resp, err = SendCommand(sockPath, ActionBrightnessSet, map[string]string{"value": "75"})
+	if err != nil || !resp.OK || resp.Message != "brightness: 75%" {
+		t.Errorf("unexpected brightness-set response: %+v, err=%v", resp, err)
 	}
 
 	resp, err = SendCommand(sockPath, "unknown", nil)

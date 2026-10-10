@@ -268,9 +268,128 @@ func (sc *SlidersController) setSystemBrightness(pct int) {
 	sc.mu.Unlock()
 
 	if bus != nil {
-		obj := bus.Object("org.freedesktop.login1", "/org/freedesktop/login1/session/self")
-		_ = obj.Call("org.freedesktop.login1.Session.SetBrightness", 0, "backlight", sc.backlightName, target)
+		obj := bus.Object("org.freedesktop.login1", "/org/freedesktop/login1/session/auto")
+		call := obj.Call("org.freedesktop.login1.Session.SetBrightness", 0, "backlight", sc.backlightName, target)
+		if call.Err != nil {
+			objSelf := bus.Object("org.freedesktop.login1", "/org/freedesktop/login1/session/self")
+			_ = objSelf.Call("org.freedesktop.login1.Session.SetBrightness", 0, "backlight", sc.backlightName, target)
+		}
 	}
+}
+
+// StepVolume adjusts volume by delta percentage (-100..+100) and displays OSD.
+func (sc *SlidersController) StepVolume(delta int) (int, bool) {
+	vol, muted, err := queryAudioState()
+	if err != nil {
+		vol = 50
+	}
+	target := int(math.Round(vol)) + delta
+	if target < 0 {
+		target = 0
+	} else if target > 150 {
+		target = 150
+	}
+	if muted && delta > 0 {
+		sc.toggleSystemMute()
+		muted = false
+	}
+	sc.setSystemVolume(target)
+	glib.IdleAdd(func() {
+		sc.updateVolumeUI(float64(target), muted)
+	})
+	if sc.showOSD != nil {
+		var icon string
+		if muted || target <= 0 {
+			icon = "audio-volume-muted-symbolic"
+		} else if target < 33 {
+			icon = "audio-volume-low-symbolic"
+		} else if target < 66 {
+			icon = "audio-volume-medium-symbolic"
+		} else {
+			icon = "audio-volume-high-symbolic"
+		}
+		sc.showOSD(icon, "Volume", float64(target))
+	}
+	return target, muted
+}
+
+// SetVolume sets speaker volume to a target percentage (0..150) and displays OSD.
+func (sc *SlidersController) SetVolume(target int) (int, bool) {
+	if target < 0 {
+		target = 0
+	} else if target > 150 {
+		target = 150
+	}
+	_, muted, _ := queryAudioState()
+	sc.setSystemVolume(target)
+	glib.IdleAdd(func() {
+		sc.updateVolumeUI(float64(target), muted)
+	})
+	if sc.showOSD != nil {
+		var icon string
+		if muted || target <= 0 {
+			icon = "audio-volume-muted-symbolic"
+		} else if target < 33 {
+			icon = "audio-volume-low-symbolic"
+		} else if target < 66 {
+			icon = "audio-volume-medium-symbolic"
+		} else {
+			icon = "audio-volume-high-symbolic"
+		}
+		sc.showOSD(icon, "Volume", float64(target))
+	}
+	return target, muted
+}
+
+// ToggleMute toggles mute and updates the UI/OSD.
+func (sc *SlidersController) ToggleMute() bool {
+	sc.toggleSystemMute()
+	_, muted, _ := queryAudioState()
+	return muted
+}
+
+// StepBrightness adjusts backlight by delta percentage (-100..+100) and displays OSD.
+func (sc *SlidersController) StepBrightness(delta int) int {
+	cur := 50.0
+	if sc.briBinding != nil && sc.briBinding.lastPct >= 0 {
+		cur = float64(sc.briBinding.lastPct)
+	}
+	if sc.backlightDev != "" {
+		if val, err := readBacklightPercent(sc.backlightDev); err == nil {
+			cur = val
+		}
+	}
+	target := int(math.Round(cur)) + delta
+	if target < 0 {
+		target = 0
+	} else if target > 100 {
+		target = 100
+	}
+	sc.setSystemBrightness(target)
+	glib.IdleAdd(func() {
+		sc.updateBrightnessUI(float64(target))
+	})
+	if sc.showOSD != nil {
+		sc.showOSD("display-brightness-symbolic", "Brightness", float64(target))
+	}
+	return target
+}
+
+// SetBrightness sets backlight to a target percentage (0..100) and displays OSD.
+func (sc *SlidersController) SetBrightness(target int) int {
+	if target < 0 {
+		target = 0
+	} else if target > 100 {
+		target = 100
+	}
+	sc.setSystemBrightness(target)
+	glib.IdleAdd(func() {
+		sc.updateBrightnessUI(float64(target))
+	})
+	if sc.showOSD != nil {
+		sc.showOSD("display-brightness-symbolic", "Brightness", float64(target))
+	}
+	return target
 }
 
 func (sc *SlidersController) listenAudioEvents(ctx context.Context) {
@@ -403,8 +522,11 @@ func (sc *SlidersController) listenBacklightEvents(ctx context.Context) {
 }
 
 func queryAudioState() (float64, bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 400*time.Millisecond)
+	defer cancel()
+
 	if wpctlPath != "" {
-		out, err := exec.Command(wpctlPath, "get-volume", "@DEFAULT_AUDIO_SINK@").Output()
+		out, err := exec.CommandContext(ctx, wpctlPath, "get-volume", "@DEFAULT_AUDIO_SINK@").Output()
 		if err == nil {
 			vol, muted, err := parseWpctlVolume(string(out))
 			if err == nil {
@@ -414,11 +536,11 @@ func queryAudioState() (float64, bool, error) {
 	}
 
 	if pactlPath != "" {
-		volOut, err := exec.Command(pactlPath, "get-sink-volume", "@DEFAULT_SINK@").Output()
+		volOut, err := exec.CommandContext(ctx, pactlPath, "get-sink-volume", "@DEFAULT_SINK@").Output()
 		if err == nil {
 			vol, err := parsePactlVolume(string(volOut))
 			if err == nil {
-				muteOut, _ := exec.Command(pactlPath, "get-sink-mute", "@DEFAULT_SINK@").Output()
+				muteOut, _ := exec.CommandContext(ctx, pactlPath, "get-sink-mute", "@DEFAULT_SINK@").Output()
 				muted := strings.Contains(strings.ToLower(string(muteOut)), "mute: yes")
 				return vol, muted, nil
 			}

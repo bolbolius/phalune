@@ -2,6 +2,7 @@ package clipboard
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"phalune/ui"
@@ -184,7 +185,11 @@ func (o *Overlay) renderList(entries []*Entry) {
 	if len(entries) == 0 {
 		o.scrolledWindow.SetVisible(false)
 		o.noResultsLabel.SetVisible(true)
-		o.noResultsLabel.SetText("No matching entries")
+		if strings.TrimSpace(o.searchEntry.Text()) == "" {
+			o.noResultsLabel.SetText("Clipboard is empty")
+		} else {
+			o.noResultsLabel.SetText("No matching entries")
+		}
 		return
 	}
 

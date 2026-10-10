@@ -12,6 +12,7 @@ import (
 	"phalune/internal/config"
 	"phalune/internal/mpris"
 	"phalune/internal/notify"
+	"phalune/internal/sound"
 	"phalune/internal/style"
 	"phalune/ui"
 
@@ -426,6 +427,7 @@ func attachSecondaryClick(btn *gtk.Button, onSecondary func()) {
 func (cc *ControlCenter) setupInteractivity() {
 	// Wi-Fi tile main button (toggle radio on left click, open subpage on right click)
 	cc.wifiButton.ConnectClicked(func() {
+		sound.Play(sound.CueToggle)
 		cc.wifiCtrl.Toggle()
 	})
 	attachSecondaryClick(cc.wifiButton, func() {
@@ -450,12 +452,14 @@ func (cc *ControlCenter) setupInteractivity() {
 		if cc.updatingWifiSwitch {
 			return false
 		}
+		sound.Play(sound.CueToggle)
 		cc.wifiCtrl.SetWirelessEnabled(state)
 		return false
 	})
 
 	// Bluetooth tile main button (toggle adapter on left click, open subpage on right click)
 	cc.bluetoothButton.ConnectClicked(func() {
+		sound.Play(sound.CueToggle)
 		cc.btCtrl.Toggle()
 	})
 	attachSecondaryClick(cc.bluetoothButton, func() {
@@ -480,17 +484,20 @@ func (cc *ControlCenter) setupInteractivity() {
 		if cc.updatingBluetoothSwitch {
 			return false
 		}
+		sound.Play(sound.CueToggle)
 		cc.btCtrl.SetPowered(state)
 		return false
 	})
 
 	// DND click
 	cc.dndButton.ConnectClicked(func() {
+		sound.Play(sound.CueToggle)
 		cc.toggleDND()
 	})
 
 	// Power Mode click (cycle profile on left click, open subpage on right click)
 	cc.powerButton.ConnectClicked(func() {
+		sound.Play(sound.CueToggle)
 		cc.powerCtrl.Toggle()
 	})
 	attachSecondaryClick(cc.powerButton, func() {
@@ -1445,6 +1452,41 @@ func (cc *ControlCenter) UpdateConfig(cfg config.ControlCenterConfig) {
 	glib.IdleAdd(func() {
 		cc.applyStyle(styleName, styleClass)
 	})
+}
+
+func (cc *ControlCenter) StepVolume(delta int) (int, bool) {
+	if cc == nil || cc.slidersCtrl == nil {
+		return 0, false
+	}
+	return cc.slidersCtrl.StepVolume(delta)
+}
+
+func (cc *ControlCenter) SetVolume(target int) (int, bool) {
+	if cc == nil || cc.slidersCtrl == nil {
+		return 0, false
+	}
+	return cc.slidersCtrl.SetVolume(target)
+}
+
+func (cc *ControlCenter) ToggleMute() bool {
+	if cc == nil || cc.slidersCtrl == nil {
+		return false
+	}
+	return cc.slidersCtrl.ToggleMute()
+}
+
+func (cc *ControlCenter) StepBrightness(delta int) int {
+	if cc == nil || cc.slidersCtrl == nil {
+		return 0
+	}
+	return cc.slidersCtrl.StepBrightness(delta)
+}
+
+func (cc *ControlCenter) SetBrightness(target int) int {
+	if cc == nil || cc.slidersCtrl == nil {
+		return 0
+	}
+	return cc.slidersCtrl.SetBrightness(target)
 }
 
 func (cc *ControlCenter) Destroy() {

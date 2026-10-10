@@ -8,6 +8,7 @@ import (
 
 	"phalune/internal/compositor"
 	"phalune/internal/config"
+	"phalune/internal/sound"
 
 	"github.com/diamondburned/gotk4/pkg/core/glib"
 )
@@ -65,6 +66,7 @@ func (s *Service) Capture(modeArg string) {
 			return
 		}
 
+		sound.Play(sound.CueShutter)
 		shotPath := writeTempPNG(png)
 
 		glib.IdleAdd(func() {

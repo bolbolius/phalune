@@ -87,6 +87,7 @@ type Config struct {
 	Session        SessionConfig        `toml:"session"`
 	PowerMenu      PowerMenuConfig      `toml:"power_menu"`
 	Wallpaper      WallpaperConfig      `toml:"wallpaper"`
+	Sound          SoundConfig          `toml:"sound"`
 	Logging        LogConfig            `toml:"logging"`
 }
 
@@ -238,6 +239,12 @@ type WallpaperConfig struct {
 	Mode      string            `toml:"mode"`      // Scaling mode: "fill" (crop), "fit" (contain), "center", "stretch"
 	Interval  Duration          `toml:"interval"`  // Auto-slideshow interval when path is a directory (0 to disable)
 	Outputs   map[string]string `toml:"outputs"`   // Per-connector wallpaper overrides ("DP-1" = "/path/to/img.jpg")
+}
+
+// ──────────────────────────── Sound Feedback ────────────────────────────
+
+type SoundConfig struct {
+	Enabled bool `toml:"enabled"` // Master toggle for micro-audio feedback
 }
 
 // ──────────────────────────── Notifications ────────────────────────────
@@ -427,6 +434,9 @@ func Default() *Config {
 			Mode:     "fill",
 			Interval: Duration{0},
 			Outputs:  make(map[string]string),
+		},
+		Sound: SoundConfig{
+			Enabled: true,
 		},
 		Logging: LogConfig{
 			Level:       "info",

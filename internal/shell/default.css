@@ -10,7 +10,7 @@ window.bar-window {
     background-color: var(--surface);
     color: var(--text);
     border-bottom: 1px solid rgba(var(--hover-rgb), 0.1);
-    padding: 2px 8px;
+    padding: 0 8px 2px 8px;
     font-family: "Ubuntu", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-size: 13px;
     min-height: var(--bar-height);
@@ -21,7 +21,7 @@ window.bar-window {
 }
 
 .widget {
-    padding: 1px 0;
+    padding: 0;
 }
 
 /* Clock Widget */
@@ -36,6 +36,7 @@ window.bar-window {
     margin: 0;
     min-width: 44px;
     font-feature-settings: "tnum";
+    cursor: pointer;
 }
 
 .widget-clock:hover {
@@ -44,6 +45,7 @@ window.bar-window {
 
 .widget-clock:active {
     background-color: rgba(var(--hover-rgb), 0.14);
+    transform: scale(0.97);
 }
 
 /* Workspaces Widget */
@@ -53,7 +55,7 @@ window.bar-window {
 
 .workspace-btn {
     min-width: 26px;
-    min-height: calc(var(--bar-height) - 6px);
+    min-height: calc(var(--bar-height) - 4px);
     padding: 1px 2px;
     margin: 0;
     border: none;
@@ -62,6 +64,7 @@ window.bar-window {
     color: var(--text-faint);
     font-size: var(--bar-font-size);
     font-weight: 600;
+    cursor: pointer;
 }
 
 .workspace-btn:hover {
@@ -71,6 +74,7 @@ window.bar-window {
 
 .workspace-btn:active {
     background-color: rgba(var(--hover-rgb), 0.14);
+    transform: scale(0.96);
 }
 
 .workspace-btn.active {
@@ -99,7 +103,8 @@ window.bar-window {
     border-radius: 6px;
     padding: 1px 0;
     margin: 0;
-    min-height: calc(var(--bar-height) - 6px);
+    min-height: calc(var(--bar-height) - 4px);
+    cursor: pointer;
 }
 
 .widget-pill:hover {
@@ -108,6 +113,7 @@ window.bar-window {
 
 .widget-pill:active {
     background-color: rgba(var(--hover-rgb), 0.14);
+    transform: scale(0.97);
 }
 
 .widget-pill image {
@@ -314,13 +320,14 @@ window.bar-window {
 
 .tray-item-button {
     min-width: var(--bar-unit);
-    min-height: calc(var(--bar-height) - 6px);
+    min-height: calc(var(--bar-height) - 4px);
     padding: 1px 0;
     margin: 0;
     border: none;
     border-radius: 6px;
     background: transparent;
     color: var(--text);
+    cursor: pointer;
     transition: background-color 140ms ease, color 140ms ease;
 }
 
@@ -330,6 +337,7 @@ window.bar-window {
 
 .tray-item-button:active {
     background-color: rgba(var(--hover-rgb), 0.14);
+    transform: scale(0.97);
 }
 
 /* System Tray Popover & Menu */
@@ -1328,6 +1336,40 @@ window.notification-center-window > contents {
     border-radius: 10px;
 }
 
+.notification-undo-bar {
+    background-color: rgba(var(--hover-rgb), 0.1);
+    border: 1px solid rgba(var(--hover-rgb), 0.15);
+    border-radius: 10px;
+    padding: 6px 14px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+.notification-undo-label {
+    font-size: 12.5px;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.notification-undo-btn {
+    background-color: var(--accent);
+    color: var(--accent-contrast);
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 6px;
+    padding: 3px 10px;
+    border: none;
+    cursor: pointer;
+}
+
+.notification-undo-btn:hover {
+    filter: brightness(1.15);
+}
+
+.notification-undo-btn:active {
+    transform: scale(0.96);
+}
+
 .notification-dnd-button,
 .notification-clear-button,
 .notification-close-button {
@@ -1505,6 +1547,7 @@ window.control-center-window > contents {
     min-height: 52px;
     transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
     color: var(--text);
+    cursor: pointer;
 }
 
 .quick-toggle:hover {
@@ -1514,6 +1557,7 @@ window.control-center-window > contents {
 
 .quick-toggle:active {
     background-color: rgba(var(--hover-rgb), 0.18);
+    transform: scale(0.98);
 }
 
 .quick-toggle.active {
@@ -1524,6 +1568,7 @@ window.control-center-window > contents {
 
 .quick-toggle.active:active {
     background-color: var(--accent-hover);
+    transform: scale(0.98);
 }
 
 .quick-toggle image {
@@ -2259,6 +2304,7 @@ window.powermenu-window > contents {
     min-height: 90px;
     transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
     color: var(--text);
+    cursor: pointer;
 }
 
 .powermenu-action-btn:hover {
@@ -2308,6 +2354,23 @@ window.powermenu-window > contents {
     font-weight: 600;
 }
 
+.powermenu-key-hint {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-faint);
+    background-color: rgba(var(--hover-rgb), 0.08);
+    border: 1px solid rgba(var(--hover-rgb), 0.12);
+    border-radius: 4px;
+    padding: 1px 5px;
+    letter-spacing: 0.5px;
+}
+
+.powermenu-action-btn:hover .powermenu-key-hint {
+    color: var(--text-bright);
+    background-color: rgba(var(--hover-rgb), 0.16);
+    border-color: rgba(var(--hover-rgb), 0.25);
+}
+
 .powermenu-cancel-btn {
     background-color: rgba(var(--hover-rgb), 0.06);
     border: 1px solid rgba(var(--hover-rgb), 0.1);
@@ -2315,6 +2378,7 @@ window.powermenu-window > contents {
     padding: 8px 24px;
     font-size: 13px;
     color: var(--text-faint);
+    cursor: pointer;
     transition: background-color 140ms ease, color 140ms ease;
 }
 

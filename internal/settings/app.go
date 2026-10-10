@@ -8,17 +8,20 @@ import (
 
 	"phalune/internal/config"
 
+	"github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
+	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
 type widgetRow struct {
-	row      Row
-	entry    *gtk.Entry
-	combo    *gtk.DropDown
-	switcher *gtk.Switch
-	errorLbl *gtk.Label
-	starLbl  *gtk.Label
+	row       Row
+	container gtk.Widgetter
+	entry     *gtk.Entry
+	combo     *gtk.DropDown
+	switcher  *gtk.Switch
+	errorLbl  *gtk.Label
+	starLbl   *gtk.Label
 }
 
 type rowWidgets struct {
@@ -38,12 +41,14 @@ type App struct {
 	saveBtn  *gtk.Button
 	resetBtn *gtk.Button
 
-	editor     *Editor
-	cfg        *config.Config
-	pages      []Page
-	widgetRows [][]widgetRow
-	configPath string
-	isUpdating bool
+	searchEntry    *gtk.SearchEntry
+	searchDebounce glib.SourceHandle
+	editor         *Editor
+	cfg         *config.Config
+	pages       []Page
+	widgetRows  [][]widgetRow
+	configPath  string
+	isUpdating  bool
 }
 
 // ConfigLoc returns the active configuration file path.
@@ -103,7 +108,22 @@ func NewWindow(app *gtk.Application) (*App, error) {
 	hbox := gtk.NewBox(gtk.OrientationHorizontal, 0)
 	hbox.AddCSSClass("settings-body")
 
-	// Sidebar
+	// Sidebar container with search
+	sidebarBox := gtk.NewBox(gtk.OrientationVertical, 0)
+	sidebarBox.AddCSSClass("sidebar-box")
+	sidebarBox.SetSizeRequest(240, -1)
+	sidebarBox.SetVExpand(true)
+	sidebarBox.SetHExpand(false)
+
+	searchContainer := gtk.NewBox(gtk.OrientationHorizontal, 0)
+	searchContainer.AddCSSClass("sidebar-search-container")
+	w.searchEntry = gtk.NewSearchEntry()
+	w.searchEntry.AddCSSClass("sidebar-search-entry")
+	w.searchEntry.SetPlaceholderText("Search settings… (Ctrl+F)")
+	w.searchEntry.SetHExpand(true)
+	searchContainer.Append(w.searchEntry)
+	sidebarBox.Append(searchContainer)
+
 	sideScrolled := gtk.NewScrolledWindow()
 	sideScrolled.SetPolicy(gtk.PolicyNever, gtk.PolicyAutomatic)
 	sideScrolled.AddCSSClass("sidebar-scroll")
@@ -112,9 +132,9 @@ func NewWindow(app *gtk.Application) (*App, error) {
 	w.sidebar.AddCSSClass("navigation-sidebar")
 	w.sidebar.SetSelectionMode(gtk.SelectionSingle)
 	sideScrolled.SetChild(w.sidebar)
-	sideScrolled.SetSizeRequest(240, -1)
 	sideScrolled.SetVExpand(true)
-	sideScrolled.SetHExpand(false)
+	sideScrolled.SetHExpand(true)
+	sidebarBox.Append(sideScrolled)
 
 	// Stack of pages
 	w.stack = gtk.NewStack()
@@ -122,7 +142,7 @@ func NewWindow(app *gtk.Application) (*App, error) {
 	w.stack.SetVExpand(true)
 	w.stack.SetHExpand(true)
 
-	hbox.Append(sideScrolled)
+	hbox.Append(sidebarBox)
 	hbox.Append(w.stack)
 
 	w.window.SetChild(hbox)
@@ -140,12 +160,32 @@ func NewWindow(app *gtk.Application) (*App, error) {
 		}
 	})
 
+	w.searchEntry.ConnectSearchChanged(func() {
+		if w.searchDebounce != 0 {
+			glib.SourceRemove(w.searchDebounce)
+			w.searchDebounce = 0
+		}
+		w.searchDebounce = glib.TimeoutAdd(100, func() bool {
+			w.searchDebounce = 0
+			w.filterSearch()
+			return false
+		})
+	})
+
 	keyCtrl := gtk.NewEventControllerKey()
 	keyCtrl.ConnectKeyPressed(func(keyval, keycode uint, state gdk.ModifierType) bool {
 		if (state&gdk.ControlMask != 0) && (keyval == gdk.KEY_s || keyval == gdk.KEY_S) {
 			if w.saveBtn.Visible() {
 				w.onSave()
 			}
+			return true
+		}
+		if (state&gdk.ControlMask != 0) && (keyval == gdk.KEY_f || keyval == gdk.KEY_F) {
+			w.searchEntry.GrabFocus()
+			return true
+		}
+		if keyval == gdk.KEY_Escape && w.searchEntry.HasFocus() {
+			w.searchEntry.SetText("")
 			return true
 		}
 		return false
@@ -257,12 +297,13 @@ func (w *App) buildPage(p Page) []widgetRow {
 			wr := w.buildRow(p.Rows[ri])
 			card.Append(wr.container)
 			rows = append(rows, widgetRow{
-				row:      p.Rows[ri],
-				entry:    wr.entry,
-				combo:    wr.combo,
-				switcher: wr.switcher,
-				errorLbl: wr.errorLbl,
-				starLbl:  wr.starLbl,
+				row:       p.Rows[ri],
+				container: wr.container,
+				entry:     wr.entry,
+				combo:     wr.combo,
+				switcher:  wr.switcher,
+				errorLbl:  wr.errorLbl,
+				starLbl:   wr.starLbl,
 			})
 		}
 
@@ -347,6 +388,81 @@ func (w *App) buildRow(row Row) rowWidgets {
 		out.combo = combo
 		hbox.Append(vbox)
 		hbox.Append(combo)
+
+	case KindFile, KindDir:
+		entry := gtk.NewEntry()
+		entry.AddCSSClass("settings-row-entry")
+		entry.SetVAlign(gtk.AlignCenter)
+		entry.SetSizeRequest(200, -1)
+		entry.SetText(w.currentValue(row))
+		entry.SetHExpand(false)
+		entry.ConnectChanged(func() {
+			if _, err := ParseValue(row, entry.Text()); err != nil {
+				errLbl.SetText(err.Error())
+				errLbl.SetVisible(true)
+				entry.AddCSSClass("error")
+			} else {
+				errLbl.SetVisible(false)
+				entry.RemoveCSSClass("error")
+			}
+		})
+		out.entry = entry
+
+		browseBtn := gtk.NewButtonWithLabel("Browse…")
+		browseBtn.AddCSSClass("settings-browse-btn")
+		browseBtn.SetVAlign(gtk.AlignCenter)
+		browseBtn.ConnectClicked(func() {
+			action := gtk.FileChooserActionOpen
+			title := "Select File"
+			if row.Kind == KindDir {
+				action = gtk.FileChooserActionSelectFolder
+				title = "Select Folder"
+			} else if row.Key == "wallpaper.path" {
+				title = "Select Wallpaper"
+			}
+
+			chooser := gtk.NewFileChooserNative(title, &w.window.Window, action, "Select", "Cancel")
+			chooser.SetModal(true)
+
+			if row.Kind == KindFile && (strings.Contains(row.Key, "wallpaper") || strings.Contains(row.Key, "image")) {
+				imgFilter := gtk.NewFileFilter()
+				imgFilter.SetName("Image Files")
+				imgFilter.AddPixbufFormats()
+				imgFilter.AddMIMEType("image/*")
+				chooser.AddFilter(imgFilter)
+
+				allFilter := gtk.NewFileFilter()
+				allFilter.SetName("All Files")
+				allFilter.AddPattern("*")
+				chooser.AddFilter(allFilter)
+			}
+
+			if cur := strings.TrimSpace(entry.Text()); cur != "" {
+				f := gio.NewFileForPath(cur)
+				_ = chooser.SetFile(f)
+			}
+
+			chooser.ConnectResponse(func(respId int) {
+				if respId == int(gtk.ResponseAccept) {
+					if f := chooser.File(); f != nil {
+						if p := f.Path(); p != "" {
+							entry.SetText(p)
+						}
+					}
+				}
+				chooser.Destroy()
+			})
+			chooser.Show()
+		})
+
+		entryBox := gtk.NewBox(gtk.OrientationHorizontal, 6)
+		entryBox.SetVAlign(gtk.AlignCenter)
+		entryBox.SetHAlign(gtk.AlignEnd)
+		entryBox.Append(entry)
+		entryBox.Append(browseBtn)
+
+		hbox.Append(vbox)
+		hbox.Append(entryBox)
 
 	default:
 		entry := gtk.NewEntry()
@@ -583,5 +699,70 @@ func (w *App) setStatus(text string, saved bool) {
 }
 
 func (w *App) Show() { w.window.SetVisible(true) }
+
+func (w *App) filterSearch() {
+	query := strings.ToLower(strings.TrimSpace(w.searchEntry.Text()))
+	var firstMatchingPage string
+
+	for pi, p := range w.pages {
+		pageMatchesTitle := strings.Contains(strings.ToLower(p.Title), query)
+		pageHasMatchingRows := false
+
+		for _, wr := range w.widgetRows[pi] {
+			if query == "" {
+				if wr.container != nil {
+					gtk.BaseWidget(wr.container).SetVisible(true)
+				}
+				continue
+			}
+
+			matches := pageMatchesTitle ||
+				strings.Contains(strings.ToLower(wr.row.Label), query) ||
+				strings.Contains(strings.ToLower(wr.row.Hint), query) ||
+				strings.Contains(strings.ToLower(wr.row.Key), query)
+
+			if wr.container != nil {
+				gtk.BaseWidget(wr.container).SetVisible(matches)
+			}
+			if matches {
+				pageHasMatchingRows = true
+			}
+		}
+
+		// Sidebar row visibility
+		if sideRow := w.sidebar.RowAtIndex(pi); sideRow != nil {
+			visible := (query == "") || pageMatchesTitle || pageHasMatchingRows
+			sideRow.SetVisible(visible)
+			if visible && firstMatchingPage == "" {
+				firstMatchingPage = p.ID
+			}
+		}
+	}
+
+	// If query changed and current page has no matches, switch to the first matching page
+	if query != "" && firstMatchingPage != "" {
+		curPage := w.stack.VisibleChildName()
+		curHasMatches := false
+		for pi, p := range w.pages {
+			if p.ID == curPage {
+				if sideRow := w.sidebar.RowAtIndex(pi); sideRow != nil && sideRow.Visible() {
+					curHasMatches = true
+				}
+				break
+			}
+		}
+		if !curHasMatches {
+			w.stack.SetVisibleChildName(firstMatchingPage)
+			for pi, p := range w.pages {
+				if p.ID == firstMatchingPage {
+					if sideRow := w.sidebar.RowAtIndex(pi); sideRow != nil {
+						w.sidebar.SelectRow(sideRow)
+					}
+					break
+				}
+			}
+		}
+	}
+}
 
 func stringsToGStrv(items []string) []string { return items }

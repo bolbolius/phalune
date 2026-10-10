@@ -43,6 +43,15 @@ Shell control:
   poweroff                    Power off computer
   logout                      Log out of current session
 
+Audio and display:
+  volume-up [step]            Increase speaker volume (default 5%)
+  volume-down [step]          Decrease speaker volume (default 5%)
+  volume-mute                 Toggle speaker mute
+  volume-set <val>            Set speaker volume (0-100 or 0-150)
+  brightness-up [step]        Increase screen brightness (default 5%)
+  brightness-down [step]      Decrease screen brightness (default 5%)
+  brightness-set <val>        Set screen brightness (0-100)
+
 Overlays and toasts:
   osd <type> <value>          Show OSD (e.g. 'osd volume 75' or 'osd brightness 50')
   screenshot [mode]           Take screenshot (area, window, display)
@@ -251,6 +260,22 @@ func parseOneShot(args []string) (string, map[string]string) {
 		}
 		if len(args) > 3 {
 			args2["icon"] = args[3]
+		}
+	case ActionVolumeUp, ActionVolumeDown:
+		if len(args) > 1 {
+			args2["step"] = args[1]
+		}
+	case ActionVolumeSet:
+		if len(args) > 1 {
+			args2["value"] = args[1]
+		}
+	case ActionBrightnessUp, ActionBrightnessDown:
+		if len(args) > 1 {
+			args2["step"] = args[1]
+		}
+	case ActionBrightnessSet:
+		if len(args) > 1 {
+			args2["value"] = args[1]
 		}
 	}
 	return action, args2

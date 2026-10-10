@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -19,6 +20,7 @@ import (
 	"phalune/internal/logging"
 	"phalune/internal/notify"
 	"phalune/internal/shell"
+	"phalune/internal/sound"
 	"phalune/internal/widget"
 	"phalune/internal/widget/audio"
 	"phalune/internal/widget/battery"
@@ -302,6 +304,75 @@ func main() {
 				}
 				sh.CaptureScreenshot(mode)
 				respCh <- ipc.Response{OK: true, Message: "screenshot capture initiated"}
+			case ipc.ActionVolumeUp:
+				step := 5
+				if s := req.Args["step"]; s != "" {
+					s = strings.TrimSuffix(s, "%")
+					if v, err := strconv.Atoi(s); err == nil && v > 0 {
+						step = v
+					}
+				}
+				newVol, muted := sh.StepVolume(step)
+				if !muted {
+					sound.Play(sound.CueTick)
+				}
+				respCh <- ipc.Response{OK: true, Message: fmt.Sprintf("volume: %d%% (muted=%v)", newVol, muted)}
+			case ipc.ActionVolumeDown:
+				step := 5
+				if s := req.Args["step"]; s != "" {
+					s = strings.TrimSuffix(s, "%")
+					if v, err := strconv.Atoi(s); err == nil && v > 0 {
+						step = v
+					}
+				}
+				newVol, muted := sh.StepVolume(-step)
+				if !muted {
+					sound.Play(sound.CueTick)
+				}
+				respCh <- ipc.Response{OK: true, Message: fmt.Sprintf("volume: %d%% (muted=%v)", newVol, muted)}
+			case ipc.ActionVolumeMute:
+				muted := sh.ToggleVolumeMute()
+				respCh <- ipc.Response{OK: true, Message: fmt.Sprintf("muted: %v", muted)}
+			case ipc.ActionVolumeSet:
+				val := 50
+				if vStr := req.Args["value"]; vStr != "" {
+					vStr = strings.TrimSuffix(vStr, "%")
+					if v, err := strconv.Atoi(vStr); err == nil {
+						val = v
+					}
+				}
+				newVol, muted := sh.SetVolume(val)
+				respCh <- ipc.Response{OK: true, Message: fmt.Sprintf("volume: %d%% (muted=%v)", newVol, muted)}
+			case ipc.ActionBrightnessUp:
+				step := 5
+				if s := req.Args["step"]; s != "" {
+					s = strings.TrimSuffix(s, "%")
+					if v, err := strconv.Atoi(s); err == nil && v > 0 {
+						step = v
+					}
+				}
+				newBri := sh.StepBrightness(step)
+				respCh <- ipc.Response{OK: true, Message: fmt.Sprintf("brightness: %d%%", newBri)}
+			case ipc.ActionBrightnessDown:
+				step := 5
+				if s := req.Args["step"]; s != "" {
+					s = strings.TrimSuffix(s, "%")
+					if v, err := strconv.Atoi(s); err == nil && v > 0 {
+						step = v
+					}
+				}
+				newBri := sh.StepBrightness(-step)
+				respCh <- ipc.Response{OK: true, Message: fmt.Sprintf("brightness: %d%%", newBri)}
+			case ipc.ActionBrightnessSet:
+				val := 50
+				if vStr := req.Args["value"]; vStr != "" {
+					vStr = strings.TrimSuffix(vStr, "%")
+					if v, err := strconv.Atoi(vStr); err == nil {
+						val = v
+					}
+				}
+				newBri := sh.SetBrightness(val)
+				respCh <- ipc.Response{OK: true, Message: fmt.Sprintf("brightness: %d%%", newBri)}
 			case ipc.ActionTestOSD, "osd-test":
 				sh.TestOSD()
 				respCh <- ipc.Response{OK: true, Message: "OSD test shown"}

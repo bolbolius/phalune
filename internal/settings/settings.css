@@ -21,14 +21,36 @@ headerbar .title {
 }
 
 /* ─── Sidebar ─────────────────────────────────────────────────────────── */
-.sidebar-scroll {
+.sidebar-box {
     background-color: #1a1b22;
     border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.sidebar-search-container {
+    padding: 10px 10px 4px 10px;
+}
+
+.sidebar-search-entry {
+    font-size: 13px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #e6e7ef;
+    padding: 4px 8px;
+}
+
+.sidebar-search-entry:focus-within {
+    border-color: #3584e4;
+    box-shadow: 0 0 0 1px #3584e4;
+}
+
+.sidebar-scroll {
+    background-color: transparent;
+}
+
 .sidebar {
     background-color: transparent;
-    padding: 10px 8px;
+    padding: 6px 8px 10px 8px;
 }
 
 .sidebar listboxrow {
@@ -194,6 +216,25 @@ headerbar .title {
 .settings-row-entry.error {
     border-color: #f7768e;
     box-shadow: 0 0 0 1px #f7768e;
+}
+
+.settings-browse-btn {
+    color: #e6e7ef;
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.settings-browse-btn:hover {
+    background-color: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.settings-browse-btn:active {
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
 .settings-row-combo button {
