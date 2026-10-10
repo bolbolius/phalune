@@ -10,24 +10,149 @@ Overlay overlay_box {
     spacing: 12;
     halign: center;
     valign: center;
-    width-request: 520;
-    height-request: 500;
+    width-request: 560;
+    height-request: 520;
     styles ["launcher-card"]
 
     SearchEntry search_entry {
-      placeholder-text: _("Search apps or type : for commands");
+      placeholder-text: _("Search apps, calculate, or type : for commands");
       styles ["launcher-search"]
     }
 
-    ScrolledWindow scrolled_window {
+    Stack content_stack {
       hexpand: true;
       vexpand: true;
-      styles ["launcher-scrolled"]
+      transition-type: crossfade;
+      transition-duration: 120;
 
-      ListBox list_box {
-        selection-mode: single;
-        activate-on-single-click: true;
-        styles ["launcher-list"]
+      StackPage {
+        name: "canvas";
+        child: ScrolledWindow canvas_scrolled {
+          hexpand: true;
+          vexpand: true;
+          styles ["launcher-scrolled"]
+
+          child: Box canvas_box {
+            orientation: vertical;
+            spacing: 16;
+            margin-top: 4;
+            margin-bottom: 8;
+            margin-start: 4;
+            margin-end: 4;
+
+            Box chips_box {
+              orientation: horizontal;
+              spacing: 8;
+              halign: center;
+              styles ["launcher-chips-bar"]
+
+              Button chip_settings {
+                tooltip-text: _("Open Settings");
+                styles ["launcher-chip-btn"]
+                child: Box {
+                  orientation: horizontal;
+                  spacing: 6;
+                  Image {
+                    icon-name: "emblem-system-symbolic";
+                    pixel-size: 14;
+                  }
+                  Label {
+                    label: _("Settings");
+                    styles ["launcher-chip-label"]
+                  }
+                };
+              }
+
+              Button chip_terminal {
+                tooltip-text: _("Open Terminal");
+                styles ["launcher-chip-btn"]
+                child: Box {
+                  orientation: horizontal;
+                  spacing: 6;
+                  Image {
+                    icon-name: "utilities-terminal-symbolic";
+                    pixel-size: 14;
+                  }
+                  Label {
+                    label: _("Terminal");
+                    styles ["launcher-chip-label"]
+                  }
+                };
+              }
+
+              Button chip_screenshot {
+                tooltip-text: _("Take Screenshot");
+                styles ["launcher-chip-btn"]
+                child: Box {
+                  orientation: horizontal;
+                  spacing: 6;
+                  Image {
+                    icon-name: "camera-photo-symbolic";
+                    pixel-size: 14;
+                  }
+                  Label {
+                    label: _("Screenshot");
+                    styles ["launcher-chip-label"]
+                  }
+                };
+              }
+
+              Button chip_lock {
+                tooltip-text: _("Lock Screen");
+                styles ["launcher-chip-btn"]
+                child: Box {
+                  orientation: horizontal;
+                  spacing: 6;
+                  Image {
+                    icon-name: "system-lock-screen-symbolic";
+                    pixel-size: 14;
+                  }
+                  Label {
+                    label: _("Lock");
+                    styles ["launcher-chip-label"]
+                  }
+                };
+              }
+            }
+
+            Box frequent_section {
+              orientation: vertical;
+              spacing: 8;
+
+              Label frequent_title {
+                label: _("FREQUENT APPLICATIONS");
+                halign: start;
+                styles ["launcher-section-header"]
+              }
+
+              FlowBox grid_flowbox {
+                selection-mode: none;
+                max-children-per-line: 4;
+                min-children-per-line: 4;
+                column-spacing: 12;
+                row-spacing: 12;
+                homogeneous: true;
+                halign: fill;
+                styles ["launcher-grid"]
+              }
+            }
+          };
+        };
+      }
+
+      StackPage {
+        name: "results";
+        child: ScrolledWindow scrolled_window {
+          hexpand: true;
+          vexpand: true;
+          styles ["launcher-scrolled"]
+
+          child: ListBox list_box {
+            selection-mode: single;
+            activate-on-single-click: true;
+            styles ["launcher-list"]
+          };
+        };
       }
     }
 
@@ -37,6 +162,41 @@ Overlay overlay_box {
       vexpand: true;
       visible: false;
       styles ["launcher-no-results"]
+    }
+
+    Box footer_hints {
+      orientation: horizontal;
+      spacing: 14;
+      halign: center;
+      styles ["launcher-footer"]
+
+      Box {
+        orientation: horizontal;
+        spacing: 4;
+        Label { label: "↵"; styles ["launcher-key-badge"] }
+        Label { label: _("Open"); styles ["launcher-hint-text"] }
+      }
+
+      Box {
+        orientation: horizontal;
+        spacing: 4;
+        Label { label: "Tab"; styles ["launcher-key-badge"] }
+        Label { label: _("Actions"); styles ["launcher-hint-text"] }
+      }
+
+      Box {
+        orientation: horizontal;
+        spacing: 4;
+        Label { label: "Ctrl+↵"; styles ["launcher-key-badge"] }
+        Label { label: _("Terminal"); styles ["launcher-hint-text"] }
+      }
+
+      Box {
+        orientation: horizontal;
+        spacing: 4;
+        Label { label: "Esc"; styles ["launcher-key-badge"] }
+        Label { label: _("Close"); styles ["launcher-hint-text"] }
+      }
     }
   };
 }

@@ -40,13 +40,19 @@ type scoredApp struct {
 }
 
 type Result struct {
-	App     *App
-	Action  *DesktopAction
-	Command *commandEntry
+	App         *App
+	Action      *DesktopAction
+	Command     *commandEntry
+	Calculation string
+	ShellCmd    string
 }
 
 func (r Result) Title() string {
 	switch {
+	case r.Calculation != "":
+		return r.Calculation
+	case r.ShellCmd != "":
+		return "> " + r.ShellCmd
 	case r.Command != nil:
 		return ":" + r.Command.Name
 	case r.Action != nil:
@@ -59,6 +65,10 @@ func (r Result) Title() string {
 
 func (r Result) Subtitle() string {
 	switch {
+	case r.Calculation != "":
+		return "Calculator result (Press Enter to copy)"
+	case r.ShellCmd != "":
+		return "Run command in terminal"
 	case r.Command != nil:
 		return r.Command.Description
 	case r.Action != nil:
@@ -76,6 +86,10 @@ func (r Result) Subtitle() string {
 
 func (r Result) IconName() string {
 	switch {
+	case r.Calculation != "":
+		return "accessories-calculator-symbolic"
+	case r.ShellCmd != "":
+		return "utilities-terminal-symbolic"
 	case r.Command != nil:
 		if r.Command.Icon != "" {
 			return r.Command.Icon
@@ -203,6 +217,10 @@ func FilterApps(apps []App, query string, store *FrecencyStore) []App {
 			matchScore = 20
 		} else if strings.Contains(execC, qCompact) {
 			matchScore = 10
+		} else if len(app.Actions) > 0 {
+			if actScore := matchAppAction(app, nameC, qCompact); actScore > 0 {
+				matchScore = actScore
+			}
 		} else if len(qCompact) >= 2 {
 			fzName := FuzzyScore(qCompact, nameC)
 			if fzName > 0 {
@@ -253,6 +271,7 @@ func FilterApps(apps []App, query string, store *FrecencyStore) []App {
 func FilterResults(apps []App, commands []commandEntry, query string, store *FrecencyStore) []Result {
 	q := strings.TrimSpace(query)
 	isCommandQuery := strings.HasPrefix(q, ":")
+	isShellQuery := strings.HasPrefix(q, ">")
 	qLower := strings.ToLower(q)
 
 	type scoredResult struct {
@@ -260,6 +279,25 @@ func FilterResults(apps []App, commands []commandEntry, query string, store *Fre
 		score float64
 	}
 	var scored []scoredResult
+
+	// Inline Math calculation evaluation
+	if mathResult, isMath := EvaluateMath(q); isMath {
+		scored = append(scored, scoredResult{
+			res:   Result{Calculation: mathResult},
+			score: 200,
+		})
+	}
+
+	// Shell command evaluation (starts with >)
+	if isShellQuery {
+		cmdStr := strings.TrimSpace(strings.TrimPrefix(q, ">"))
+		if cmdStr != "" {
+			scored = append(scored, scoredResult{
+				res:   Result{ShellCmd: cmdStr},
+				score: 180,
+			})
+		}
+	}
 
 	if isCommandQuery {
 		qCmd := strings.TrimPrefix(qLower, ":")
@@ -273,19 +311,6 @@ func FilterResults(apps []App, commands []commandEntry, query string, store *Fre
 			}
 		}
 	} else {
-		for i := range apps {
-			for j := range apps[i].Actions {
-				action := &apps[i].Actions[j]
-				score := scoreAction(apps[i], *action, qLower)
-				if score > 0 {
-					scored = append(scored, scoredResult{
-						res:   Result{App: &apps[i], Action: action},
-						score: score,
-					})
-				}
-			}
-		}
-
 		filtered := FilterApps(apps, q, store)
 		for i := range filtered {
 			scored = append(scored, scoredResult{
@@ -342,4 +367,26 @@ func scoreAction(app App, action DesktopAction, qLower string) float64 {
 	}
 
 	return score
+}
+
+func matchAppAction(app App, appNameC, qCompact string) float64 {
+	for _, act := range app.Actions {
+		actNameC := strings.ReplaceAll(strings.ToLower(act.Name), " ", "")
+		combined := appNameC + actNameC
+		combinedReversed := actNameC + appNameC
+		if strings.Contains(actNameC, qCompact) ||
+			strings.Contains(combined, qCompact) ||
+			strings.Contains(combinedReversed, qCompact) ||
+			strings.HasPrefix(combined, qCompact) {
+			return 38
+		}
+		// Also check if qCompact contains app name and part of action name
+		if strings.HasPrefix(qCompact, appNameC) {
+			rest := strings.TrimPrefix(qCompact, appNameC)
+			if strings.Contains(actNameC, rest) {
+				return 38
+			}
+		}
+	}
+	return 0
 }

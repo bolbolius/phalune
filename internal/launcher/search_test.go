@@ -200,27 +200,21 @@ func TestFilterResultsSubActions(t *testing.T) {
 	}
 	apps := []App{firefox}
 
+	// Action keyword matches the parent app
 	res := FilterResults(apps, nil, "private", nil)
-	if len(res) == 0 || res[0].Action == nil {
-		t.Fatalf("expected 'private' to match private-window action, got %+v", res)
-	}
-	if res[0].Action.ID != "new-private-window" || res[0].App == nil || res[0].App.ID != "firefox.desktop" {
-		t.Fatalf("unexpected first result %+v", res[0])
+	if len(res) == 0 || res[0].App == nil || res[0].App.ID != "firefox.desktop" {
+		t.Fatalf("expected 'private' to match parent app firefox, got %+v", res)
 	}
 
-	// Combined query "firefox private" also lands on the action.
+	// Combined query "firefox private" also lands on the parent app
 	resCombo := FilterResults(apps, nil, "firefox private", nil)
-	if len(resCombo) == 0 || resCombo[0].Action == nil {
-		t.Fatalf("expected 'firefox private' to match action, got %+v", resCombo)
+	if len(resCombo) == 0 || resCombo[0].App == nil || resCombo[0].App.ID != "firefox.desktop" {
+		t.Fatalf("expected 'firefox private' to match parent app firefox, got %+v", resCombo)
 	}
 
-	// Action result icons fall back to parent app icon.
-	r := Result{App: &firefox, Action: &firefox.Actions[0]}
-	if got := r.IconName(); got != "firefox" {
-		// App has no icon set here, so fallback expected.
-		if got != "application-x-executable" {
-			t.Errorf("unexpected icon fallback %q", got)
-		}
+	// Desktop actions are retained on the App struct
+	if len(res[0].App.Actions) != 2 {
+		t.Fatalf("expected 2 actions on matched app, got %d", len(res[0].App.Actions))
 	}
 }
 
@@ -241,5 +235,29 @@ func TestResultAccessors(t *testing.T) {
 	ra := Result{App: &app}
 	if ra.Title() != "App" || ra.Subtitle() != "" || ra.IconName() != "app-icon" {
 		t.Errorf("unexpected app result %+v", ra)
+	}
+
+	rc := Result{Calculation: "42"}
+	if rc.Title() != "42" || rc.Subtitle() != "Calculator result (Press Enter to copy)" || rc.IconName() != "accessories-calculator-symbolic" {
+		t.Errorf("unexpected calc result %+v", rc)
+	}
+
+	rs := Result{ShellCmd: "htop"}
+	if rs.Title() != "> htop" || rs.Subtitle() != "Run command in terminal" || rs.IconName() != "utilities-terminal-symbolic" {
+		t.Errorf("unexpected shell result %+v", rs)
+	}
+}
+
+func TestFilterResultsMathAndShell(t *testing.T) {
+	// Math evaluation
+	resMath := FilterResults(nil, nil, "128 * 4", nil)
+	if len(resMath) != 1 || resMath[0].Calculation != "512" {
+		t.Fatalf("expected math result 512, got %+v", resMath)
+	}
+
+	// Shell command evaluation with '>'
+	resShell := FilterResults(nil, nil, "> btop", nil)
+	if len(resShell) != 1 || resShell[0].ShellCmd != "btop" {
+		t.Fatalf("expected shell cmd 'btop', got %+v", resShell)
 	}
 }

@@ -24,10 +24,11 @@ type ShellCommands struct {
 	Suspend   func() error
 	Hibernate func() error
 	Logout    func() error
-	Lock      func()
-	Reload    func()
-	PowerMenu func()
-	Clipboard func()
+	Lock       func()
+	Reload     func()
+	PowerMenu  func()
+	Clipboard  func()
+	Screenshot func()
 }
 
 type commandEntry struct {

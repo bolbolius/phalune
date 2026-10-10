@@ -420,7 +420,7 @@ window.launcher-window > contents {
 
 .launcher-search:focus-within {
     border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.25);
+    outline: none;
 }
 
 .launcher-scrolled {
@@ -429,26 +429,124 @@ window.launcher-window > contents {
 
 .launcher-list {
     background-color: transparent;
+    padding-right: 6px;
 }
+
+/* Action Chips Bar */
+.launcher-chips-bar {
+    padding: 2px 0 6px 0;
+}
+
+.launcher-chip-btn {
+    background-color: rgba(var(--hover-rgb), 0.05);
+    color: var(--text-dim);
+    border: 1px solid rgba(var(--hover-rgb), 0.08);
+    border-radius: 9999px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.launcher-chip-btn:hover {
+    background-color: rgba(var(--hover-rgb), 0.12);
+    border-color: rgba(var(--hover-rgb), 0.18);
+    color: var(--text-bright);
+}
+
+.launcher-chip-btn:active {
+    background-color: rgba(var(--accent-rgb), 0.2);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.launcher-chip-label {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Section Header */
+.launcher-section-header {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    margin-bottom: 2px;
+}
+
+/* FlowBox Application Grid */
+.launcher-grid {
+    background-color: transparent;
+}
+
+.launcher-grid flowboxchild {
+    background-color: transparent;
+    padding: 0;
+    border-radius: 12px;
+}
+
+.launcher-grid flowboxchild:hover,
+.launcher-grid flowboxchild:selected {
+    background-color: transparent;
+}
+
+.launcher-grid-item {
+    background-color: rgba(var(--hover-rgb), 0.04);
+    border: 1px solid rgba(var(--hover-rgb), 0.08);
+    border-radius: 12px;
+    padding: 14px 8px 10px 8px;
+    min-width: 96px;
+    min-height: 84px;
+    cursor: pointer;
+    transition: background-color 130ms ease, border-color 130ms ease;
+}
+
+.launcher-grid flowboxchild:hover .launcher-grid-item,
+.launcher-grid-item:hover {
+    background-color: rgba(var(--hover-rgb), 0.09);
+    border-color: rgba(var(--hover-rgb), 0.18);
+}
+
+.launcher-grid flowboxchild:active .launcher-grid-item,
+.launcher-grid-item:active {
+    background-color: rgba(var(--accent-rgb), 0.15);
+    border-color: var(--accent);
+}
+
+.launcher-grid-icon {
+    margin-bottom: 2px;
+}
+
+.launcher-grid-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+}
+
+
 
 .launcher-row {
     background-color: transparent;
+    border: 1px solid transparent;
     border-radius: 8px;
-    padding: 4px 8px;
+    padding: 6px 10px;
     margin-bottom: 2px;
-    transition: background-color 130ms ease, color 130ms ease;
+    transition: background-color 130ms ease, border-color 130ms ease, color 130ms ease;
 }
 
 .launcher-row:hover {
     background-color: rgba(var(--hover-rgb), 0.06);
+    border-color: rgba(var(--hover-rgb), 0.08);
 }
 
 .launcher-row:active {
-    background-color: rgba(var(--accent-rgb), 0.3);
+    background-color: rgba(var(--accent-rgb), 0.25);
 }
 
 .launcher-row:selected {
-    background-color: rgba(var(--accent-rgb), 0.2);
+    background-color: rgba(var(--accent-rgb), 0.15);
+    border-color: rgba(var(--accent-rgb), 0.4);
     outline: none;
 }
 
@@ -476,10 +574,91 @@ window.launcher-window > contents {
     color: var(--accent);
 }
 
+.launcher-row-calc .launcher-name {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.launcher-row-shell .launcher-name {
+    font-family: monospace;
+    font-size: 13px;
+    color: var(--text-bright);
+}
+
 .launcher-no-results {
     font-size: 14px;
     color: var(--text-faint);
     padding: 40px;
+}
+
+/* Footer Hints Bar */
+.launcher-footer {
+    padding-top: 8px;
+    border-top: 1px solid rgba(var(--hover-rgb), 0.08);
+}
+
+.launcher-key-badge {
+    background-color: rgba(var(--hover-rgb), 0.1);
+    border: 1px solid rgba(var(--hover-rgb), 0.15);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+}
+
+.launcher-hint-text {
+    font-size: 11px;
+    color: var(--text-dim);
+}
+
+/* App Actions Popover */
+.launcher-actions-popover contents {
+    background-color: var(--surface-overlay);
+    border: 1px solid rgba(var(--hover-rgb), 0.14);
+    border-radius: 12px;
+    padding: 6px;
+    box-shadow: 0 8px 24px rgba(var(--shadow-rgb), 0.45);
+}
+
+.launcher-actions-box {
+    min-width: 170px;
+}
+
+.launcher-actions-header {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    padding: 4px 8px 6px 8px;
+    border-bottom: 1px solid rgba(var(--hover-rgb), 0.08);
+    margin-bottom: 2px;
+}
+
+.launcher-action-btn {
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 6px 10px;
+    color: var(--text);
+    transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.launcher-action-btn:hover {
+    background-color: rgba(var(--hover-rgb), 0.08);
+    border-color: rgba(var(--hover-rgb), 0.12);
+    color: var(--text-bright);
+}
+
+.launcher-action-btn:active {
+    background-color: rgba(var(--accent-rgb), 0.2);
+    border-color: var(--accent);
+}
+
+.launcher-action-label {
+    font-size: 13px;
+    font-weight: 500;
 }
 
 /* Clipboard History */
@@ -804,9 +983,9 @@ window.osd-window > contents {
 
 .bar-style-solid.bar {
     background-color: var(--surface);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid rgba(var(--hover-rgb), 0.12);
     box-shadow: 0 2px 8px rgba(var(--shadow-rgb), 0.25);
-    padding: 0 12px;
+    padding: 0 16px;
 }
 
 .bar-style-solid .bar-section {
@@ -818,18 +997,28 @@ window.osd-window > contents {
     margin: 0;
 }
 
+.bar-style-solid .bar-section:not(:last-child) {
+    border-right: 1px solid rgba(var(--hover-rgb), 0.08);
+    padding-right: 8px;
+    margin-right: 8px;
+}
+
 .bar-style-solid .widget-pill {
-    background-color: rgba(var(--hover-rgb), 0.04);
+    background-color: transparent;
     border-radius: 6px;
-    padding: 1px 4px;
-    margin: 0 1px;
+    padding: 2px 6px;
+    margin: 0 2px;
+}
+
+.bar-style-solid .widget-pill:hover {
+    background-color: rgba(var(--hover-rgb), 0.08);
 }
 
 .bar-style-minimal.bar {
-    background-color: rgba(0, 0, 0, 0.35);
-    border-bottom: none;
+    background-color: var(--surface);
+    border-bottom: 1px solid rgba(var(--hover-rgb), 0.08);
     box-shadow: none;
-    padding: 0 8px;
+    padding: 0 10px;
 }
 
 .bar-style-minimal .bar-section {
@@ -845,12 +1034,22 @@ window.osd-window > contents {
     background-color: transparent;
     border: none;
     box-shadow: none;
-    padding: 0 3px;
-    margin: 0;
+    padding: 0 4px;
+    margin: 0 2px;
 }
 
 .bar-style-minimal .widget-label {
+    font-size: 11px;
     font-weight: 500;
+    color: var(--text-dim);
+}
+
+.bar-style-minimal .widget-pill:hover .widget-label {
+    color: var(--text-bright);
+}
+
+.bar-style-minimal image {
+    pixel-size: 12;
 }
 
 /* 3. Control Center Styles: cards (GNOME-like) vs compact (Minimalist Tray) */
@@ -887,7 +1086,7 @@ window.osd-window > contents {
 .control-center-style-cards .quick-toggle.active {
     background-color: var(--accent);
     color: var(--accent-contrast);
-    box-shadow: 0 4px 14px rgba(var(--accent-rgb), 0.35);
+    box-shadow: none;
 }
 
 /* GNOME Sliders Container Card */
@@ -1092,60 +1291,118 @@ window.osd-window > contents {
     font-size: 11px;
 }
 
-/* 5. Launcher Styles: centered (default) vs fullscreen vs compact */
+/* 5. Launcher Styles: centered (Spotlight Canvas) vs fullscreen (App Dashboard) vs compact (Command HUD) */
 .launcher-style-centered.launcher-card {
     border-radius: 18px;
     padding: 18px;
     box-shadow: 0 16px 48px rgba(var(--shadow-rgb), 0.6);
 }
 
+/* Fullscreen: Expansive App Dashboard */
 .launcher-style-fullscreen.launcher-card {
-    background-color: rgba(var(--bg-rgb), 0.94);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 32px 48px;
+    background-color: var(--surface-overlay);
+    border: 1px solid rgba(var(--hover-rgb), 0.14);
+    border-radius: 24px;
+    padding: 24px 32px;
     box-shadow: 0 24px 64px rgba(var(--shadow-rgb), 0.7);
 }
 
+.launcher-overlay.launcher-overlay-fullscreen {
+    background-color: rgba(var(--shadow-rgb), 0.82);
+}
+
 .launcher-style-fullscreen .launcher-search {
-    font-size: 18px;
-    padding: 14px 20px;
-    border-radius: 14px;
-    margin-bottom: 12px;
-}
-
-.launcher-style-fullscreen .launcher-item {
+    font-size: 16px;
     padding: 12px 18px;
-    border-radius: 12px;
+    border-radius: 14px;
+    margin-bottom: 8px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-.launcher-style-fullscreen .launcher-item-name {
-    font-size: 15px;
+.launcher-style-fullscreen .launcher-chips-bar {
+    padding: 8px 0 12px 0;
+}
+
+.launcher-style-fullscreen .launcher-grid-item {
+    min-width: 110px;
+    min-height: 100px;
+    padding: 18px 12px 14px 12px;
+}
+
+.launcher-style-fullscreen .launcher-grid-label {
+    font-size: 13px;
     font-weight: 600;
 }
 
+.launcher-style-fullscreen .launcher-row {
+    padding: 10px 16px;
+    border-radius: 10px;
+}
+
+.launcher-style-fullscreen .launcher-name {
+    font-size: 15px;
+}
+
+/* Compact: Ultra-fast single-line Command HUD */
 .launcher-style-compact.launcher-card {
-    border-radius: 12px;
-    padding: 8px 10px;
-    box-shadow: 0 8px 24px rgba(var(--shadow-rgb), 0.45);
+    border-radius: 10px;
+    padding: 10px 12px;
+    box-shadow: 0 8px 24px rgba(var(--shadow-rgb), 0.5);
+    border: 1px solid rgba(var(--hover-rgb), 0.14);
 }
 
 .launcher-style-compact .launcher-search {
-    font-size: 12px;
+    font-size: 13px;
     padding: 6px 10px;
+    border-radius: 8px;
+    margin-bottom: 2px;
 }
 
-.launcher-style-compact .launcher-item {
-    padding: 5px 8px;
+.launcher-style-compact .launcher-row {
+    padding: 6px 10px;
+    margin: 1px 6px 1px 2px;
     border-radius: 6px;
 }
 
-.launcher-style-compact .launcher-item-name {
-    font-size: 12px;
+.launcher-style-compact .launcher-scrolled {
+    margin-top: 4px;
+    padding-right: 2px;
 }
 
-.launcher-style-compact .launcher-item-comment {
-    font-size: 10px;
+.launcher-style-compact .launcher-list {
+    padding-right: 8px;
+}
+
+.launcher-style-compact scrollbar {
+    margin-left: 4px;
+    margin-right: 0;
+    min-width: 6px;
+}
+
+.launcher-style-compact scrollbar slider {
+    min-width: 4px;
+    border-radius: 9999px;
+    background-color: rgba(var(--hover-rgb), 0.25);
+}
+
+.launcher-style-compact scrollbar slider:hover {
+    background-color: rgba(var(--hover-rgb), 0.45);
+}
+
+.launcher-style-compact .launcher-icon {
+    pixel-size: 20;
+    margin-right: 4px;
+}
+
+.launcher-style-compact .launcher-name {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.launcher-style-compact .launcher-desc {
+    font-size: 11px;
 }
 
 /* Notification Surface */
@@ -2104,7 +2361,7 @@ window.control-center-window > contents {
 .slider-scale:active slider {
     transform: scale(1.15);
     background-color: var(--text-bright);
-    box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.5);
+    box-shadow: 0 1px 3px rgba(var(--shadow-rgb), 0.5);
 }
 
 .slider-value-label {
@@ -2712,7 +2969,7 @@ window.polkit-window > contents {
 
 .polkit-auth-btn:hover {
     background-color: var(--accent-hover);
-    box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.4);
+    box-shadow: none;
 }
 
 

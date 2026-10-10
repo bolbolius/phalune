@@ -539,6 +539,9 @@ func (s *Shell) Start() error {
 		Reload:    s.ReloadConfig,
 		PowerMenu: s.TogglePowerMenu,
 		Clipboard: s.ToggleClipboard,
+		Screenshot: func() {
+			s.CaptureScreenshot("interactive")
+		},
 	})
 	s.launcher = launch
 
