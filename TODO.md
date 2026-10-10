@@ -63,6 +63,6 @@
   - [X] Static wallpaper setting per monitor.
   - [X] Slideshow / auto-rotation.
   - [X] Dynamic color extraction.
-- [ ] Making UX better.
+- [X] Making UX better.
 - [ ] Scripts for installation.
 - [ ] Usage documents.
