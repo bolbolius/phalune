@@ -177,25 +177,25 @@ func (pm *PowerMenu) setupInteractivity() {
 				go func() { _ = pm.sessionMgr.Suspend() }()
 			}
 			return true
-		case gdk.KEY_h, gdk.KEY_H, gdk.KEY_3:
+		case gdk.KEY_h, gdk.KEY_H, gdk.KEY_6:
 			pm.Close()
 			if pm.sessionMgr != nil {
 				go func() { _ = pm.sessionMgr.Hibernate() }()
 			}
 			return true
-		case gdk.KEY_o, gdk.KEY_O, gdk.KEY_4:
+		case gdk.KEY_o, gdk.KEY_O, gdk.KEY_3:
 			pm.Close()
 			if pm.sessionMgr != nil {
 				go func() { _ = pm.sessionMgr.Logout() }()
 			}
 			return true
-		case gdk.KEY_r, gdk.KEY_R, gdk.KEY_5:
+		case gdk.KEY_r, gdk.KEY_R, gdk.KEY_4:
 			pm.Close()
 			if pm.sessionMgr != nil {
 				go func() { _ = pm.sessionMgr.Reboot() }()
 			}
 			return true
-		case gdk.KEY_p, gdk.KEY_P, gdk.KEY_6:
+		case gdk.KEY_p, gdk.KEY_P, gdk.KEY_5:
 			pm.Close()
 			if pm.sessionMgr != nil {
 				go func() { _ = pm.sessionMgr.PowerOff() }()

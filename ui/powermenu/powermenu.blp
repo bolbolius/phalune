@@ -104,10 +104,10 @@ Overlay overlay_box {
       }
 
       Button hibernate_button {
-        tooltip-text: _("Hibernate (3 or H)");
+        tooltip-text: _("Hibernate (6 or H)");
         styles ["powermenu-action-btn"]
         layout {
-          row: 0;
+          row: 1;
           column: 2;
         }
 
@@ -130,18 +130,18 @@ Overlay overlay_box {
           }
 
           Label {
-            label: "3 / H";
+            label: "6 / H";
             styles ["powermenu-key-hint"]
           }
         };
       }
 
       Button logout_button {
-        tooltip-text: _("Log Out (4 or O)");
+        tooltip-text: _("Log Out (3 or O)");
         styles ["powermenu-action-btn"]
         layout {
-          row: 1;
-          column: 0;
+          row: 0;
+          column: 2;
         }
 
         child: Box {
@@ -163,18 +163,18 @@ Overlay overlay_box {
           }
 
           Label {
-            label: "4 / O";
+            label: "3 / O";
             styles ["powermenu-key-hint"]
           }
         };
       }
 
       Button reboot_button {
-        tooltip-text: _("Restart (5 or R)");
+        tooltip-text: _("Restart (4 or R)");
         styles ["powermenu-action-btn"]
         layout {
           row: 1;
-          column: 1;
+          column: 0;
         }
 
         child: Box {
@@ -196,18 +196,18 @@ Overlay overlay_box {
           }
 
           Label {
-            label: "5 / R";
+            label: "4 / R";
             styles ["powermenu-key-hint"]
           }
         };
       }
 
       Button shutdown_button {
-        tooltip-text: _("Shut Down (6 or P)");
+        tooltip-text: _("Shut Down (5 or P)");
         styles ["powermenu-action-btn", "destructive-action"]
         layout {
           row: 1;
-          column: 2;
+          column: 1;
         }
 
         child: Box {
@@ -229,7 +229,7 @@ Overlay overlay_box {
           }
 
           Label {
-            label: "6 / P";
+            label: "5 / P";
             styles ["powermenu-key-hint"]
           }
         };
