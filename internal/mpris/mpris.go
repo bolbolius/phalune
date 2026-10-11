@@ -26,6 +26,9 @@ const (
 
 	// maxArtBytes caps how much album art is downloaded into the cache.
 	maxArtBytes = 10 << 20
+
+	// notifyDebounce merges D-Bus signal bursts into one trailing update.
+	notifyDebounce = 80 * time.Millisecond
 )
 
 // PlaybackStatus represents player state.
@@ -65,9 +68,16 @@ type Controller struct {
 	httpClient *http.Client
 	cacheDir   string
 	activeBus  string
-	callbacks  []func(active *PlayerState)
-	ctx        context.Context
-	cancel     context.CancelFunc
+	// playStarted records when each bus last entered Playing; the most
+	// recent press wins when several players claim to play at once.
+	playStarted map[string]time.Time
+	callbacks   []func(active *PlayerState)
+	// notifyTimer merges signal bursts; lastBus/lastSig suppress duplicates.
+	notifyTimer *time.Timer
+	lastBus     string
+	lastSig     string
+	ctx         context.Context
+	cancel      context.CancelFunc
 }
 
 // New creates and starts a new MPRIS controller.
@@ -85,15 +95,16 @@ func New() (*Controller, error) {
 	pruneArtCache(cacheDir)
 
 	c := &Controller{
-		conn:       conn,
-		players:    make(map[string]*PlayerState),
-		ownerToBus: make(map[string]string),
-		artCache:   make(map[string]string),
-		httpClient: &http.Client{Timeout: 5 * time.Second},
-		cacheDir:   cacheDir,
-		callbacks:  make([]func(*PlayerState), 0),
-		ctx:        ctx,
-		cancel:     cancel,
+		conn:        conn,
+		players:     make(map[string]*PlayerState),
+		ownerToBus:  make(map[string]string),
+		artCache:    make(map[string]string),
+		playStarted: make(map[string]time.Time),
+		httpClient:  &http.Client{Timeout: 5 * time.Second},
+		cacheDir:    cacheDir,
+		callbacks:   make([]func(*PlayerState), 0),
+		ctx:         ctx,
+		cancel:      cancel,
 	}
 
 	c.initPlayers()
@@ -105,6 +116,12 @@ func New() (*Controller, error) {
 // Close disconnects the controller.
 func (c *Controller) Close() error {
 	c.cancel()
+	c.mu.Lock()
+	if c.notifyTimer != nil {
+		c.notifyTimer.Stop()
+		c.notifyTimer = nil
+	}
+	c.mu.Unlock()
 	if c.conn != nil {
 		return c.conn.Close()
 	}
@@ -145,17 +162,70 @@ func (c *Controller) getActiveLocked() *PlayerState {
 }
 
 func (c *Controller) notifyChange() {
-	c.mu.RLock()
+	c.mu.Lock()
+	if c.notifyTimer != nil {
+		c.notifyTimer.Stop()
+	}
+	c.notifyTimer = time.AfterFunc(notifyDebounce, c.flushNotify)
+	c.mu.Unlock()
+}
+
+// flushNotify delivers the active state unless identical to the last.
+func (c *Controller) flushNotify() {
+	c.mu.Lock()
+	c.notifyTimer = nil
 	active := c.getActiveLocked()
 	listeners := make([]func(*PlayerState), len(c.callbacks))
 	copy(listeners, c.callbacks)
-	c.mu.RUnlock()
+	sig := activeSig(active)
+	bus := ""
+	if active != nil {
+		bus = active.BusName
+	}
+	if bus == c.lastBus && sig == c.lastSig {
+		c.mu.Unlock()
+		return
+	}
+	c.lastBus, c.lastSig = bus, sig
+	c.mu.Unlock()
 
 	for _, cb := range listeners {
 		if cb != nil {
 			cb(active)
 		}
 	}
+}
+
+// activeSig fingerprints everything the UI and bus mirror.
+func activeSig(st *PlayerState) string {
+	if st == nil {
+		return "nil"
+	}
+	var b strings.Builder
+	b.WriteString(st.BusName)
+	b.WriteByte(0)
+	b.WriteString(string(st.Status))
+	b.WriteByte(0)
+	b.WriteString(st.Identity)
+	b.WriteByte(0)
+	b.WriteString(st.Title)
+	b.WriteByte(0)
+	b.WriteString(st.Artist)
+	b.WriteByte(0)
+	b.WriteString(st.Album)
+	b.WriteByte(0)
+	b.WriteString(st.ArtURL)
+	b.WriteByte(0)
+	b.WriteString(st.LocalArtPath)
+	b.WriteByte(0)
+	for _, f := range []bool{st.CanGoNext, st.CanGoPrevious, st.CanPlay, st.CanPause, st.CanControl} {
+		if f {
+			b.WriteByte('1')
+		} else {
+			b.WriteByte('0')
+		}
+	}
+	return b.String()
 }
 
 func (c *Controller) initPlayers() {
@@ -183,6 +253,11 @@ func (c *Controller) initPlayers() {
 				c.ownerToBus[st.Owner] = name
 			}
 			c.players[name] = st
+			if st.Status == PlaybackPlaying {
+				if _, ok := c.playStarted[name]; !ok {
+					c.playStarted[name] = time.Now()
+				}
+			}
 			c.recalculateActiveLocked()
 			c.mu.Unlock()
 		}
@@ -401,38 +476,61 @@ func (c *Controller) resolveArtURL(st *PlayerState) {
 }
 
 func (c *Controller) recalculateActiveLocked() {
-	// Prioritize Playing players, then Paused, then others. Bus names are
-	// walked in sorted order so the result is deterministic.
-	busNames := make([]string, 0, len(c.players))
-	for name := range c.players {
-		busNames = append(busNames, name)
+	// Keep the current player while valid; preempt only on fresh
+	// playback or when it goes away.
+	if cur, ok := c.players[c.activeBus]; ok {
+		switch cur.Status {
+		case PlaybackPlaying:
+			return
+		case PlaybackPaused:
+			if !anyPlayingLocked(c.players) {
+				return
+			}
+		}
 	}
-	sort.Strings(busNames)
 
-	var candidatePlaying, candidatePaused, candidateAny string
-	for _, name := range busNames {
-		st := c.players[name]
-		if candidatePlaying == "" && st.Status == PlaybackPlaying {
-			candidatePlaying = name
-		}
-		if candidatePaused == "" && st.Status == PlaybackPaused {
-			candidatePaused = name
-		}
-		if candidateAny == "" {
-			candidateAny = name
+	// Prefer players that are playing, most recent press first.
+	var playing []string
+	var paused []string
+	var any []string
+	for name, st := range c.players {
+		any = append(any, name)
+		switch st.Status {
+		case PlaybackPlaying:
+			playing = append(playing, name)
+		case PlaybackPaused:
+			paused = append(paused, name)
 		}
 	}
+	sort.Strings(any)
+	sort.Strings(paused)
+	sort.SliceStable(playing, func(i, j int) bool {
+		ti, tj := c.playStarted[playing[i]], c.playStarted[playing[j]]
+		if !ti.Equal(tj) {
+			return ti.After(tj)
+		}
+		return playing[i] < playing[j]
+	})
 
 	switch {
-	case candidatePlaying != "":
-		c.activeBus = candidatePlaying
-	case candidatePaused != "":
-		c.activeBus = candidatePaused
-	case candidateAny != "":
-		c.activeBus = candidateAny
+	case len(playing) > 0:
+		c.activeBus = playing[0]
+	case len(paused) > 0:
+		c.activeBus = paused[0]
+	case len(any) > 0:
+		c.activeBus = any[0]
 	default:
 		c.activeBus = ""
 	}
+}
+
+func anyPlayingLocked(players map[string]*PlayerState) bool {
+	for _, st := range players {
+		if st.Status == PlaybackPlaying {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *Controller) listenBusEvents() {
@@ -487,6 +585,7 @@ func (c *Controller) handleSignal(sig *dbus.Signal) {
 				}
 				delete(c.players, name)
 			}
+			delete(c.playStarted, name)
 			if c.activeBus == name {
 				c.recalculateActiveLocked()
 			}
@@ -507,6 +606,11 @@ func (c *Controller) handleSignal(sig *dbus.Signal) {
 					c.ownerToBus[st.Owner] = name
 				}
 				c.players[name] = st
+				if st.Status == PlaybackPlaying {
+					if _, ok := c.playStarted[name]; !ok {
+						c.playStarted[name] = time.Now()
+					}
+				}
 				c.recalculateActiveLocked()
 				c.mu.Unlock()
 			}
@@ -542,7 +646,12 @@ func (c *Controller) handleSignal(sig *dbus.Signal) {
 		if st != nil {
 			if val, ok := changed["PlaybackStatus"]; ok {
 				if s, ok := val.Value().(string); ok {
-					st.Status = PlaybackStatus(s)
+					if next := PlaybackStatus(s); next != st.Status {
+						st.Status = next
+						if next == PlaybackPlaying {
+							c.playStarted[targetBus] = time.Now()
+						}
+					}
 				}
 			}
 			if val, ok := changed["Metadata"]; ok {

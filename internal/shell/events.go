@@ -17,6 +17,7 @@ import (
 // event bus so external programs can subscribe ("phalune msg subscribe").
 // Emitted topics: workspaces, volume, brightness, microphone, mpris,
 // notifications, battery.
+// Managers created later register explicitly after creation in Start.
 func (s *Shell) startEventEmitters(ctx context.Context) {
 	if s.eventBus == nil {
 		return
@@ -24,9 +25,7 @@ func (s *Shell) startEventEmitters(ctx context.Context) {
 
 	s.emitCompositorEvents(ctx)
 	s.emitOSDEvents()
-	s.emitNotificationEvents(ctx)
 	s.emitBatteryEvents(ctx)
-	s.emitMprisEvents(ctx)
 }
 
 // emitMprisEvents mirrors the active media player state onto the bus.
