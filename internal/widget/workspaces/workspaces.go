@@ -118,15 +118,13 @@ func (w *Workspaces) updateWorkspaces(allWorkspaces []compositor.Workspace) {
 		if !exists {
 			btnBuilder := gtk.NewBuilderFromString(ui.WorkspaceButton)
 			btn = btnBuilder.GetObject("workspace_button").Cast().(*gtk.Button)
-			btn.SetLabel(displayName)
+			btn.SetTooltipText(displayName)
 			btn.ConnectClicked(func() {
 				_ = w.compositorSvc.FocusWorkspace(wsID)
 			})
 			w.buttons[wsID] = btn
 		} else {
-			if btn.Label() != displayName {
-				btn.SetLabel(displayName)
-			}
+			btn.SetTooltipText(displayName)
 		}
 
 		if ws.IsFocused {

@@ -2,20 +2,21 @@ using Gtk 4.0;
 
 Box privacy_box {
   orientation: horizontal;
-  spacing: 6;
+  spacing: 4;
   visible: false;
-  styles ["widget-box", "privacy-widget"]
+  tooltip-text: _("Hardware in use");
+  styles ["widget", "privacy-widget", "widget-pill"]
 
   Image mic_icon {
     icon-name: "audio-input-microphone-symbolic";
-    pixel-size: 14;
+    pixel-size: 16;
     visible: false;
     styles ["privacy-icon", "mic-active"]
   }
 
   Image camera_icon {
     icon-name: "camera-web-symbolic";
-    pixel-size: 14;
+    pixel-size: 16;
     visible: false;
     styles ["privacy-icon", "camera-active"]
   }

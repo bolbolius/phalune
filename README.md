@@ -82,7 +82,7 @@ Loaded from `$XDG_CONFIG_HOME/phalune/config.toml` or `~/.config/phalune/config.
 
 ```toml
 [bar]
-height = 32
+height = 36
 
 [bar.left]
 widgets = ["workspaces"]

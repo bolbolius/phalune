@@ -2,8 +2,9 @@ using Gtk 4.0;
 
 Box notifications_box {
   orientation: horizontal;
-  spacing: 0;
-  styles ["widget-box", "notifications-widget", "widget-pill"]
+  spacing: 4;
+  tooltip-text: _("Notifications");
+  styles ["widget", "notifications-widget", "widget-pill"]
 
   Image notifications_icon {
     icon-name: "preferences-system-notifications-symbolic";

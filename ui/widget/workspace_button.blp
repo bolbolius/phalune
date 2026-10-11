@@ -1,8 +1,15 @@
 using Gtk 4.0;
 
 Button workspace_button {
-  label: _("1");
   tooltip-text: _("Workspace");
+  valign: center;
+  halign: center;
   styles ["workspace-btn"]
+
+  child: Box indicator_dot {
+    valign: center;
+    halign: center;
+    styles ["workspace-dot"]
+  };
 }
 

@@ -64,6 +64,7 @@ func New(app *gtk.Application, monitor *gdk.Monitor, cfg *config.Config, registr
 
 	builder := gtk.NewBuilderFromString(ui.Bar)
 	centerBox := builder.GetObject("bar_root").Cast().(*gtk.CenterBox)
+	centerBox.SetSizeRequest(-1, height)
 
 	// Style class drives presentation-only variants (CSS) today; layouts
 	// with dedicated structure plug in via templates later.
@@ -108,6 +109,13 @@ func New(app *gtk.Application, monitor *gdk.Monitor, cfg *config.Config, registr
 		}
 		rightBox.Append(w.Root())
 		createdWidgets = append(createdWidgets, w)
+	}
+
+	// Empty groups stay hidden: :empty is not a GTK selector.
+	for _, section := range []*gtk.Box{leftBox, centerBoxWidget, rightBox} {
+		if section.FirstChild() == nil {
+			section.SetVisible(false)
+		}
 	}
 
 	return &Bar{

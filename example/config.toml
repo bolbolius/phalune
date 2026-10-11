@@ -24,7 +24,7 @@ name = "phalune"
 
 [bar]
 # Height of the top bar in pixels (exclusive zone will be reserved accordingly)
-height = 32
+height = 36
 
 # Bar position on screen: "top" or "bottom"
 position = "top"
@@ -42,7 +42,7 @@ widgets = ["clock"]
 
 # Right section widgets (arranged horizontally on the far right)
 [bar.right]
-widgets = ["privacy", "tray", "wifi", "bluetooth", "audio", "battery", "keyboard", "clipboard", "notifications", "ipc:demo", "power"]
+widgets = ["tray", "audio", "battery", "notifications", "power"]
 
 # ─── Widget: Workspaces ───────────────────────────────────────────────────────
 

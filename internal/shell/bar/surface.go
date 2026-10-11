@@ -27,6 +27,7 @@ func ConfigureLayerSurface(win *gtk.Window, monitor *gdk.Monitor, height int, po
 	gtk4layershell.SetAnchor(win, gtk4layershell.LayerShellEdgeLeft, true)
 	gtk4layershell.SetAnchor(win, gtk4layershell.LayerShellEdgeRight, true)
 
+	// Explicit height reserves the exclusive zone; otherwise use automatic zoning.
 	if height > 0 {
 		gtk4layershell.SetExclusiveZone(win, height)
 	} else {

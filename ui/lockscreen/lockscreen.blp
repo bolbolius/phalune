@@ -75,11 +75,15 @@ Overlay overlay_box {
           hexpand: true;
           placeholder-text: _("Enter password…");
           show-peek-icon: true;
+          activates-default: true;
           styles ["lockscreen-entry"]
         }
 
         Button unlock_button {
           tooltip-text: _("Unlock");
+          width-request: 40;
+          height-request: 40;
+          receives-default: true;
           styles ["lockscreen-unlock-btn"]
 
           child: Image {
