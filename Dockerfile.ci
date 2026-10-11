@@ -5,3 +5,7 @@ RUN xbps-install -Sy --repository=https://repo-fastly.voidlinux.org/current \
     gtk4-devel gtk4-layer-shell gtk4-layer-shell-devel \
     polkit-devel gobject-introspection blueprint-compiler xorg-server-xvfb && \
     rm -rf /var/cache/xbps/*
+
+# Pre-fetch Go modules so per-run builds skip downloads.
+COPY go.mod go.sum /tmp/modseed/
+RUN cd /tmp/modseed && go mod download && rm -rf /tmp/modseed

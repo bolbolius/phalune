@@ -6,6 +6,9 @@
 # Generated compile-time UI files
 *.ui
 
+# CI-only Go build cache (GOCACHE under workspace in container jobs)
+/.ci-cache/
+
 # OS & Editor
 .DS_Store
 *.swp
