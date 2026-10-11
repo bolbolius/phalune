@@ -27,6 +27,7 @@ type AuthDialog struct {
 	errorLabel       *gtk.Label
 	cancelBtn        *gtk.Button
 	authBtn          *gtk.Button
+	authSpinner      *gtk.Spinner
 
 	taskId       uintptr
 	cookie       string
@@ -72,6 +73,7 @@ func NewAuthDialog(app *gtk.Application) (*AuthDialog, error) {
 	errorLabel := builder.GetObject("error_label").Cast().(*gtk.Label)
 	cancelBtn := builder.GetObject("cancel_button").Cast().(*gtk.Button)
 	authBtn := builder.GetObject("auth_button").Cast().(*gtk.Button)
+	authSpinner := builder.GetObject("auth_spinner").Cast().(*gtk.Spinner)
 
 	win.SetChild(overlayBox)
 
@@ -89,6 +91,7 @@ func NewAuthDialog(app *gtk.Application) (*AuthDialog, error) {
 		errorLabel:       errorLabel,
 		cancelBtn:        cancelBtn,
 		authBtn:          authBtn,
+		authSpinner:      authSpinner,
 	}
 
 	d.setupEvents()
@@ -143,6 +146,8 @@ func (d *AuthDialog) submit() {
 	pass := d.passwordEntry.Text()
 	d.authBtn.SetSensitive(false)
 	d.passwordEntry.SetSensitive(false)
+	d.authSpinner.SetVisible(true)
+	d.authSpinner.Start()
 	if d.onResponse != nil {
 		d.onResponse(d.taskId, pass)
 	}
@@ -199,6 +204,8 @@ func (d *AuthDialog) Open(
 	d.errorLabel.SetText("")
 	d.errorLabel.SetVisible(false)
 	d.authBtn.SetSensitive(true)
+	d.authSpinner.Stop()
+	d.authSpinner.SetVisible(false)
 
 	d.window.Present()
 
@@ -217,6 +224,8 @@ func (d *AuthDialog) ShowError(msg string) {
 	d.passwordEntry.SetSensitive(true)
 	d.passwordEntry.SetText("")
 	d.authBtn.SetSensitive(true)
+	d.authSpinner.Stop()
+	d.authSpinner.SetVisible(false)
 	d.passwordEntry.GrabFocus()
 }
 

@@ -96,6 +96,12 @@ Overlay overlay_box {
         styles ["polkit-cancel-btn"]
       }
 
+      Spinner auth_spinner {
+        visible: false;
+        valign: center;
+        styles ["polkit-auth-spinner"]
+      }
+
       Button auth_button {
         label: _("Authenticate");
         styles ["suggested-action", "polkit-auth-btn"]
