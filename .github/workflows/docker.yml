@@ -36,7 +36,6 @@ jobs:
           context: .
           file: ./Dockerfile.ci
           push: true
-          tags: |
-            ghcr.io/${{ github.repository }}/ci:latest
+          tags: ghcr.io/bolbolius/phalune-ci:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max

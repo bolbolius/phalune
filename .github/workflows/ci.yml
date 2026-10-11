@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     container:
-      image: ghcr.io/bolbolius/phalune/ci:latest
+      image: ghcr.io/bolbolius/phalune-ci:latest
     steps:
       - uses: actions/checkout@v4
 
