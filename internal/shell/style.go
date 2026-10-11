@@ -22,32 +22,8 @@ var tokensCSS string
 //go:embed animations.css
 var animationsCSS string
 
-// CSSDefaults maps known token names to their default fallback values.
-var CSSDefaults = map[string]string{
-	"surface":             "rgba(26, 27, 38, 0.75)",
-	"surface-raised":      "rgba(26, 27, 38, 0.85)",
-	"surface-overlay":     "rgba(26, 27, 38, 0.94)",
-	"surface-solid":       "rgba(22, 22, 30, 0.98)",
-	"surface-solid-color": "#16161e",
-	"text":                "#c0caf5",
-	"text-dim":            "#a9b1d6",
-	"text-faint":          "#787c99",
-	"text-bright":         "#ffffff",
-	"accent-rgb":          "122 162 247",
-	"accent":              "#7aa2f7",
-	"accent-hover":        "#89b4fa",
-	"accent-active":       "#b4befe",
-	"accent-contrast":     "#1a1b26",
-	"accent-contrast-rgb": "26 27 38",
-	"muted":               "#565f89",
-	"error-rgb":           "247 118 142",
-	"error":               "#f7768e",
-	"error-bright":        "#ff9eaf",
-	"success":             "#9ece6a",
-	"warning":             "#e0af68",
-	"hover-rgb":           "255 255 255",
-	"shadow-rgb":          "0 0 0",
-}
+// CSSDefaults aliases theme.DefaultTokens: one shared map.
+var CSSDefaults = theme.DefaultTokens
 
 // ApplyDefaultCSS applies the built-in default stylesheet with no theme.
 func ApplyDefaultCSS() error {

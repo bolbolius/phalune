@@ -13,18 +13,19 @@ shadow = 0.45
 [colors]
 surface = "#1a1b26"
 surface-raised = "#24283b"
+surface-overlay = "#222436"
 surface-solid = "#16161e"
 
 text = "#c0caf5"
 text-dim = "#a9b1d6"
-text-faint = "#565f89"
+text-faint = "#878fb8"
 text-bright = "#ffffff"
 
 accent = "#7aa2f7"
 accent-hover = "#89b4fa"
 accent-active = "#b4befe"
 accent-contrast = "#15161e"
-muted = "#565f89"
+muted = "#878fb8"
 
 success = "#9ece6a"
 warning = "#e0af68"

@@ -9,10 +9,10 @@ window.bar-window {
 .bar {
     background-color: var(--surface);
     color: var(--text);
-    border-bottom: 1px solid rgba(var(--hover-rgb), 0.1);
-    padding: 0 8px 2px 8px;
+    border-bottom: 1px solid var(--border-soft);
+    padding: 4px 10px;
     font-family: "Ubuntu", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    font-size: 13px;
+    font-size: var(--bar-font-size);
     min-height: var(--bar-height);
 }
 
@@ -26,7 +26,7 @@ window.bar-window {
 
 /* Clock Widget */
 .widget-clock {
-    font-size: 13px;
+    font-size: var(--font-body);
     font-weight: 600;
     color: var(--text);
     background-color: transparent;
@@ -36,7 +36,6 @@ window.bar-window {
     margin: 0;
     min-width: 44px;
     font-feature-settings: "tnum";
-    cursor: pointer;
 }
 
 .widget-clock:hover {
@@ -48,52 +47,62 @@ window.bar-window {
     transform: scale(0.97);
 }
 
-/* Workspaces Widget */
+/* Workspaces Widget - GNOME shell dot indicators */
 .widget-workspaces {
-    padding: 0;
+    padding: 0 4px;
+    background-color: transparent;
+    border: none;
+    margin: 0;
 }
 
 .workspace-btn {
-    min-width: 26px;
-    min-height: calc(var(--bar-height) - 4px);
-    padding: 1px 2px;
-    margin: 0;
+    min-width: 24px;
+    min-height: 28px;
+    padding: 0;
+    margin: 0 2px;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-pill);
     background: transparent;
-    color: var(--text-faint);
-    font-size: var(--bar-font-size);
-    font-weight: 600;
-    cursor: pointer;
+    box-shadow: none;
 }
 
-.workspace-btn:hover {
-    background-color: rgba(var(--hover-rgb), 0.08);
-    color: var(--text);
+.workspace-dot {
+    min-width: 8px;
+    min-height: 8px;
+    border-radius: var(--radius-pill);
+    background-color: var(--text-faint);
+    opacity: 0.65;
+    transition: background-color var(--dur-med) var(--ease), opacity var(--dur-med) var(--ease), transform var(--dur-fast) var(--ease);
 }
 
-.workspace-btn:active {
-    background-color: rgba(var(--hover-rgb), 0.14);
-    transform: scale(0.96);
+.workspace-btn:hover .workspace-dot {
+    background-color: var(--text);
+    opacity: 0.9;
+    transform: scale(1.15);
 }
 
-.workspace-btn.active {
-    background-color: rgba(var(--hover-rgb), 0.10);
-    color: var(--text);
-    font-weight: 600;
+.workspace-btn:active .workspace-dot {
+    transform: scale(0.9);
 }
 
-.workspace-btn.focused {
-    min-width: 26px;
+/* Active / occupied workspace: distinctly brighter */
+.workspace-btn.active .workspace-dot {
+    background-color: var(--text);
+    opacity: 0.95;
+}
+
+/* Focused / current workspace: luna glow signature */
+.workspace-btn.focused .workspace-dot {
     background-color: var(--accent);
-    color: var(--accent-contrast);
-    font-weight: 700;
+    opacity: 1.0;
+    min-width: 9px;
+    min-height: 9px;
+    box-shadow: none;
 }
 
-.workspace-btn.urgent {
+.workspace-btn.urgent .workspace-dot {
     background-color: var(--error);
-    color: var(--text-bright);
-    font-weight: 700;
+    opacity: 1.0;
 }
 
 /* Common Bar Widget */
@@ -104,7 +113,6 @@ window.bar-window {
     padding: 1px 0;
     margin: 0;
     min-height: calc(var(--bar-height) - 4px);
-    cursor: pointer;
 }
 
 .widget-pill:hover {
@@ -180,15 +188,7 @@ window.bar-window {
     font-weight: 600;
 }
 
-/* ── Audio Widget ── */
-.widget-audio {
-    color: var(--text);
-}
-
-.widget-audio image {
-    color: var(--accent);
-}
-
+/* ── Audio Widget states ── */
 .widget-audio.muted {
     color: var(--muted);
 }
@@ -327,8 +327,7 @@ window.bar-window {
     border-radius: 6px;
     background: transparent;
     color: var(--text);
-    cursor: pointer;
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .tray-item-button:hover {
@@ -350,7 +349,7 @@ popover.tray-popover > contents {
     background-color: var(--surface-overlay);
     color: var(--text);
     border: 1px solid rgba(var(--hover-rgb), 0.12);
-    border-radius: 14px;
+    border-radius: var(--radius-md);
     padding: 6px;
     box-shadow: 0 8px 24px rgba(var(--shadow-rgb), 0.5);
 }
@@ -365,8 +364,8 @@ popover.tray-popover > contents {
     background: transparent;
     color: var(--text);
     padding: 6px 10px;
-    font-size: 13px;
-    transition: all 120ms ease-in-out;
+    font-size: var(--font-body);
+    transition: all var(--dur-fast) var(--ease)-in-out;
 }
 
 .tray-menu-item:hover {
@@ -414,13 +413,14 @@ window.launcher-window > contents {
     border: 1px solid rgba(var(--hover-rgb), 0.1);
     border-radius: 12px;
     padding: 8px 12px;
-    font-size: 14px;
-    transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
+    font-size: var(--font-large);
+    transition: border-color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
 
 .launcher-search:focus-within {
     border-color: var(--accent);
     outline: none;
+    box-shadow: none;
 }
 
 .launcher-scrolled {
@@ -441,11 +441,11 @@ window.launcher-window > contents {
     background-color: rgba(var(--hover-rgb), 0.05);
     color: var(--text-dim);
     border: 1px solid rgba(var(--hover-rgb), 0.08);
-    border-radius: 9999px;
+    border-radius: var(--radius-pill);
     padding: 6px 14px;
-    font-size: 13px;
+    font-size: var(--font-body);
     font-weight: 500;
-    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+    transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .launcher-chip-btn:hover {
@@ -461,13 +461,13 @@ window.launcher-window > contents {
 }
 
 .launcher-chip-label {
-    font-size: 12px;
+    font-size: var(--font-small);
     font-weight: 500;
 }
 
 /* Section Header */
 .launcher-section-header {
-    font-size: 11px;
+    font-size: var(--font-caption);
     font-weight: 700;
     letter-spacing: 0.8px;
     color: var(--text-dim);
@@ -498,8 +498,7 @@ window.launcher-window > contents {
     padding: 14px 8px 10px 8px;
     min-width: 96px;
     min-height: 84px;
-    cursor: pointer;
-    transition: background-color 130ms ease, border-color 130ms ease;
+    transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
 }
 
 .launcher-grid flowboxchild:hover .launcher-grid-item,
@@ -519,7 +518,7 @@ window.launcher-window > contents {
 }
 
 .launcher-grid-label {
-    font-size: 12px;
+    font-size: var(--font-small);
     font-weight: 500;
     color: var(--text);
 }
@@ -529,10 +528,10 @@ window.launcher-window > contents {
 .launcher-row {
     background-color: transparent;
     border: 1px solid transparent;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     padding: 6px 10px;
     margin-bottom: 2px;
-    transition: background-color 130ms ease, border-color 130ms ease, color 130ms ease;
+    transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .launcher-row:hover {
@@ -555,13 +554,13 @@ window.launcher-window > contents {
 }
 
 .launcher-name {
-    font-size: 14px;
+    font-size: var(--font-large);
     font-weight: 600;
     color: var(--text);
 }
 
 .launcher-desc {
-    font-size: 12px;
+    font-size: var(--font-small);
     color: var(--text-faint);
 }
 
@@ -577,17 +576,17 @@ window.launcher-window > contents {
 .launcher-row-calc .launcher-name {
     color: var(--accent);
     font-weight: 700;
-    font-size: 15px;
+    font-size: var(--font-title);
 }
 
 .launcher-row-shell .launcher-name {
     font-family: monospace;
-    font-size: 13px;
+    font-size: var(--font-body);
     color: var(--text-bright);
 }
 
 .launcher-no-results {
-    font-size: 14px;
+    font-size: var(--font-large);
     color: var(--text-faint);
     padding: 40px;
 }
@@ -603,13 +602,13 @@ window.launcher-window > contents {
     border: 1px solid rgba(var(--hover-rgb), 0.15);
     border-radius: 4px;
     padding: 1px 6px;
-    font-size: 11px;
+    font-size: var(--font-caption);
     font-weight: 600;
     color: var(--text-dim);
 }
 
 .launcher-hint-text {
-    font-size: 11px;
+    font-size: var(--font-caption);
     color: var(--text-dim);
 }
 
@@ -619,7 +618,7 @@ window.launcher-window > contents {
     border: 1px solid rgba(var(--hover-rgb), 0.14);
     border-radius: 12px;
     padding: 6px;
-    box-shadow: 0 8px 24px rgba(var(--shadow-rgb), 0.45);
+    box-shadow: var(--shadow-md);
 }
 
 .launcher-actions-box {
@@ -627,7 +626,7 @@ window.launcher-window > contents {
 }
 
 .launcher-actions-header {
-    font-size: 11px;
+    font-size: var(--font-caption);
     font-weight: 700;
     color: var(--text-dim);
     letter-spacing: 0.5px;
@@ -639,10 +638,10 @@ window.launcher-window > contents {
 .launcher-action-btn {
     background-color: transparent;
     border: 1px solid transparent;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     padding: 6px 10px;
     color: var(--text);
-    transition: background-color 120ms ease, border-color 120ms ease;
+    transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
 }
 
 .launcher-action-btn:hover {
@@ -657,7 +656,7 @@ window.launcher-window > contents {
 }
 
 .launcher-action-label {
-    font-size: 13px;
+    font-size: var(--font-body);
     font-weight: 500;
 }
 
@@ -690,13 +689,13 @@ window.clipboard-window > contents {
     border: 1px solid rgba(var(--hover-rgb), 0.1);
     border-radius: 12px;
     padding: 8px 12px;
-    font-size: 14px;
-    transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
+    font-size: var(--font-large);
+    transition: border-color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
 
 .clipboard-search:focus-within {
     border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.25);
+    box-shadow: none;
 }
 
 .clipboard-scrolled {
@@ -709,10 +708,10 @@ window.clipboard-window > contents {
 
 .clipboard-row {
     background-color: transparent;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     padding: 6px 10px;
     margin-bottom: 3px;
-    transition: background-color 130ms ease, color 130ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .clipboard-row:hover {
@@ -734,13 +733,13 @@ window.clipboard-window > contents {
 }
 
 .clipboard-name {
-    font-size: 13px;
+    font-size: var(--font-body);
     font-weight: 500;
     color: var(--text);
 }
 
 .clipboard-desc {
-    font-size: 11px;
+    font-size: var(--font-caption);
     color: var(--text-faint);
 }
 
@@ -748,7 +747,7 @@ window.clipboard-window > contents {
     opacity: 0.5;
     padding: 4px;
     border-radius: 6px;
-    transition: opacity 120ms ease, background-color 120ms ease, color 120ms ease;
+    transition: opacity var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .clipboard-row:hover .clipboard-delete-btn {
@@ -762,7 +761,7 @@ window.clipboard-window > contents {
 }
 
 .clipboard-no-results {
-    font-size: 13px;
+    font-size: var(--font-body);
     color: var(--text-faint);
     padding: 32px;
 }
@@ -772,11 +771,11 @@ window.clipboard-window > contents {
 }
 
 .clipboard-clear-btn {
-    font-size: 12px;
+    font-size: var(--font-small);
     color: var(--text-faint);
     padding: 4px 8px;
     border-radius: 6px;
-    transition: color 120ms ease, background-color 120ms ease;
+    transition: color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
 }
 
 .clipboard-clear-btn:hover {
@@ -801,11 +800,11 @@ window.screenshot-window > contents {
     border-radius: 16px;
     padding: 12px 16px;
     margin: 24px;
-    box-shadow: 0 8px 24px rgba(var(--shadow-rgb), 0.45);
+    box-shadow: var(--shadow-md);
 }
 
 .screenshot-preview {
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     border: 1px solid rgba(var(--hover-rgb), 0.12);
 }
 
@@ -814,13 +813,13 @@ window.screenshot-window > contents {
 }
 
 .screenshot-title {
-    font-size: 14px;
+    font-size: var(--font-large);
     font-weight: 600;
     color: var(--text);
 }
 
 .screenshot-info {
-    font-size: 11px;
+    font-size: var(--font-caption);
     color: var(--text-faint);
 }
 
@@ -829,13 +828,13 @@ window.screenshot-window > contents {
 }
 
 .screenshot-btn {
-    font-size: 12px;
+    font-size: var(--font-small);
     padding: 5px 12px;
     border-radius: 6px;
     background-color: rgba(var(--hover-rgb), 0.06);
     color: var(--text);
     border: 1px solid rgba(var(--hover-rgb), 0.1);
-    transition: background-color 130ms ease, color 130ms ease, border-color 130ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
 }
 
 .screenshot-btn:hover {
@@ -880,7 +879,7 @@ window.osd-window > contents {
     border-radius: 18px;
     padding: 8px 18px;
     margin: 12px;
-    box-shadow: 0 8px 24px rgba(var(--shadow-rgb), 0.45);
+    box-shadow: var(--shadow-md);
 }
 
 .osd-icon {
@@ -889,28 +888,28 @@ window.osd-window > contents {
 }
 
 .osd-label {
-    font-size: 13px;
+    font-size: var(--font-body);
     font-weight: 600;
     color: var(--text);
 }
 
 .osd-progress {
-    min-height: 8px;
-    border-radius: 9999px;
+    min-height: 6px;
+    border-radius: var(--radius-pill);
 }
 
 .osd-progress trough {
     background-color: rgba(var(--hover-rgb), 0.12);
-    border-radius: 9999px;
+    border-radius: var(--radius-pill);
 }
 
 .osd-progress progress {
     background-color: var(--accent);
-    border-radius: 9999px;
+    border-radius: var(--radius-pill);
 }
 
 .osd-value {
-    font-size: 12px;
+    font-size: var(--font-small);
     font-weight: 600;
     color: var(--text-faint);
     min-width: 32px;
@@ -920,7 +919,7 @@ window.osd-window > contents {
 
 /* 1. OSD Styles */
 .osd-layout-pill {
-    border-radius: 9999px;
+    border-radius: var(--radius-pill);
     padding: 8px 18px;
     box-shadow: 0 8px 28px rgba(var(--shadow-rgb), 0.55);
 }
@@ -933,7 +932,7 @@ window.osd-window > contents {
 }
 
 .osd-layout-bar .osd-value {
-    font-size: 13px;
+    font-size: var(--font-body);
     font-weight: 700;
     min-width: 44px;
     color: var(--text);
@@ -962,22 +961,16 @@ window.osd-window > contents {
 .bar-style-bubble .bar-section {
     background-color: var(--surface-overlay);
     border: 1px solid rgba(var(--hover-rgb), 0.14);
-    border-radius: 9999px;
-    box-shadow: 0 4px 14px rgba(var(--shadow-rgb), 0.35);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-sm);
     padding: 2px 8px;
     margin: 0 4px;
 }
 
-.bar-style-bubble .bar-section:empty {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 0;
-    margin: 0;
-}
+/* :empty is not a GTK selector; bar.go hides empty sections. */
 
 .bar-style-bubble .widget-pill {
-    border-radius: 9999px;
+    border-radius: var(--radius-pill);
     padding: 1px 4px;
 }
 
@@ -1039,7 +1032,7 @@ window.osd-window > contents {
 }
 
 .bar-style-minimal .widget-label {
-    font-size: 11px;
+    font-size: var(--font-caption);
     font-weight: 500;
     color: var(--text-dim);
 }
@@ -1049,7 +1042,6 @@ window.osd-window > contents {
 }
 
 .bar-style-minimal image {
-    pixel-size: 12;
 }
 
 /* 3. Control Center Styles: cards (GNOME-like) vs compact (Minimalist Tray) */
@@ -1066,7 +1058,7 @@ window.osd-window > contents {
 
 /* GNOME Pill Quick Toggles (capsule 9999px) */
 .control-center-style-cards .quick-toggle {
-    border-radius: 9999px;
+    border-radius: var(--radius-pill);
     background-color: rgba(var(--hover-rgb), 0.08);
     border: 1px solid rgba(var(--hover-rgb), 0.06);
     min-height: 48px;
@@ -1103,12 +1095,12 @@ window.osd-window > contents {
 
 .control-center-style-cards .slider-scale trough {
     min-height: 10px;
-    border-radius: 9999px;
+    border-radius: var(--radius-pill);
     background-color: rgba(var(--hover-rgb), 0.12);
 }
 
 .control-center-style-cards .slider-scale progress {
-    border-radius: 9999px;
+    border-radius: var(--radius-pill);
     background-color: var(--accent);
 }
 
@@ -1123,7 +1115,7 @@ window.osd-window > contents {
 .control-center-style-cards .mpris-art {
     min-width: 56px;
     min-height: 56px;
-    border-radius: 14px;
+    border-radius: var(--radius-md);
 }
 
 /* ── Compact Style: Streamlined Minimalist Tray Flyout ── */
@@ -1137,8 +1129,6 @@ window.osd-window > contents {
 }
 
 .control-center-style-compact .quick-toggles-grid {
-    column-spacing: 6px;
-    row-spacing: 6px;
     margin-bottom: 0;
 }
 
@@ -1163,7 +1153,6 @@ window.osd-window > contents {
 }
 
 .control-center-style-compact .quick-toggle-arrow-button image {
-    pixel-size: 12;
 }
 
 .control-center-style-compact .quick-toggle-arrow-button:hover {
@@ -1178,11 +1167,10 @@ window.osd-window > contents {
 }
 
 .control-center-style-compact .quick-toggle-icon {
-    pixel-size: 16;
 }
 
 .control-center-style-compact .quick-toggle-title {
-    font-size: 11px;
+    font-size: var(--font-caption);
     font-weight: 600;
 }
 
@@ -1204,7 +1192,6 @@ window.osd-window > contents {
     background-color: transparent;
     border: none;
     padding: 0;
-    spacing: 4px;
 }
 
 .control-center-style-compact .slider-row {
@@ -1213,11 +1200,10 @@ window.osd-window > contents {
 }
 
 .control-center-style-compact .slider-icon {
-    pixel-size: 16;
 }
 
 .control-center-style-compact .slider-value-label {
-    font-size: 11px;
+    font-size: var(--font-caption);
     min-width: 30px;
 }
 
@@ -1235,13 +1221,12 @@ window.osd-window > contents {
 }
 
 .control-center-style-compact .slider-arrow-button image {
-    pixel-size: 12;
 }
 
 .control-center-style-compact .mpris-card {
     background-color: rgba(var(--hover-rgb), 0.03);
     border: 1px solid rgba(var(--hover-rgb), 0.06);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     padding: 8px;
 }
 
@@ -1252,7 +1237,7 @@ window.osd-window > contents {
 }
 
 .control-center-style-compact .mpris-title {
-    font-size: 12px;
+    font-size: var(--font-small);
 }
 
 .control-center-style-compact .mpris-artist {
@@ -1273,7 +1258,7 @@ window.osd-window > contents {
 
 .notifications-style-compact .notify-card {
     padding: 6px 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     box-shadow: 0 4px 12px rgba(var(--shadow-rgb), 0.35);
     margin-bottom: 4px;
 }
@@ -1284,18 +1269,18 @@ window.osd-window > contents {
 }
 
 .notifications-style-compact .notify-summary {
-    font-size: 12px;
+    font-size: var(--font-small);
 }
 
 .notifications-style-compact .notify-body {
-    font-size: 11px;
+    font-size: var(--font-caption);
 }
 
 /* 5. Launcher Styles: centered (Spotlight Canvas) vs fullscreen (App Dashboard) vs compact (Command HUD) */
 .launcher-style-centered.launcher-card {
     border-radius: 18px;
     padding: 18px;
-    box-shadow: 0 16px 48px rgba(var(--shadow-rgb), 0.6);
+    box-shadow: var(--shadow-lg);
 }
 
 /* Fullscreen: Expansive App Dashboard */
@@ -1312,11 +1297,10 @@ window.osd-window > contents {
 }
 
 .launcher-style-fullscreen .launcher-search {
-    font-size: 16px;
+    font-size: var(--font-subtitle);
     padding: 12px 18px;
-    border-radius: 14px;
+    border-radius: var(--radius-md);
     margin-bottom: 8px;
-    max-width: 600px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -1332,7 +1316,7 @@ window.osd-window > contents {
 }
 
 .launcher-style-fullscreen .launcher-grid-label {
-    font-size: 13px;
+    font-size: var(--font-body);
     font-weight: 600;
 }
 
@@ -1342,7 +1326,7 @@ window.osd-window > contents {
 }
 
 .launcher-style-fullscreen .launcher-name {
-    font-size: 15px;
+    font-size: var(--font-title);
 }
 
 /* Compact: Ultra-fast single-line Command HUD */
@@ -1354,9 +1338,9 @@ window.osd-window > contents {
 }
 
 .launcher-style-compact .launcher-search {
-    font-size: 13px;
+    font-size: var(--font-body);
     padding: 6px 10px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     margin-bottom: 2px;
 }
 
@@ -1383,7 +1367,7 @@ window.osd-window > contents {
 
 .launcher-style-compact scrollbar slider {
     min-width: 4px;
-    border-radius: 9999px;
+    border-radius: var(--radius-pill);
     background-color: rgba(var(--hover-rgb), 0.25);
 }
 
@@ -1392,17 +1376,16 @@ window.osd-window > contents {
 }
 
 .launcher-style-compact .launcher-icon {
-    pixel-size: 20;
     margin-right: 4px;
 }
 
 .launcher-style-compact .launcher-name {
-    font-size: 13px;
+    font-size: var(--font-body);
     font-weight: 500;
 }
 
 .launcher-style-compact .launcher-desc {
-    font-size: 11px;
+    font-size: var(--font-caption);
 }
 
 /* Notification Surface */
@@ -1425,8 +1408,8 @@ window.notify-window > contents {
     border: 1px solid rgba(var(--hover-rgb), 0.12);
     border-radius: 16px;
     padding: 12px 14px;
-    box-shadow: 0 8px 24px rgba(var(--shadow-rgb), 0.45);
-    transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+    box-shadow: var(--shadow-md);
+    transition: background-color var(--dur-med) var(--ease), border-color var(--dur-med) var(--ease), box-shadow var(--dur-med) var(--ease);
 }
 
 .notify-card:hover {
@@ -1440,7 +1423,7 @@ window.notify-window > contents {
 }
 
 .notify-app {
-    font-size: 11px;
+    font-size: var(--font-caption);
     font-weight: 600;
     color: var(--text-faint);
     text-transform: uppercase;
@@ -1450,12 +1433,12 @@ window.notify-window > contents {
     padding: 0 4px;
     min-height: 18px;
     min-width: 18px;
-    font-size: 11px;
+    font-size: var(--font-caption);
     background: transparent;
     border: none;
     color: var(--text-faint);
     border-radius: 4px;
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .notify-close:hover {
@@ -1468,13 +1451,13 @@ window.notify-window > contents {
 }
 
 .notify-title {
-    font-size: 14px;
+    font-size: var(--font-large);
     font-weight: 600;
     color: var(--text);
 }
 
 .notify-body {
-    font-size: 12px;
+    font-size: var(--font-small);
     color: var(--text-dim);
     margin-top: 2px;
 }
@@ -1485,7 +1468,7 @@ window.notify-window > contents {
 
 .notify-card.urgency-critical {
     border-color: var(--error);
-    box-shadow: 0 0 16px rgba(var(--error-rgb), 0.4);
+    box-shadow: none;
 }
 
 .notify-actions {
@@ -1498,9 +1481,9 @@ window.notify-window > contents {
     border: 1px solid rgba(var(--hover-rgb), 0.12);
     border-radius: 6px;
     padding: 3px 10px;
-    font-size: 12px;
+    font-size: var(--font-small);
     font-weight: 500;
-    transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .notify-action-btn:hover {
@@ -1521,11 +1504,11 @@ window.notify-window > contents {
 .notify-reply-entry {
     background-color: rgba(var(--hover-rgb), 0.08);
     border: 1px solid rgba(var(--hover-rgb), 0.12);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     color: var(--text);
     padding: 3px 8px;
-    font-size: 12px;
-    transition: border-color 140ms ease, background-color 140ms ease;
+    font-size: var(--font-small);
+    transition: border-color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
 }
 
 .notify-reply-entry:focus-within {
@@ -1533,13 +1516,13 @@ window.notify-window > contents {
 }
 
 .notify-reply-btn {
-    font-size: 12px;
+    font-size: var(--font-small);
     padding: 3px 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background-color: var(--accent);
     color: var(--accent-contrast);
     font-weight: 600;
-    transition: background-color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease);
 }
 
 .notify-reply-btn:hover {
@@ -1561,7 +1544,7 @@ window.notification-center-window > contents {
 }
 
 .notification-center-overlay {
-    background-color: rgba(var(--shadow-rgb), 0.2);
+    background-color: rgba(var(--shadow-rgb), 0.45);
 }
 
 .notification-center-card {
@@ -1569,7 +1552,7 @@ window.notification-center-window > contents {
     color: var(--text);
     border: 1px solid rgba(var(--hover-rgb), 0.12);
     border-radius: 18px;
-    padding: 16px;
+    padding: 18px;
     box-shadow: 0 16px 40px rgba(var(--shadow-rgb), 0.6);
 }
 
@@ -1579,7 +1562,7 @@ window.notification-center-window > contents {
 }
 
 .notification-center-title {
-    font-size: 15px;
+    font-size: var(--font-title);
     font-weight: 700;
     color: var(--text);
 }
@@ -1587,7 +1570,7 @@ window.notification-center-window > contents {
 .notification-count-badge {
     background-color: var(--accent);
     color: var(--accent-contrast);
-    font-size: 11px;
+    font-size: var(--font-caption);
     font-weight: 700;
     padding: 2px 7px;
     border-radius: 10px;
@@ -1611,12 +1594,11 @@ window.notification-center-window > contents {
 .notification-undo-btn {
     background-color: var(--accent);
     color: var(--accent-contrast);
-    font-size: 12px;
+    font-size: var(--font-small);
     font-weight: 700;
     border-radius: 6px;
     padding: 3px 10px;
     border: none;
-    cursor: pointer;
 }
 
 .notification-undo-btn:hover {
@@ -1631,10 +1613,10 @@ window.notification-center-window > contents {
 .notification-clear-button,
 .notification-close-button {
     padding: 4px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     color: var(--text-faint);
     background: transparent;
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .notification-dnd-button:hover,
@@ -1667,7 +1649,7 @@ window.notification-center-window > contents {
     border: 1px solid rgba(var(--hover-rgb), 0.06);
     border-radius: 10px;
     padding: 10px 12px;
-    transition: background-color 130ms ease, border-color 130ms ease;
+    transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
 }
 
 .notification-history-item:hover {
@@ -1680,14 +1662,14 @@ window.notification-center-window > contents {
 }
 
 .notification-history-app {
-    font-size: 11px;
+    font-size: var(--font-caption);
     font-weight: 600;
     color: var(--text-faint);
     text-transform: uppercase;
 }
 
 .notification-history-time {
-    font-size: 11px;
+    font-size: var(--font-caption);
     color: var(--muted);
 }
 
@@ -1695,7 +1677,7 @@ window.notification-center-window > contents {
     padding: 2px 4px;
     color: var(--muted);
     border-radius: 4px;
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .notification-history-close:hover {
@@ -1708,13 +1690,13 @@ window.notification-center-window > contents {
 }
 
 .notification-history-summary {
-    font-size: 13px;
+    font-size: var(--font-body);
     font-weight: 600;
     color: var(--text);
 }
 
 .notification-history-body {
-    font-size: 12px;
+    font-size: var(--font-small);
     color: var(--text-dim);
 }
 
@@ -1724,7 +1706,7 @@ window.notification-center-window > contents {
     margin: 0;
     min-height: calc(var(--bar-height) - 6px);
     min-width: var(--bar-unit);
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .notifications-widget image {
@@ -1746,17 +1728,17 @@ window.notification-center-window > contents {
     font-size: 10px;
     font-weight: 700;
     padding: 1px 5px;
-    border-radius: 8px;
-    transition: background-color 140ms ease, color 140ms ease;
+    border-radius: var(--radius-sm);
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .privacy-widget {
     padding: 2px 4px;
-    transition: opacity 160ms ease;
+    transition: opacity var(--dur-med) var(--ease);
 }
 
 .privacy-icon {
-    transition: color 160ms ease;
+    transition: color var(--dur-med) var(--ease);
 }
 
 .privacy-icon.mic-active {
@@ -1778,7 +1760,7 @@ window.control-center-window > contents {
 }
 
 .control-center-overlay {
-    background-color: rgba(var(--shadow-rgb), 0.2);
+    background-color: rgba(var(--shadow-rgb), 0.45);
 }
 
 .control-center-card {
@@ -1786,10 +1768,10 @@ window.control-center-window > contents {
     color: var(--text);
     border: 1px solid rgba(var(--hover-rgb), 0.12);
     border-radius: 18px;
-    padding: 16px;
+    padding: 18px;
     box-shadow: 0 12px 36px rgba(var(--shadow-rgb), 0.55);
     font-family: "Ubuntu", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    min-width: 360px;
+    min-width: 380px;
 }
 
 .quick-toggles-grid {
@@ -1799,12 +1781,11 @@ window.control-center-window > contents {
 .quick-toggle {
     background-color: rgba(var(--hover-rgb), 0.07);
     border: 1px solid rgba(var(--hover-rgb), 0.05);
-    border-radius: 14px;
+    border-radius: var(--radius-md);
     padding: 10px 12px;
     min-height: 52px;
-    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+    transition: background-color var(--dur-med) var(--ease), border-color var(--dur-med) var(--ease), color var(--dur-med) var(--ease);
     color: var(--text);
-    cursor: pointer;
 }
 
 .quick-toggle:hover {
@@ -1823,20 +1804,39 @@ window.control-center-window > contents {
     color: var(--accent-contrast);
 }
 
+/* DND reuses the split-tile body as its toggle surface */
+.quick-toggle-body.active {
+    background-color: var(--accent);
+    color: var(--accent-contrast);
+}
+
+.quick-toggle-body.active .quick-toggle-title {
+    color: var(--accent-contrast);
+}
+
+.quick-toggle-body.active .quick-toggle-subtitle {
+    color: rgba(var(--accent-contrast-rgb), 0.82);
+}
+
+/* Single-body split tile (DND): full rounding, no arrow sibling */
+.quick-toggle-split .quick-toggle-body:only-child {
+    border-radius: var(--radius-md);
+}
+
 .quick-toggle.active:active {
     background-color: var(--accent-hover);
     transform: scale(0.98);
 }
 
 .quick-toggle image {
-    transition: color 150ms ease;
+    transition: color var(--dur-med) var(--ease);
 }
 
 .quick-toggle-title {
-    font-size: 13px;
+    font-size: var(--font-body);
     font-weight: 600;
     color: var(--text);
-    transition: color 150ms ease;
+    transition: color var(--dur-med) var(--ease);
 }
 
 .quick-toggle.active .quick-toggle-title {
@@ -1845,10 +1845,10 @@ window.control-center-window > contents {
 }
 
 .quick-toggle-subtitle {
-    font-size: 11px;
+    font-size: var(--font-caption);
     color: var(--text-faint);
     margin-top: 1px;
-    transition: color 150ms ease;
+    transition: color var(--dur-med) var(--ease);
 }
 
 .quick-toggle.active .quick-toggle-subtitle {
@@ -1881,7 +1881,7 @@ window.control-center-window > contents {
     border: none;
     border-radius: 0 14px 14px 0;
     color: var(--text-faint);
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .quick-toggle-arrow-button:hover {
@@ -1912,7 +1912,7 @@ window.control-center-window > contents {
 
 /* Control Center Subviews */
 .subview-title {
-    font-size: 15px;
+    font-size: var(--font-title);
     font-weight: 700;
     color: var(--text);
 }
@@ -1920,9 +1920,9 @@ window.control-center-window > contents {
 .subview-back-button,
 .subview-action-button {
     padding: 6px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     color: var(--text);
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .subview-back-button:hover,
@@ -1950,9 +1950,9 @@ window.control-center-window > contents {
 
 .wifi-item-row {
     padding: 8px 10px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: transparent;
-    transition: background-color 130ms ease;
+    transition: background-color var(--dur-fast) var(--ease);
 }
 
 .wifi-item-row:hover {
@@ -1972,13 +1972,13 @@ window.control-center-window > contents {
 }
 
 .wifi-item-ssid {
-    font-size: 13px;
+    font-size: var(--font-body);
     font-weight: 600;
     color: var(--text);
 }
 
 .wifi-item-status {
-    font-size: 11px;
+    font-size: var(--font-caption);
     color: var(--accent);
 }
 
@@ -1990,38 +1990,6 @@ window.control-center-window > contents {
     color: var(--success);
 }
 
-.wifi-item-action-button {
-    font-size: 12px;
-    padding: 4px 10px;
-    border-radius: 8px;
-    background-color: rgba(var(--hover-rgb), 0.08);
-    color: var(--text);
-    transition: background-color 140ms ease, color 140ms ease;
-}
-
-.wifi-item-action-button:hover {
-    background-color: rgba(var(--hover-rgb), 0.16);
-    color: var(--text-bright);
-}
-
-.wifi-item-action-button:active {
-    background-color: rgba(var(--hover-rgb), 0.24);
-}
-
-.wifi-item-action-button.destructive-action {
-    background-color: rgba(var(--error-rgb), 0.15);
-    color: var(--error);
-}
-
-.wifi-item-action-button.destructive-action:hover {
-    background-color: rgba(var(--error-rgb), 0.28);
-    color: var(--error-bright);
-}
-
-.wifi-item-action-button.destructive-action:active {
-    background-color: rgba(var(--error-rgb), 0.4);
-}
-
 .wifi-password-box {
     margin-top: 4px;
     padding: 4px 0;
@@ -2030,20 +1998,20 @@ window.control-center-window > contents {
 .wifi-password-entry {
     background-color: rgba(var(--hover-rgb), 0.08);
     border: 1px solid rgba(var(--hover-rgb), 0.12);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     color: var(--text);
     padding: 4px 8px;
-    font-size: 12px;
+    font-size: var(--font-small);
 }
 
 .wifi-password-join-btn {
-    font-size: 12px;
+    font-size: var(--font-small);
     padding: 4px 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background-color: var(--accent);
     color: var(--accent-contrast);
     font-weight: 600;
-    transition: background-color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease);
 }
 
 .wifi-password-join-btn:hover {
@@ -2055,11 +2023,11 @@ window.control-center-window > contents {
 }
 
 .wifi-password-cancel-btn {
-    font-size: 12px;
+    font-size: var(--font-small);
     padding: 4px 8px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     color: var(--text-faint);
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .wifi-password-cancel-btn:hover {
@@ -2077,9 +2045,9 @@ window.control-center-window > contents {
 
 .bluetooth-item-row {
     padding: 8px 10px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: transparent;
-    transition: background-color 130ms ease;
+    transition: background-color var(--dur-fast) var(--ease);
 }
 
 .bluetooth-item-row:hover {
@@ -2099,50 +2067,18 @@ window.control-center-window > contents {
 }
 
 .bluetooth-item-name {
-    font-size: 13px;
+    font-size: var(--font-body);
     font-weight: 600;
     color: var(--text);
 }
 
 .bluetooth-item-status {
-    font-size: 11px;
+    font-size: var(--font-caption);
     color: var(--accent);
 }
 
 .bluetooth-item-connected-icon {
     color: var(--success);
-}
-
-.bluetooth-item-action-button {
-    font-size: 12px;
-    padding: 4px 10px;
-    border-radius: 8px;
-    background-color: rgba(var(--hover-rgb), 0.08);
-    color: var(--text);
-    transition: background-color 140ms ease, color 140ms ease;
-}
-
-.bluetooth-item-action-button:hover {
-    background-color: rgba(var(--hover-rgb), 0.16);
-    color: var(--text-bright);
-}
-
-.bluetooth-item-action-button:active {
-    background-color: rgba(var(--hover-rgb), 0.24);
-}
-
-.bluetooth-item-action-button.destructive-action {
-    background-color: rgba(var(--error-rgb), 0.15);
-    color: var(--error);
-}
-
-.bluetooth-item-action-button.destructive-action:hover {
-    background-color: rgba(var(--error-rgb), 0.28);
-    color: var(--error-bright);
-}
-
-.bluetooth-item-action-button.destructive-action:active {
-    background-color: rgba(var(--error-rgb), 0.4);
 }
 
 .bluetooth-actions-box {
@@ -2151,12 +2087,12 @@ window.control-center-window > contents {
 }
 
 .bluetooth-forget-btn {
-    font-size: 11px;
+    font-size: var(--font-caption);
     padding: 2px 8px;
     border-radius: 6px;
     background-color: rgba(var(--error-rgb), 0.12);
     color: var(--error);
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .bluetooth-forget-btn:hover {
@@ -2170,7 +2106,7 @@ window.control-center-window > contents {
 
 .subview-empty-label {
     color: var(--muted);
-    font-size: 13px;
+    font-size: var(--font-body);
     padding: 24px 0;
 }
 
@@ -2184,7 +2120,7 @@ window.control-center-window > contents {
     background-color: rgba(var(--hover-rgb), 0.05);
     border: 1px solid rgba(var(--hover-rgb), 0.06);
     border-radius: 12px;
-    transition: background-color 140ms ease, border-color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
 }
 
 .power-profile-row:hover {
@@ -2205,13 +2141,13 @@ window.control-center-window > contents {
 }
 
 .power-profile-title {
-    font-size: 13px;
+    font-size: var(--font-body);
     font-weight: 600;
     color: var(--text);
 }
 
 .power-profile-subtitle {
-    font-size: 11px;
+    font-size: var(--font-caption);
     color: var(--text-faint);
 }
 
@@ -2221,7 +2157,7 @@ window.control-center-window > contents {
 
 /* Audio Subview */
 .subview-section-title {
-    font-size: 13px;
+    font-size: var(--font-body);
     font-weight: 700;
     color: var(--text-faint);
     margin-top: 4px;
@@ -2238,7 +2174,7 @@ window.control-center-window > contents {
     border: 1px solid rgba(var(--hover-rgb), 0.04);
     margin-bottom: 6px;
     min-height: 64px;
-    transition: background-color 130ms ease;
+    transition: background-color var(--dur-fast) var(--ease);
 }
 
 .audio-stream-row:hover {
@@ -2250,13 +2186,13 @@ window.control-center-window > contents {
 }
 
 .audio-stream-name {
-    font-size: 13px;
+    font-size: var(--font-body);
     font-weight: 600;
     color: var(--text);
 }
 
 .audio-stream-media {
-    font-size: 11px;
+    font-size: var(--font-caption);
     color: var(--text-faint);
 }
 
@@ -2265,7 +2201,7 @@ window.control-center-window > contents {
     border-radius: 6px;
     color: var(--accent);
     background: transparent;
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .audio-stream-mute-button:hover {
@@ -2291,7 +2227,7 @@ window.control-center-window > contents {
 }
 
 .stream-vol-label {
-    font-size: 12px;
+    font-size: var(--font-small);
     font-weight: 600;
     color: var(--text-faint);
     min-width: 38px;
@@ -2304,10 +2240,10 @@ window.control-center-window > contents {
 .slider-row {
     background-color: rgba(var(--hover-rgb), 0.06);
     border: 1px solid rgba(var(--hover-rgb), 0.05);
-    border-radius: 14px;
+    border-radius: var(--radius-md);
     padding: 4px 12px;
     min-height: 44px;
-    transition: background-color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease);
 }
 
 .slider-icon-button {
@@ -2316,7 +2252,7 @@ window.control-center-window > contents {
     padding: 4px;
     border-radius: 50%;
     color: var(--text);
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .slider-icon-button:hover {
@@ -2343,7 +2279,7 @@ window.control-center-window > contents {
     background-color: var(--accent);
     border-radius: 5px;
     min-height: 6px;
-    transition: background-color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease);
 }
 
 .slider-scale slider {
@@ -2353,7 +2289,7 @@ window.control-center-window > contents {
     border-radius: 50%;
     background-color: var(--text);
     border: 2px solid var(--surface-solid-color);
-    transition: transform 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
+    transition: transform var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
 
 .slider-scale.dragging slider,
@@ -2365,7 +2301,7 @@ window.control-center-window > contents {
 }
 
 .slider-value-label {
-    font-size: 12px;
+    font-size: var(--font-small);
     font-weight: 600;
     color: var(--text-faint);
     min-width: 38px;
@@ -2375,9 +2311,9 @@ window.control-center-window > contents {
     padding: 6px;
     background: transparent;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     color: var(--text-faint);
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .slider-arrow-button:hover {
@@ -2393,9 +2329,9 @@ window.control-center-window > contents {
 .mpris-card {
     background-color: rgba(var(--hover-rgb), 0.06);
     border: 1px solid rgba(var(--hover-rgb), 0.05);
-    border-radius: 14px;
+    border-radius: var(--radius-md);
     padding: 12px 14px;
-    transition: background-color 150ms ease;
+    transition: background-color var(--dur-med) var(--ease);
 }
 
 .mpris-card:hover {
@@ -2411,19 +2347,19 @@ window.control-center-window > contents {
 }
 
 .mpris-title {
-    font-size: 13px;
+    font-size: var(--font-body);
     font-weight: 700;
     color: var(--text);
 }
 
 .mpris-artist {
-    font-size: 11px;
+    font-size: var(--font-caption);
     font-weight: 500;
     color: var(--text-faint);
 }
 
 .mpris-player-name {
-    font-size: 11px;
+    font-size: var(--font-caption);
     font-weight: 600;
     color: var(--accent);
     background-color: rgba(var(--accent-rgb), 0.1);
@@ -2440,7 +2376,7 @@ window.control-center-window > contents {
     border-radius: 10px;
     color: var(--text);
     background-color: rgba(var(--hover-rgb), 0.05);
-    transition: background-color 140ms ease, color 140ms ease, transform 100ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), transform 100ms ease;
 }
 
 .mpris-control-btn:hover {
@@ -2539,11 +2475,11 @@ window.powermenu-window > contents {
     border: 1px solid rgba(var(--hover-rgb), 0.12);
     border-radius: 18px;
     padding: 24px;
-    box-shadow: 0 16px 48px rgba(var(--shadow-rgb), 0.6);
+    box-shadow: var(--shadow-lg);
 }
 
 .powermenu-title {
-    font-size: 16px;
+    font-size: var(--font-subtitle);
     font-weight: 700;
     color: var(--text);
 }
@@ -2555,13 +2491,12 @@ window.powermenu-window > contents {
 .powermenu-action-btn {
     background-color: rgba(var(--hover-rgb), 0.06);
     border: 1px solid rgba(var(--hover-rgb), 0.08);
-    border-radius: 14px;
+    border-radius: var(--radius-md);
     padding: 16px 12px;
     min-width: 100px;
     min-height: 90px;
-    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+    transition: background-color var(--dur-med) var(--ease), border-color var(--dur-med) var(--ease), color var(--dur-med) var(--ease);
     color: var(--text);
-    cursor: pointer;
 }
 
 .powermenu-action-btn:hover {
@@ -2586,12 +2521,13 @@ window.powermenu-window > contents {
 
 .powermenu-action-btn:focus {
     border-color: var(--accent);
-    outline: none;
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
 }
 
 .powermenu-icon {
     color: var(--accent);
-    transition: color 150ms ease;
+    transition: color var(--dur-med) var(--ease);
 }
 
 .powermenu-action-btn:hover .powermenu-icon {
@@ -2607,7 +2543,7 @@ window.powermenu-window > contents {
 }
 
 .powermenu-action-title {
-    font-size: 13px;
+    font-size: var(--font-body);
     font-weight: 600;
 }
 
@@ -2633,10 +2569,9 @@ window.powermenu-window > contents {
     border: 1px solid rgba(var(--hover-rgb), 0.1);
     border-radius: 10px;
     padding: 8px 24px;
-    font-size: 13px;
+    font-size: var(--font-body);
     color: var(--text-faint);
-    cursor: pointer;
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .powermenu-cancel-btn:hover {
@@ -2676,7 +2611,7 @@ window.lockscreen-window > contents {
 }
 
 .lockscreen-date {
-    font-size: 16px;
+    font-size: var(--font-subtitle);
     font-weight: 500;
     color: var(--accent);
 }
@@ -2686,7 +2621,7 @@ window.lockscreen-window > contents {
 }
 
 .lockscreen-username {
-    font-size: 16px;
+    font-size: var(--font-subtitle);
     font-weight: 600;
     color: var(--text);
 }
@@ -2701,8 +2636,8 @@ window.lockscreen-window > contents {
     border-radius: 12px;
     padding: 8px 12px;
     color: var(--text);
-    font-size: 14px;
-    transition: border-color 140ms ease, background-color 140ms ease;
+    font-size: var(--font-large);
+    transition: border-color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
 }
 
 .lockscreen-entry:focus-within {
@@ -2717,7 +2652,7 @@ window.lockscreen-window > contents {
     padding: 8px 14px;
     color: var(--accent-contrast);
     font-weight: 700;
-    transition: background-color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease);
 }
 
 .lockscreen-unlock-btn:hover {
@@ -2729,7 +2664,7 @@ window.lockscreen-window > contents {
 }
 
 .lockscreen-feedback {
-    font-size: 13px;
+    font-size: var(--font-body);
     font-weight: 500;
     color: var(--accent);
     margin-top: 4px;
@@ -2752,7 +2687,7 @@ window.lockscreen-window > contents {
     border-radius: 10px;
     padding: 8px 12px;
     color: var(--text-faint);
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .lockscreen-bottom-btn:hover {
@@ -2799,9 +2734,9 @@ window.window-switcher-window > contents {
 .window-tile-btn {
     background: rgba(var(--hover-rgb), 0.04);
     border: 2px solid transparent;
-    border-radius: 14px;
+    border-radius: var(--radius-md);
     padding: 8px;
-    transition: background-color 120ms ease, border-color 120ms ease;
+    transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
 }
 
 .window-tile-btn:hover {
@@ -2832,7 +2767,7 @@ window.window-switcher-window > contents {
 }
 
 .window-tile-app {
-    font-size: 12px;
+    font-size: var(--font-small);
     font-weight: 600;
     color: var(--text);
 }
@@ -2842,16 +2777,16 @@ window.window-switcher-window > contents {
 }
 
 .window-switcher-selected-title {
-    font-size: 13px;
+    font-size: var(--font-body);
     font-weight: 500;
     color: var(--text-dim);
     padding: 6px 16px;
     background-color: rgba(var(--hover-rgb), 0.05);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
 }
 
 .window-switcher-empty {
-    font-size: 14px;
+    font-size: var(--font-large);
     color: var(--muted);
     padding: 30px 40px;
 }
@@ -2874,7 +2809,7 @@ window.polkit-window > contents {
     background-color: var(--surface-solid);
     color: var(--text);
     border: 1px solid rgba(var(--hover-rgb), 0.15);
-    border-radius: 14px;
+    border-radius: var(--radius-md);
     padding: 24px;
     box-shadow: 0 16px 40px rgba(var(--shadow-rgb), 0.65);
 }
@@ -2885,19 +2820,19 @@ window.polkit-window > contents {
 }
 
 .polkit-title {
-    font-size: 16px;
+    font-size: var(--font-subtitle);
     font-weight: 700;
     color: var(--text);
 }
 
 .polkit-action {
-    font-size: 11px;
+    font-size: var(--font-caption);
     color: var(--text-faint);
     font-family: monospace;
 }
 
 .polkit-message {
-    font-size: 13px;
+    font-size: var(--font-body);
     color: var(--text-dim);
     line-height: 1.4;
 }
@@ -2907,36 +2842,36 @@ window.polkit-window > contents {
 }
 
 .polkit-identity-prefix {
-    font-size: 12px;
+    font-size: var(--font-small);
     color: var(--text-faint);
 }
 
 .polkit-dropdown {
     background-color: rgba(var(--hover-rgb), 0.06);
     border: 1px solid rgba(var(--hover-rgb), 0.12);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     color: var(--text);
     padding: 4px 8px;
-    font-size: 13px;
+    font-size: var(--font-body);
 }
 
 .polkit-password-entry {
     background-color: rgba(var(--hover-rgb), 0.06);
     border: 1px solid rgba(var(--hover-rgb), 0.15);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     color: var(--text);
     padding: 8px 12px;
-    font-size: 14px;
-    transition: border-color 140ms ease, box-shadow 140ms ease;
+    font-size: var(--font-large);
+    transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
 
 .polkit-password-entry:focus-within {
     border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.3);
+    box-shadow: none;
 }
 
 .polkit-error-label {
-    font-size: 12px;
+    font-size: var(--font-small);
     font-weight: 600;
     color: var(--error);
 }
@@ -2944,12 +2879,12 @@ window.polkit-window > contents {
 .polkit-cancel-btn {
     background-color: rgba(var(--hover-rgb), 0.06);
     border: 1px solid rgba(var(--hover-rgb), 0.1);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     color: var(--text);
     padding: 6px 16px;
-    font-size: 13px;
+    font-size: var(--font-body);
     font-weight: 500;
-    transition: background-color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease);
 }
 
 .polkit-cancel-btn:hover {
@@ -2959,17 +2894,115 @@ window.polkit-window > contents {
 .polkit-auth-btn {
     background-color: var(--accent);
     border: 1px solid rgba(var(--accent-rgb), 0.8);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     color: var(--accent-contrast);
     padding: 6px 18px;
-    font-size: 13px;
+    font-size: var(--font-body);
     font-weight: 600;
-    transition: background-color 140ms ease, box-shadow 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
 
 .polkit-auth-btn:hover {
     background-color: var(--accent-hover);
     box-shadow: none;
+}
+
+/* ── Phalune design-system unification ──
+ * Hierarchy: modals lg(20px) / popups md(14px) / pills pill.
+ * Shadows: sm popups, md cards, lg modals.
+ */
+
+.launcher-card,
+.clipboard-card,
+.notification-center-card,
+.control-center-card,
+.powermenu-card,
+.window-switcher-card,
+.lockscreen-card {
+    border-radius: var(--radius-lg);
+    border-color: var(--border);
+}
+
+.launcher-card,
+.notification-center-card,
+.control-center-card,
+.powermenu-card,
+.window-switcher-card {
+    box-shadow: var(--shadow-lg);
+}
+
+.notify-card,
+.screenshot-toast,
+.osd-card {
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+}
+
+.bar-style-bubble .bar-section {
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Type strays folded into 4-step scale */
+.powermenu-key-hint {
+    font-size: var(--font-caption);
+}
+.notification-undo-label {
+    font-size: var(--font-body);
+}
+
+/* Keyboard focus: visible luna ring on interactive widgets only */
+button:focus-visible,
+entry:focus-visible,
+row:focus-visible,
+scale:focus-visible,
+switch:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* Disabled states beyond tray menu */
+button:disabled,
+entry:disabled,
+row:disabled {
+    opacity: 0.5;
+}
+
+/* Shared empty pattern: dim text, generous breathing room */
+.launcher-no-results,
+.clipboard-no-results,
+.subview-empty-label,
+.window-switcher-empty {
+    color: var(--text-faint);
+    font-size: var(--font-body);
+    padding: 32px 24px;
+}
+
+/* Touch targets: bar pills meet 28px minimum */
+.widget-pill,
+.notifications-widget,
+.widget-clipboard,
+.widget-power {
+    min-height: var(--bar-unit);
+}
+/* NOTE: GtkCssProvider ignores @media, so no reduced-motion branch exists.
+ * Press-scale feedback stays for everyone until GTK gains media support.
+ */
+
+/* Scan feedback: refresh icon rotates while a radio scan runs. */
+@keyframes scan-spin {
+    to { transform: rotate(1turn); }
+}
+
+.subview-action-button.scan-busy image {
+    animation: scan-spin 1s linear infinite;
+}
+
+/* Async row/dialog spinners follow the accent. */
+.wifi-item-spinner,
+.bluetooth-item-spinner,
+.polkit-auth-spinner {
+    color: var(--accent);
 }
 
 

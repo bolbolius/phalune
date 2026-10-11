@@ -1,6 +1,6 @@
 # Phalune default theme (Luna moth)
 name = "phalune"
-description = "Luna moth: moonlit forest night with luminescent celadon mint"
+description = "Luna moth: moonlit night, quiet surfaces with a restrained celadon accent"
 dark = true
 
 [opacity]
@@ -11,22 +11,23 @@ scrim = 0.55
 shadow = 0.45
 
 [colors]
-surface = "#121815"
-surface-raised = "#1a231f"
-surface-solid = "#0d1310"
+surface = "#101315"
+surface-raised = "#15191d"
+surface-overlay = "#15191d"
+surface-solid = "#0b0e11"
 
-text = "#e6ece8"
-text-dim = "#a2b5a7"
-text-faint = "#677d6e"
+text = "#e8eae6"
+text-dim = "#a8ada6"
+text-faint = "#8a938a"
 text-bright = "#ffffff"
 
-accent = "#7ec7a2"
-accent-hover = "#94e2b6"
-accent-active = "#6bc492"
+accent = "#86b89b"
+accent-hover = "#9ccbaf"
+accent-active = "#6fa687"
 accent-contrast = "#0d1712"
-muted = "#4d6354"
+muted = "#6f7a72"
 
-success = "#7dd892"
+success = "#7fb98a"
 warning = "#e5c463"
 error = "#e06c75"
 error-bright = "#eb828a"

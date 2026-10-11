@@ -4,6 +4,7 @@ package theme
 import (
 	_ "embed"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"sort"
@@ -277,6 +278,8 @@ func hexToTriplet(s string) (string, error) {
 	switch len(c) {
 	case 3:
 		c = string([]byte{c[0], c[0], c[1], c[1], c[2], c[2]})
+	case 8:
+		c = c[:6]
 	}
 	if len(c) != 6 {
 		return "", fmt.Errorf("expected hex color, got %q", s)
@@ -292,7 +295,7 @@ func hexToTriplet(s string) (string, error) {
 }
 
 func clamp01(v, fallback float64) float64 {
-	if v <= 0 || v >= 1 {
+	if v < 0 || v > 1 {
 		return fallback
 	}
 	return v
@@ -355,6 +358,55 @@ func userThemePath(name string) (string, error) {
 }
 
 // CSS renders the theme as a :root CSS block with custom properties.
+// DefaultTokens is the shared token fallback map.
+var DefaultTokens = map[string]string{
+	"surface":             "rgba(16, 19, 21, 0.75)",
+	"surface-raised":      "rgba(21, 25, 29, 0.85)",
+	"surface-overlay":     "rgba(21, 25, 29, 0.94)",
+	"surface-solid":       "rgba(11, 14, 17, 0.98)",
+	"surface-solid-color": "#0b0e11",
+	"text":                "#e8eae6",
+	"text-dim":            "#a8ada6",
+	"text-faint":          "#8a938a",
+	"text-bright":         "#ffffff",
+	"accent-rgb":          "134 184 155",
+	"accent":              "#86b89b",
+	"accent-hover":        "#9ccbaf",
+	"accent-active":       "#6fa687",
+	"accent-contrast":     "#0d1712",
+	"accent-contrast-rgb": "13 23 18",
+	"muted":               "#6f7a72",
+	"error-rgb":           "224 108 117",
+	"error":               "#e06c75",
+	"error-bright":        "#eb828a",
+	"success":             "#7fb98a",
+	"success-rgb":         "127 185 138",
+	"warning":             "#e5c463",
+	"warning-rgb":         "229 196 99",
+	"hover-rgb":           "134 184 155",
+	"shadow-rgb":          "6 8 10",
+}
+
+// TokensCSS renders the fallback :root block.
+func TokensCSS() string {
+	keys := make([]string, 0, len(DefaultTokens))
+	for k := range DefaultTokens {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	var b strings.Builder
+	b.WriteString(":root {\n")
+	for _, k := range keys {
+		b.WriteString("    --")
+		b.WriteString(k)
+		b.WriteString(": ")
+		b.WriteString(DefaultTokens[k])
+		b.WriteString(";\n")
+	}
+	b.WriteString("}\n")
+	return b.String()
+}
+
 func (t *Theme) CSS(cssDefaults, overrides map[string]string) string {
 	merged := make(map[string]string, len(cssDefaults)+len(t.Colors)+len(overrides)+4)
 	for k, v := range cssDefaults {
@@ -443,6 +495,9 @@ func normalizeOverride(key, value string) (string, string, bool) {
 			return key + ".rgb", value, true
 		}
 		if triplet, err := hexToTriplet(value); err == nil {
+			if t := strings.TrimPrefix(value, "#"); len(t) == 8 {
+				slog.Warn("theme: 8-digit hex alpha channel ignored, using opaque RGB", "token", key)
+			}
 			return key + ".rgb", triplet, true
 		}
 		return key, value, false

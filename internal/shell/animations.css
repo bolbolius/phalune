@@ -1,15 +1,15 @@
 /* Animation and transition rules for phalune */
 
 .widget-clock {
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .workspace-btn {
-    transition: background-color 160ms ease, color 160ms ease;
+    transition: background-color var(--dur-med) var(--ease), color var(--dur-med) var(--ease);
 }
 
 .widget-pill {
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .widget-audio image,
@@ -18,72 +18,72 @@
 .widget-wifi image,
 .widget-keyboard image,
 .widget-power image {
-    transition: color 140ms ease;
+    transition: color var(--dur-fast) var(--ease);
 }
 
 .widget-power {
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .tray-item-button {
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .tray-menu-item {
-    transition: background-color 120ms ease, color 120ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .launcher-search {
-    transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
+    transition: border-color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
 
 .launcher-row {
-    transition: background-color 130ms ease, color 130ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .notify-card {
-    transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+    transition: background-color var(--dur-med) var(--ease), border-color var(--dur-med) var(--ease), box-shadow var(--dur-med) var(--ease);
 }
 
 .notify-close,
 .notify-action-btn,
 .notify-reply-btn,
 .notify-reply-entry {
-    transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
 }
 
 .notification-dnd-button,
 .notification-clear-button,
 .notification-close-button,
 .notification-history-close {
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .notification-history-item {
-    transition: background-color 130ms ease, border-color 130ms ease;
+    transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
 }
 
 .notifications-widget,
 .notifications-badge {
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .privacy-widget {
-    transition: opacity 160ms ease;
+    transition: opacity var(--dur-med) var(--ease);
 }
 
 .privacy-icon {
-    transition: color 160ms ease;
+    transition: color var(--dur-med) var(--ease);
 }
 
 .quick-toggle {
-    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+    transition: background-color var(--dur-med) var(--ease), border-color var(--dur-med) var(--ease), color var(--dur-med) var(--ease);
 }
 
 .quick-toggle image,
 .quick-toggle-title,
 .quick-toggle-subtitle {
-    transition: color 150ms ease;
+    transition: color var(--dur-med) var(--ease);
 }
 
 .quick-toggle-arrow-button,
@@ -95,72 +95,72 @@
 .bluetooth-forget-btn,
 .wifi-password-cancel-btn,
 .audio-stream-mute-button {
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .wifi-item-row,
 .bluetooth-item-row,
 .power-profile-row,
 .audio-stream-row {
-    transition: background-color 130ms ease;
+    transition: background-color var(--dur-fast) var(--ease);
 }
 
 .wifi-password-join-btn {
-    transition: background-color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease);
 }
 
 .slider-row {
-    transition: background-color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease);
 }
 
 .slider-icon-button {
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .slider-scale highlight {
-    transition: background-color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease);
 }
 
 .slider-scale slider {
-    transition: transform 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
+    transition: transform var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
 
 .powermenu-action-btn {
-    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+    transition: background-color var(--dur-med) var(--ease), border-color var(--dur-med) var(--ease), color var(--dur-med) var(--ease);
 }
 
 .powermenu-icon {
-    transition: color 150ms ease;
+    transition: color var(--dur-med) var(--ease);
 }
 
 .powermenu-cancel-btn {
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .lockscreen-entry {
-    transition: border-color 140ms ease, background-color 140ms ease;
+    transition: border-color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
 }
 
 .lockscreen-unlock-btn {
-    transition: background-color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease);
 }
 
 .lockscreen-bottom-btn {
-    transition: background-color 140ms ease, color 140ms ease;
+    transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .window-switcher-overlay {
-    transition: opacity 160ms ease;
+    transition: opacity var(--dur-med) var(--ease);
 }
 
 .window-switcher-card {
-    transition: opacity 160ms ease;
+    transition: opacity var(--dur-med) var(--ease);
 }
 
 .window-tile-btn {
-    transition: transform 140ms ease,
-                background-color 140ms ease,
-                border-color 140ms ease,
-                box-shadow 140ms ease;
+    transition: transform var(--dur-fast) var(--ease),
+                background-color var(--dur-fast) var(--ease),
+                border-color var(--dur-fast) var(--ease),
+                box-shadow var(--dur-fast) var(--ease);
 }
 

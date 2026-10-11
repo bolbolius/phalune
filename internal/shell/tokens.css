@@ -1,35 +1,82 @@
-/* Theme token defaults. */
+/* Token defaults. Use tokens, not literals.
+ *
+ * Type: caption 11 / small 12 / body 13 / large 14 / title 15 /
+ * subtitle 16 / display 20. Intentional literals: 10px micro-labels,
+ * 64px lockscreen clock.
+ * Radius: sm 8 / md 14 / lg 20 / pill. Smaller values and 18px card
+ * bases stay literal; the override block at the end of default.css
+ * owns final card geometry.
+ * Elevation: sm / md / lg shared; one-off shadows stay per surface.
+ * Motion: fast 120ms / med 180ms. The 100ms press scale stays literal.
+ */
 :root {
     /* Surfaces */
-    --surface: rgba(26, 27, 38, 0.75);
-    --surface-raised: rgba(26, 27, 38, 0.85);
-    --surface-overlay: rgba(26, 27, 38, 0.94);
-    --surface-solid: rgba(22, 22, 30, 0.98);
-    --surface-solid-color: #16161e;
+    --surface: rgba(16, 19, 21, 0.75);
+    --surface-raised: rgba(21, 25, 29, 0.85);
+    --surface-overlay: rgba(21, 25, 29, 0.94);
+    --surface-solid: rgba(11, 14, 17, 0.98);
+    --surface-solid-color: #0b0e11;
 
-    /* Text */
-    --text: #c0caf5;
-    --text-dim: #a9b1d6;
-    --text-faint: #787c99;
+    /* Text (contrast-checked on dark surfaces) */
+    --text: #e8eae6;
+    --text-dim: #a8ada6;
+    --text-faint: #8a938a;
     --text-bright: #ffffff;
 
-    /* Accent */
-    --accent-rgb: 122 162 247;
-    --accent: #7aa2f7;
-    --accent-hover: #89b4fa;
-    --accent-active: #b4befe;
-    --accent-contrast: #1a1b26;
-    --accent-contrast-rgb: 26 27 38;
-    --muted: #565f89;
+    /* Accent (restrained luna celadon) */
+    --accent-rgb: 134 184 155;
+    --accent: #86b89b;
+    --accent-hover: #9ccbaf;
+    --accent-active: #6fa687;
+    --accent-contrast: #0d1712;
+    --accent-contrast-rgb: 13 23 18;
+    --muted: #6f7a72;
 
     /* Status */
-    --error-rgb: 247 118 142;
-    --error: #f7768e;
-    --error-bright: #ff9eaf;
-    --success: #9ece6a;
-    --warning: #e0af68;
+    --error-rgb: 224 108 117;
+    --error: #e06c75;
+    --error-bright: #eb828a;
+    --success: #7fb98a;
+    --success-rgb: 127 185 138;
+    --warning: #e5c463;
+    --warning-rgb: 229 196 99;
 
-    /* Overlays & shadows */
-    --hover-rgb: 255 255 255;
-    --shadow-rgb: 0 0 0;
+    /* Overlays: soft sage hover, neutral night shadow */
+    --hover-rgb: 134 184 155;
+    --shadow-rgb: 6 8 10;
+
+    /* Bar metrics */
+    --bar-height: 36px;
+    --bar-unit: 28px;
+    --bar-text-unit: 40px;
+    --bar-font-size: 13px;
+
+    /* Type scale */
+    --font-caption: 11px;
+    --font-small: 12px;
+    --font-body: 13px;
+    --font-large: 14px;
+    --font-title: 15px;
+    --font-subtitle: 16px;
+    --font-display: 20px;
+
+    /* Radius scale */
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --radius-pill: 9999px;
+
+    /* Elevation */
+    --shadow-sm: 0 4px 14px rgba(var(--shadow-rgb), 0.35);
+    --shadow-md: 0 8px 24px rgba(var(--shadow-rgb), 0.45);
+    --shadow-lg: 0 16px 48px rgba(var(--shadow-rgb), 0.6);
+
+    /* Borders */
+    --border: rgba(var(--hover-rgb), 0.14);
+    --border-soft: rgba(var(--hover-rgb), 0.08);
+
+    /* Motion */
+    --dur-fast: 120ms;
+    --dur-med: 180ms;
+    --ease: ease;
 }
