@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"phalune/internal/config"
 )
 
 func write(t *testing.T, content string) string {
@@ -212,6 +214,50 @@ func TestSetBackslashString(t *testing.T) {
 	want := "[bar.keyboard]\nformat = \"C:\\\\path\\\\\\\"test\\\"\"\n"
 	if got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+	}
+}
+
+func TestSetWidgetsArray(t *testing.T) {
+	src := "[bar.left]\nwidgets = [\"workspaces\"]\n"
+	path := write(t, src)
+
+	ed, _ := NewEditor(path)
+	row := Row{Key: "bar.left.widgets", Kind: KindWidgets}
+
+	parsed, err := ParseValue(row, "clock, wifi, custom.pomodoro, ipc:demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ed.Set(row, parsed); err != nil {
+		t.Fatal(err)
+	}
+	if err := ed.Save(); err != nil {
+		t.Fatal(err)
+	}
+
+	data, _ := os.ReadFile(path)
+	want := "[bar.left]\nwidgets = [\"clock\", \"wifi\", \"custom.pomodoro\", \"ipc:demo\"]\n"
+	if string(data) != want {
+		t.Errorf("got:\n%s\nwant:\n%s", string(data), want)
+	}
+
+	cfg, err := config.Load(path)
+	if err != nil {
+		t.Fatalf("written config does not parse: %v", err)
+	}
+	got := cfg.Bar.Left.Widgets
+	if len(got) != 4 || got[0] != "clock" || got[3] != "ipc:demo" {
+		t.Errorf("unexpected widgets: %q", got)
+	}
+
+	if _, err := ParseValue(row, "clock, bogus"); err == nil {
+		t.Error("expected error for unknown widget")
+	}
+	if _, err := ParseValue(row, "custom., ipc:"); err == nil {
+		t.Error("expected error for empty extension suffix")
+	}
+	if parsed, err := ParseValue(row, "  "); err != nil || parsed != "[]" {
+		t.Errorf("empty list should clear to [], got %q, %v", parsed, err)
 	}
 }
 

@@ -169,12 +169,19 @@ func parseEntry(line string) (key, value string, ok bool) {
 
 func formatEntry(row Row, key, value, original string) string {
 	indent := original[:len(original)-len(strings.TrimLeft(original, " \t"))]
-	return indent + key + " = " + tomlValue(value)
+	return indent + key + " = " + encodeValue(row, value)
 }
 
 func formatEntryRaw(row Row, key, value string) string {
-	_ = row
-	return key + " = " + tomlValue(value)
+	return key + " = " + encodeValue(row, value)
+}
+
+// encodeValue renders settings as TOML; widget lists pass through as arrays.
+func encodeValue(row Row, value string) string {
+	if row.Kind == KindWidgets {
+		return value
+	}
+	return tomlValue(value)
 }
 
 func tomlValue(v string) string {

@@ -20,6 +20,8 @@ const (
 	KindChoice Kind = "choice"
 	KindFile   Kind = "file"
 	KindDir    Kind = "dir"
+	// KindWidgets edits a bar widget list as comma-separated names.
+	KindWidgets Kind = "widgets"
 )
 
 // Row describes one editable config field.
@@ -129,6 +131,50 @@ func wallpaperPage() Page {
 	}
 }
 
+// knownWidgetNames mirrors the shell widget registry.
+var knownWidgetNames = []string{
+	"clock", "workspaces", "audio", "battery", "tray", "bluetooth",
+	"wifi", "network", "keyboard", "power", "clipboard",
+	"notifications", "privacy",
+}
+
+const widgetNamesHint = "clock, workspaces, audio, battery, tray, bluetooth, wifi, keyboard, power, clipboard, notifications, privacy, custom.<name>, ipc:<id>"
+
+func validWidgetName(name string) bool {
+	if strings.HasPrefix(name, "custom.") && len(name) > len("custom.") {
+		return true
+	}
+	if strings.HasPrefix(name, "ipc:") && len(name) > len("ipc:") {
+		return true
+	}
+	for _, n := range knownWidgetNames {
+		if name == n {
+			return true
+		}
+	}
+	return false
+}
+
+// parseWidgetsList validates a widget list and returns the TOML array.
+func parseWidgetsList(v string) (string, error) {
+	if strings.TrimSpace(v) == "" {
+		return "[]", nil
+	}
+	parts := strings.Split(v, ",")
+	names := make([]string, 0, len(parts))
+	for _, p := range parts {
+		name := strings.TrimSpace(p)
+		if name == "" {
+			continue
+		}
+		if !validWidgetName(name) {
+			return "", fmt.Errorf("unknown widget %q (valid: %s)", name, widgetNamesHint)
+		}
+		names = append(names, `"`+name+`"`)
+	}
+	return "[" + strings.Join(names, ", ") + "]", nil
+}
+
 func barPage() Page {
 	return Page{
 		ID:    "bar",
@@ -138,6 +184,9 @@ func barPage() Page {
 			{Key: "bar.style", Label: "Style", Hint: "Presentation: bubble, solid or minimal", Kind: KindChoice, Choices: []string{"bubble", "solid", "minimal"}},
 			{Key: "bar.height", Label: "Height", Hint: "Bar thickness in pixels", Kind: KindNumber, Min: 16, Max: 96, Unit: "px"},
 			{Key: "bar.position", Label: "Position", Hint: "Edge of the screen", Kind: KindChoice, Choices: []string{"top", "bottom"}},
+			{Key: "bar.left.widgets", Label: "Left widgets", Hint: "Comma-separated, applies on restart. Names: " + widgetNamesHint, Kind: KindWidgets},
+			{Key: "bar.center.widgets", Label: "Center widgets", Hint: "Comma-separated, applies on restart. Names: " + widgetNamesHint, Kind: KindWidgets},
+			{Key: "bar.right.widgets", Label: "Right widgets", Hint: "Comma-separated, applies on restart. Names: " + widgetNamesHint, Kind: KindWidgets},
 			{Key: "bar.clock.format", Label: "Clock format", Hint: "Go time layout, e.g. 15:04 or 3:04 PM", Kind: KindText},
 			{Key: "bar.audio.step", Label: "Volume step", Hint: "Percent per scroll tick", Kind: KindNumber, Min: 1, Max: 25, Unit: "%"},
 			{Key: "bar.audio.max_volume", Label: "Max volume", Hint: "Volume ceiling", Kind: KindNumber, Min: 50, Max: 150, Unit: "%"},
@@ -146,7 +195,7 @@ func barPage() Page {
 			{Key: "bar.tray.icon_size", Label: "Tray icon size", Hint: "Pixel size", Kind: KindNumber, Min: 12, Max: 48, Unit: "px"},
 		},
 		Titles: []string{"Layout", "Clock", "Audio", "Battery", "Keyboard & Tray"},
-		Cuts:   []int{3, 4, 6, 7, 9},
+		Cuts:   []int{6, 7, 9, 10, 12},
 	}
 }
 
@@ -262,6 +311,12 @@ func readString(cfg *config.Config, key string) string {
 		return cfg.Bar.Position
 	case "bar.style":
 		return cfg.Bar.Style
+	case "bar.left.widgets":
+		return strings.Join(cfg.Bar.Left.Widgets, ", ")
+	case "bar.center.widgets":
+		return strings.Join(cfg.Bar.Center.Widgets, ", ")
+	case "bar.right.widgets":
+		return strings.Join(cfg.Bar.Right.Widgets, ", ")
 	case "bar.clock.format":
 		return cfg.Bar.Clock.Format
 	case "bar.audio.step":
@@ -396,6 +451,9 @@ func ParseValue(row Row, value string) (parsed string, err error) {
 			return "", fmt.Errorf("maximum %s", strconv.Itoa(row.Max))
 		}
 		return strconv.Itoa(n), nil
+
+	case KindWidgets:
+		return parseWidgetsList(v)
 
 	default:
 		if isDurationField(row.Key) {

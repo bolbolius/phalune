@@ -44,11 +44,11 @@ type App struct {
 	searchEntry    *gtk.SearchEntry
 	searchDebounce glib.SourceHandle
 	editor         *Editor
-	cfg         *config.Config
-	pages       []Page
-	widgetRows  [][]widgetRow
-	configPath  string
-	isUpdating  bool
+	cfg            *config.Config
+	pages          []Page
+	widgetRows     [][]widgetRow
+	configPath     string
+	isUpdating     bool
 }
 
 // ConfigLoc returns the active configuration file path.
@@ -542,7 +542,11 @@ func (w *App) checkDirty() {
 
 			dirty := false
 			if parsed, err := ParseValue(wr.row, cur); err == nil {
-				dirty = (parsed != orig)
+				if parsedOrig, err := ParseValue(wr.row, orig); err == nil {
+					dirty = (parsed != parsedOrig)
+				} else {
+					dirty = (parsed != orig)
+				}
 			} else {
 				dirty = (cur != orig)
 			}
@@ -614,7 +618,11 @@ func (w *App) collect() ([]struct {
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", wr.row.Label, err)
 			}
-			if parsed != old {
+			parsedOld, perr := ParseValue(wr.row, old)
+			if perr != nil {
+				parsedOld = old
+			}
+			if parsed != parsedOld {
 				out = append(out, struct {
 					Row   Row
 					Value string
