@@ -2,39 +2,32 @@ name: ci
 
 on:
   push:
+    branches:
+      - main
   pull_request:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-24.04
     container:
-      image: ghcr.io/void-linux/void-glibc-full:latest
+      image: ghcr.io/bolbolius/phalune/ci:latest
     steps:
-      - name: Bootstrap git
-        run: xbps-install -Sy --repository=https://repo-fastly.voidlinux.org/current xbps git ca-certificates
-
       - uses: actions/checkout@v4
 
-      - name: Fix git ownership
+      - name: Mark workspace directory safe
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-      - name: Cache xbps packages
+      - name: Cache Go build cache
         uses: actions/cache@v4
         with:
-          path: /var/cache/xbps
-          key: xbps-${{ runner.arch }}-${{ hashFiles('.github/workflows/ci.yml') }}
-          restore-keys: xbps-${{ runner.arch }}-
-
-      - name: Install system deps
-        run: |
-          xbps-install -Sy --repository=https://repo-fastly.voidlinux.org/current \
-            make gcc \
-            gtk4-devel \
-            gtk4-layer-shell gtk4-layer-shell-devel \
-            gobject-introspection \
-            blueprint-compiler \
-            go \
-            pkg-config
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: go-${{ runner.arch }}-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            go-${{ runner.arch }}-
 
       - name: Build
         run: make build

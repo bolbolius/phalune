@@ -23,13 +23,14 @@ Phalune talks to the running compositor through a compositor-agnostic interface 
 - Linux with Wayland compositor
 - `gtk4` & `gtk4-devel`
 - `gtk4-layer-shell` & `gtk4-layer-shell-devel`
+- `polkit-devel`
 - `gobject-introspection`
 - `blueprint-compiler`
 - Go 1.22+
 
 Install dependencies on Void Linux:
 ```bash
-sudo xbps-install -S gtk4-devel gtk4-layer-shell gtk4-layer-shell-devel gobject-introspection blueprint-compiler
+sudo xbps-install -S gtk4-devel gtk4-layer-shell gtk4-layer-shell-devel polkit-devel gobject-introspection blueprint-compiler
 ```
 
 ---

@@ -22,8 +22,8 @@ To build and install manually:
 
 ```bash
 # Required build dependencies:
-# gtk4-devel, gtk4-layer-shell(-devel), gobject-introspection,
-# blueprint-compiler, Go 1.22+, pkg-config
+# gtk4-devel, gtk4-layer-shell(-devel), polkit-devel,
+# gobject-introspection, blueprint-compiler, Go 1.22+, pkg-config
 
 make build
 sudo make install            # Installs to PREFIX=/usr/local by default

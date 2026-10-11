@@ -18,7 +18,7 @@ command -v xbps-install >/dev/null 2>&1 || fail "xbps-install not found. This sc
 
 echo "==> Installing build dependencies via xbps..."
 sudo xbps-install -S gtk4-devel gtk4-layer-shell gtk4-layer-shell-devel \
-  gobject-introspection blueprint-compiler go pkg-config git
+  polkit-devel gobject-introspection blueprint-compiler go pkg-config git
 
 echo "==> Building Phalune..."
 make -C "$REPO_ROOT" build
