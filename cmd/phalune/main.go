@@ -483,7 +483,7 @@ func main() {
 					Message: fmt.Sprintf("notify logs enabled: %v (level=%s)", newState, logHandler.NotifyLevel()),
 				}
 			case ipc.ActionPing:
-				data, _ := json.Marshal(map[string]any{"ping": "pong"})
+				data, _ := json.Marshal(map[string]any{"ping": "pong", "ipc_version": ipc.ProtocolVersion})
 				respCh <- ipc.Response{OK: true, Message: "pong", Data: data}
 			case ipc.ActionWidgetPush:
 				id := req.Args["id"]

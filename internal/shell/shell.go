@@ -284,6 +284,7 @@ type Status struct {
 	Bars          int    `json:"bars"`
 	DND           bool   `json:"dnd"`
 	Notifications int    `json:"notifications"`
+	IPCVersion    int    `json:"ipc_version"`
 }
 
 // DebugControlCenter snapshots control-center geometry. Runs on the GTK thread.
@@ -323,6 +324,7 @@ func (s *Shell) Status() Status {
 		Bars:          barsCount,
 		DND:           dnd,
 		Notifications: notifs,
+		IPCVersion:    ipc.ProtocolVersion,
 	}
 }
 

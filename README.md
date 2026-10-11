@@ -39,8 +39,14 @@ sudo xbps-install -S gtk4-devel gtk4-layer-shell gtk4-layer-shell-devel gobject-
 The build process uses the `Makefile` to automatically compile all Blueprint files in `ui/` into `.ui` definitions and link the `phalune` binary:
 
 ```bash
-# Compile UI (.blp -> .ui) and build binary
+# Automated install on Void Linux (dependencies + build + install + default config)
+./scripts/install.sh
+
+# Or build manually (.blp -> .ui and binary compilation)
 make build
+
+# Install system files (PREFIX=/usr/local by default)
+sudo make install
 
 # Run
 ./phalune
@@ -104,20 +110,20 @@ all_workspaces = true
 
 ## IPC & CLI Commands
 
-`phalune` includes a built-in IPC client and Unix domain socket server (`$XDG_RUNTIME_DIR/phalune.sock`). You can interact with the running shell instance using `phalune msg`:
+Phalune runs a Unix domain socket server at `$XDG_RUNTIME_DIR/phalune.sock`. You can control every part of the shell, bind shortcuts in your compositor, or write scripts using `phalune msg`:
 
 ```bash
-# Toggle the application launcher
+# App Launcher
 phalune msg toggle-launcher
 phalune msg open-launcher
 phalune msg close-launcher
 
-# Toggle Control Center (Quick Settings)
+# Control Center (Quick Settings)
 phalune msg toggle-control-center
 phalune msg open-control-center
 phalune msg close-control-center
 
-# Toggle Notification Center
+# Notification Center
 phalune msg toggle-notification-center
 
 # Window Switcher (Alt-Tab)
@@ -136,7 +142,7 @@ phalune msg toggle-clipboard
 phalune msg open-clipboard
 phalune msg close-clipboard
 
-# Lock Screen & Session
+# Session & Screen Locking
 phalune msg lock
 phalune msg unlock
 phalune msg is-locked
@@ -151,32 +157,32 @@ phalune msg osd volume 75
 phalune msg osd brightness 50
 phalune msg test-osd
 
-# Screenshots (requires grim and slurp; modes: area, window, display)
+# Screenshots (modes: area, window, display; needs grim and slurp)
 phalune msg screenshot
 phalune msg screenshot area
 phalune msg screenshot window
 phalune msg screenshot display
 
-# Notification Toasts
+# Desktop Notifications
 phalune msg notify "Download Finished" "archlinux-2026.iso has finished downloading."
 phalune msg test-notify
 
-# Reload configuration and styles on the fly
+# Reload configuration and stylesheets without restarting
 phalune msg reload-config
 phalune msg reload-style
 
-# Status & Diagnostics (supports --json / -j flag)
+# Diagnostics & Status (supports --json / -j for scripting)
 phalune msg status
 phalune msg status --json
 phalune msg is-locked --json
 phalune msg ping
 
-# Dynamic bar widgets pushed by external programs (see docs/IPC.md)
+# Dynamic bar widgets (custom scripts pushing over IPC; see docs/IPC.md)
 phalune msg widget push --id=pomodoro --text="🍅 18:42" --class=running --percentage=65
 phalune msg widget clear --id=pomodoro
 phalune msg widget watch --id=pomodoro
 
-# Stream shell events as NDJSON (Ctrl-C to stop)
+# Stream desktop events in real time as NDJSON
 phalune msg subscribe
 phalune msg subscribe --events=workspaces,volume,mpris
 ```
@@ -185,17 +191,12 @@ phalune msg subscribe --events=workspaces,volume,mpris
 
 ## Extensibility
 
-Two tiers, same socket:
+You can extend the status bar through two different approaches:
 
-* **Tier 1 — script bar modules**: `custom.<name>` widgets run shell
-  commands on an interval, tail streams, or feed JSON, with click/scroll
-  actions.
-* **Tier 2 — IPC event bus & dynamic widgets**: external daemons claim
-  bar slots (`ipc:<id>`) over a persistent socket and push state, receive
-  click callbacks, and subscribe to a real-time shell event stream
-  (workspaces, volume, mpris, brightness, notifications, battery).
+- **Custom Script Widgets (`custom.<name>`)**: Run any shell command at a set interval, follow an ongoing stdout stream, or output structured JSON with tooltips and CSS classes. Also supports click and scroll actions.
+- **Dynamic IPC Widgets (`ipc:<id>`)**: Let external scripts, daemons, or background jobs reserve a slot in the bar and push updates directly over the IPC socket. External tools can also subscribe to live desktop events like workspace switching, volume changes, MPRIS playback, and battery levels.
 
-Protocol reference for third-party developers: **[docs/IPC.md](docs/IPC.md)**.
+For the full socket protocol specification and example clients, see [**docs/IPC.md**](docs/IPC.md).
 
 ---
 
@@ -244,7 +245,10 @@ necessary.
 
 ## Documentation
 
-See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the project structure and [`CONTRIBUTING.md`](CONTRIBUTING.md) for contribution guidelines.
+- [`docs/USAGE.md`](docs/USAGE.md) — Setup, configuration reference, and everyday usage.
+- [`docs/IPC.md`](docs/IPC.md) — Socket IPC wire protocol and scripting reference.
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — Internal architecture and project structure.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — Development workflow and contribution guidelines.
 
 ---
 

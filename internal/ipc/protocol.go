@@ -9,6 +9,12 @@ import (
 	"strings"
 )
 
+// ProtocolVersion represents the IPC wire protocol version.
+// It is incremented only for breaking changes. Additive updates (such as
+// new actions or optional fields) remain backward-compatible; clients should
+// ignore unrecognized fields.
+const ProtocolVersion = 1
+
 type Request struct {
 	Action string            `json:"action"`
 	Args   map[string]string `json:"args,omitempty"`

@@ -19,6 +19,11 @@ $XDG_RUNTIME_DIR/phalune.sock
 * **Encoding:** UTF-8, no byte-order mark (BOM).
 * **Message limit:** 1 MiB per line.
 * **Security:** Socket file permissions are set to `0700` (accessible only by the running user).
+* **Versioning:** `status --json` and `ping --json` report `ipc_version` (currently `1`).
+  The protocol follows an additive-only policy during beta: new actions and
+  optional fields may be added without breaking existing clients, and command
+  aliases remain supported. Clients should ignore unrecognized fields.
+  A bump in `ipc_version` indicates a breaking protocol change.
 
 ### Communication Modes
 
