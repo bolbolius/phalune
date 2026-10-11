@@ -31,7 +31,7 @@ func main() {
 	app := gtk.NewApplication("org.phalune.settings", gio.ApplicationNonUnique)
 
 	app.ConnectActivate(func() {
-		if err := settings.LoadStyle(); err != nil {
+		if err := settings.LoadStyle(cfg.Theme.Name, cfg.Theme.Values); err != nil {
 			slog.Warn("failed to load settings stylesheet", "error", err)
 		}
 
