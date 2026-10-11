@@ -54,7 +54,7 @@ Overlay overlay_box {
                   spacing: 6;
                   Image {
                     icon-name: "emblem-system-symbolic";
-                    pixel-size: 14;
+                    pixel-size: 16;
                   }
                   Label {
                     label: _("Settings");
@@ -71,7 +71,7 @@ Overlay overlay_box {
                   spacing: 6;
                   Image {
                     icon-name: "utilities-terminal-symbolic";
-                    pixel-size: 14;
+                    pixel-size: 16;
                   }
                   Label {
                     label: _("Terminal");
@@ -88,7 +88,7 @@ Overlay overlay_box {
                   spacing: 6;
                   Image {
                     icon-name: "camera-photo-symbolic";
-                    pixel-size: 14;
+                    pixel-size: 16;
                   }
                   Label {
                     label: _("Screenshot");
@@ -105,7 +105,7 @@ Overlay overlay_box {
                   spacing: 6;
                   Image {
                     icon-name: "system-lock-screen-symbolic";
-                    pixel-size: 14;
+                    pixel-size: 16;
                   }
                   Label {
                     label: _("Lock");
@@ -154,14 +154,18 @@ Overlay overlay_box {
           };
         };
       }
-    }
 
-    Label no_results_label {
-      label: _("No applications found");
-      hexpand: true;
-      vexpand: true;
-      visible: false;
-      styles ["launcher-no-results"]
+      StackPage {
+        name: "empty";
+        child: Label no_results_label {
+          label: _("No applications found");
+          halign: center;
+          valign: center;
+          hexpand: true;
+          vexpand: true;
+          styles ["launcher-no-results"]
+        };
+      }
     }
 
     Box footer_hints {
@@ -169,6 +173,13 @@ Overlay overlay_box {
       spacing: 14;
       halign: center;
       styles ["launcher-footer"]
+
+      Box {
+        orientation: horizontal;
+        spacing: 4;
+        Label { label: "↑↓"; styles ["launcher-key-badge"] }
+        Label { label: _("Navigate"); styles ["launcher-hint-text"] }
+      }
 
       Box {
         orientation: horizontal;

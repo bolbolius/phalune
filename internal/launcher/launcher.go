@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os/exec"
 	"strings"
+	"sync"
 
 	"phalune/internal/config"
 	"phalune/internal/style"
@@ -17,15 +18,14 @@ import (
 )
 
 type Launcher struct {
-	window         *gtk.Window
-	overlayBox     *gtk.Overlay
-	card           *gtk.Box
-	searchEntry    *gtk.SearchEntry
-	contentStack   *gtk.Stack
-	listBox        *gtk.ListBox
-	scrolledWindow *gtk.ScrolledWindow
-	noResultsLabel *gtk.Label
-	gridFlowBox    *gtk.FlowBox
+	window       *gtk.Window
+	overlayBox   *gtk.Overlay
+	card         *gtk.Box
+	searchEntry  *gtk.SearchEntry
+	contentStack *gtk.Stack
+	listBox      *gtk.ListBox
+	gridFlowBox  *gtk.FlowBox
+	frequentBox  *gtk.Box
 
 	chipSettings   *gtk.Button
 	chipTerminal   *gtk.Button
@@ -42,6 +42,8 @@ type Launcher struct {
 	commands      []commandEntry
 	rawCommands   *ShellCommands
 	allApps       []App
+	appsMu        sync.RWMutex
+	scanActive    bool
 	current       []Result
 	frequentApps  []App
 	activePopover *gtk.Popover
@@ -64,9 +66,8 @@ func New(app *gtk.Application, cfg config.LauncherConfig) (*Launcher, error) {
 	searchEntry := builder.GetObject("search_entry").Cast().(*gtk.SearchEntry)
 	contentStack := builder.GetObject("content_stack").Cast().(*gtk.Stack)
 	listBox := builder.GetObject("list_box").Cast().(*gtk.ListBox)
-	scrolled := builder.GetObject("scrolled_window").Cast().(*gtk.ScrolledWindow)
-	noResults := builder.GetObject("no_results_label").Cast().(*gtk.Label)
 	gridFlowBox := builder.GetObject("grid_flowbox").Cast().(*gtk.FlowBox)
+	frequentBox := builder.GetObject("frequent_section").Cast().(*gtk.Box)
 
 	chipSettings := builder.GetObject("chip_settings").Cast().(*gtk.Button)
 	chipTerminal := builder.GetObject("chip_terminal").Cast().(*gtk.Button)
@@ -91,9 +92,8 @@ func New(app *gtk.Application, cfg config.LauncherConfig) (*Launcher, error) {
 		searchEntry:    searchEntry,
 		contentStack:   contentStack,
 		listBox:        listBox,
-		scrolledWindow: scrolled,
-		noResultsLabel: noResults,
 		gridFlowBox:    gridFlowBox,
+		frequentBox:    frequentBox,
 		chipSettings:   chipSettings,
 		chipTerminal:   chipTerminal,
 		chipScreenshot: chipScreenshot,
@@ -302,19 +302,20 @@ func (l *Launcher) moveSelection(delta int) {
 
 func (l *Launcher) updateFilter() {
 	query := strings.TrimSpace(l.searchEntry.Text())
+	apps := l.getApps()
 
 	// Compact mode is a pure command HUD: no canvas, always results view
 	if l.currentStyle == "compact" {
 		l.contentStack.SetVisibleChildName("results")
 		if query == "" {
 			// Show top frecency apps directly in the list
-			sorted := SortAppsHybrid(l.allApps, l.frecency)
+			sorted := SortAppsHybrid(apps, l.frecency)
 			l.current = make([]Result, len(sorted))
 			for i := range sorted {
 				l.current[i] = Result{App: &sorted[i]}
 			}
 		} else {
-			l.current = FilterResults(l.allApps, l.commands, query, l.frecency)
+			l.current = FilterResults(apps, l.commands, query, l.frecency)
 		}
 		l.renderList()
 		return
@@ -352,12 +353,17 @@ func (l *Launcher) renderFrequentGrid() {
 		l.gridFlowBox.SetMaxChildrenPerLine(4)
 	}
 
-	sorted := SortAppsHybrid(l.allApps, l.frecency)
+	apps := l.getApps()
+	sorted := SortAppsHybrid(apps, l.frecency)
 	if len(sorted) < limit {
 		limit = len(sorted)
 	}
 	l.frequentApps = make([]App, limit)
 	copy(l.frequentApps, sorted[:limit])
+
+	if l.frequentBox != nil {
+		l.frequentBox.SetVisible(len(l.frequentApps) > 0)
+	}
 
 	for _, app := range l.frequentApps {
 		itemBox := gtk.NewBox(gtk.OrientationVertical, 6)
@@ -406,13 +412,11 @@ func (l *Launcher) renderList() {
 	}
 
 	if len(l.current) == 0 {
-		l.scrolledWindow.SetVisible(false)
-		l.noResultsLabel.SetVisible(true)
+		l.contentStack.SetVisibleChildName("empty")
 		return
 	}
 
-	l.noResultsLabel.SetVisible(false)
-	l.scrolledWindow.SetVisible(true)
+	l.contentStack.SetVisibleChildName("results")
 
 	for _, res := range l.current {
 		rowBuilder := gtk.NewBuilderFromString(ui.LauncherItem)
@@ -618,9 +622,13 @@ func (l *Launcher) Toggle() {
 }
 
 func (l *Launcher) Open() {
-	apps, err := ScanApplications()
-	if err == nil {
-		l.allApps = apps
+	if len(l.getApps()) == 0 {
+		// First open scans synchronously; later opens use the cache.
+		if apps, err := ScanApplications(); err == nil {
+			l.setApps(apps)
+		}
+	} else {
+		go l.rescan()
 	}
 
 	l.searchEntry.SetText("")
@@ -628,6 +636,46 @@ func (l *Launcher) Open() {
 
 	l.window.Present()
 	l.searchEntry.GrabFocus()
+}
+
+// getApps returns a snapshot of the cached application list.
+func (l *Launcher) getApps() []App {
+	l.appsMu.RLock()
+	defer l.appsMu.RUnlock()
+	return append([]App(nil), l.allApps...)
+}
+
+func (l *Launcher) setApps(apps []App) {
+	l.appsMu.Lock()
+	l.allApps = apps
+	l.appsMu.Unlock()
+}
+
+// rescan refreshes the app cache in the background.
+func (l *Launcher) rescan() {
+	l.appsMu.Lock()
+	if l.scanActive {
+		l.appsMu.Unlock()
+		return
+	}
+	l.scanActive = true
+	l.appsMu.Unlock()
+	defer func() {
+		l.appsMu.Lock()
+		l.scanActive = false
+		l.appsMu.Unlock()
+	}()
+
+	apps, err := ScanApplications()
+	if err != nil {
+		return
+	}
+	l.setApps(apps)
+	glib.IdleAdd(func() {
+		if l.window.IsVisible() {
+			l.updateFilter()
+		}
+	})
 }
 
 func (l *Launcher) Close() {

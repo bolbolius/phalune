@@ -19,11 +19,11 @@ const (
 )
 
 type ShellCommands struct {
-	Reboot    func() error
-	PowerOff  func() error
-	Suspend   func() error
-	Hibernate func() error
-	Logout    func() error
+	Reboot     func() error
+	PowerOff   func() error
+	Suspend    func() error
+	Hibernate  func() error
+	Logout     func() error
 	Lock       func()
 	Reload     func()
 	PowerMenu  func()
