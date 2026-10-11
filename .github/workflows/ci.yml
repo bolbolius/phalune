@@ -11,17 +11,24 @@ jobs:
       image: ghcr.io/void-linux/void-glibc-full:latest
     steps:
       - name: Bootstrap git
-        run: xbps-install -Suy xbps git ca-certificates
+        run: xbps-install -Sy xbps git ca-certificates
 
       - uses: actions/checkout@v4
 
       - name: Fix git ownership
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
+      - name: Cache xbps packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/xbps
+          key: xbps-${{ runner.arch }}-${{ hashFiles('.github/workflows/ci.yml') }}
+          restore-keys: xbps-${{ runner.arch }}-
+
       - name: Install system deps
         run: |
-          xbps-install -Suy \
-            make \
+          xbps-install -Sy \
+            make gcc \
             gtk4-devel \
             gtk4-layer-shell gtk4-layer-shell-devel \
             gobject-introspection \
