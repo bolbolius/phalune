@@ -26,6 +26,7 @@ type NotificationCenter struct {
 	closeButton    *gtk.Button
 	scrolledWindow *gtk.ScrolledWindow
 	listBox        *gtk.ListBox
+	rowActions     []func()
 	emptyLabel     *gtk.Label
 
 	notifyMgr *notify.Manager
@@ -99,6 +100,14 @@ func New(app *gtk.Application, notifyMgr *notify.Manager) (*NotificationCenter, 
 		undoBtn:        undoBtn,
 		notifyMgr:      notifyMgr,
 	}
+
+	// Enter/Space on a focused row dismisses it; order matches render order.
+	listBox.ConnectRowActivated(func(row *gtk.ListBoxRow) {
+		idx := row.Index()
+		if idx >= 0 && idx < len(nc.rowActions) {
+			nc.rowActions[idx]()
+		}
+	})
 
 	if notifyMgr != nil {
 		nc.store = notifyMgr.Store()
@@ -224,6 +233,7 @@ func (nc *NotificationCenter) Render() {
 	for row := nc.listBox.RowAtIndex(0); row != nil; row = nc.listBox.RowAtIndex(0) {
 		nc.listBox.Remove(row)
 	}
+	nc.rowActions = nil
 
 	if nc.store == nil {
 		nc.emptyLabel.SetVisible(true)
@@ -285,14 +295,16 @@ func (nc *NotificationCenter) Render() {
 			bodyLabel.SetVisible(true)
 		}
 
-		dismissBtn.ConnectClicked(func() {
+		dismiss := func() {
 			if nc.store != nil {
 				nc.store.Remove(item.ID)
 			}
 			if nc.notifyMgr != nil {
 				nc.notifyMgr.Dismiss(item.ID, notify.CloseReasonDismissedByUser)
 			}
-		})
+		}
+		dismissBtn.ConnectClicked(dismiss)
+		nc.rowActions = append(nc.rowActions, dismiss)
 
 		if len(item.Actions) > 0 {
 			for _, act := range item.Actions {

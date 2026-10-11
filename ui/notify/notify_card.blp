@@ -6,7 +6,7 @@ Box notify_card {
   styles ["notify-card"]
 
   Image card_icon {
-    pixel-size: 32;
+    pixel-size: 24;
     valign: start;
     accessible-role: presentation;
     styles ["notify-icon"]
@@ -14,7 +14,7 @@ Box notify_card {
 
   Box content_box {
     orientation: vertical;
-    spacing: 3;
+    spacing: 4;
     hexpand: true;
 
     Box header_box {
@@ -28,7 +28,7 @@ Box notify_card {
       }
 
       Button close_button {
-        label: _("✕");
+        icon-name: "window-close-symbolic";
         tooltip-text: _("Close");
         styles ["notify-close"]
       }
@@ -65,6 +65,7 @@ Box notify_card {
       Entry reply_entry {
         placeholder-text: _("Reply…");
         hexpand: true;
+        activates-default: true;
         styles ["notify-reply-entry"]
       }
 
