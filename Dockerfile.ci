@@ -3,5 +3,5 @@ FROM ghcr.io/void-linux/void-glibc-full:latest
 RUN xbps-install -Sy --repository=https://repo-fastly.voidlinux.org/current \
     xbps ca-certificates git make gcc pkg-config go \
     gtk4-devel gtk4-layer-shell gtk4-layer-shell-devel \
-    polkit-devel gobject-introspection blueprint-compiler && \
+    polkit-devel gobject-introspection blueprint-compiler xorg-server-xvfb && \
     rm -rf /var/cache/xbps/*

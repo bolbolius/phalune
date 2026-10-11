@@ -39,7 +39,10 @@ jobs:
         run: go vet ./...
 
       - name: Test
-        run: go test ./...
+        run: |
+          Xvfb :99 -screen 0 1024x768x24 &
+          sleep 2
+          DISPLAY=:99 go test ./...
 
       - name: Upload binaries
         uses: actions/upload-artifact@v4
