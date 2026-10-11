@@ -58,6 +58,8 @@ type BluetoothController struct {
 	debounceMu    sync.Mutex
 	onChange      func(powered, available bool, title, icon string)
 	onDevices     func(devices []BluetoothDevice)
+	// onDiscovering fires on real adapter discovery state changes.
+	onDiscovering func(discovering bool)
 }
 
 func (bc *BluetoothController) scheduleRefresh() {
@@ -90,6 +92,13 @@ func NewBluetoothController(onChange func(powered, available bool, title, icon s
 func (bc *BluetoothController) SetOnDevicesChanged(fn func(devices []BluetoothDevice)) {
 	bc.mu.Lock()
 	bc.onDevices = fn
+	bc.mu.Unlock()
+}
+
+// SetOnDiscoveringChanged reports discovery state on the GTK thread.
+func (bc *BluetoothController) SetOnDiscoveringChanged(fn func(discovering bool)) {
+	bc.mu.Lock()
+	bc.onDiscovering = fn
 	bc.mu.Unlock()
 }
 
@@ -205,10 +214,26 @@ func (bc *BluetoothController) Refresh() {
 	}
 
 	bc.mu.Lock()
+	prevDiscovering := bc.discovering
 	bc.powered = powered
 	bc.available = true
 	bc.devices = devices
+	if discVal, discErr := obj.GetProperty(bluezIFace + ".Discovering"); discErr == nil {
+		if d, ok := discVal.Value().(bool); ok {
+			bc.discovering = d
+		}
+	}
+	discoveringChanged := bc.discovering != prevDiscovering
+	discoveringNow := bc.discovering
+	discoveringHook := bc.onDiscovering
 	bc.mu.Unlock()
+
+	if discoveringChanged && discoveringHook != nil {
+		hook, discovering := discoveringHook, discoveringNow
+		glib.IdleAdd(func() {
+			hook(discovering)
+		})
+	}
 
 	bc.notify()
 }

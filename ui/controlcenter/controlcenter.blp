@@ -12,7 +12,7 @@ Overlay overlay_box {
     valign: start;
     margin-top: 40;
     margin-end: 16;
-    width-request: 360;
+    width-request: 380;
     styles ["control-center-card"]
 
     Stack content_stack {
@@ -74,7 +74,8 @@ Overlay overlay_box {
                       label: _("Off");
                       halign: start;
                       ellipsize: end;
-                      max-width-chars: 10;
+                      width-chars: 12;
+                      max-width-chars: 12;
                       styles ["quick-toggle-subtitle"]
                     }
                   }
@@ -135,7 +136,8 @@ Overlay overlay_box {
                       label: _("Off");
                       halign: start;
                       ellipsize: end;
-                      max-width-chars: 10;
+                      width-chars: 12;
+                      max-width-chars: 12;
                       styles ["quick-toggle-subtitle"]
                     }
                   }
@@ -155,46 +157,54 @@ Overlay overlay_box {
               }
             }
 
-            Button dnd_button {
-              tooltip-text: _("Do Not Disturb");
-              styles ["quick-toggle"]
+            Box dnd_tile {
+              orientation: horizontal;
+              spacing: 0;
+              styles ["quick-toggle", "quick-toggle-split"]
               layout {
                 row: 1;
                 column: 0;
               }
 
-              child: Box {
-                orientation: horizontal;
-                spacing: 10;
+              Button dnd_button {
+                hexpand: true;
+                tooltip-text: _("Do Not Disturb");
+                styles ["flat", "quick-toggle-body"]
 
-                Image dnd_icon {
-                  icon-name: "notifications-disabled-symbolic";
-                  pixel-size: 22;
-                  accessible-role: presentation;
-                  styles ["quick-toggle-icon"]
-                }
+                child: Box {
+                  orientation: horizontal;
+                  spacing: 8;
 
-                Box {
-                  orientation: vertical;
-                  valign: center;
-                  halign: start;
-                  hexpand: true;
-
-                  Label dnd_title {
-                    label: _("Do Not Disturb");
-                    halign: start;
-                    styles ["quick-toggle-title"]
+                  Image dnd_icon {
+                    icon-name: "notifications-disabled-symbolic";
+                    pixel-size: 22;
+                    accessible-role: presentation;
+                    styles ["quick-toggle-icon"]
                   }
 
-                  Label dnd_status {
-                    label: _("Off");
+                  Box {
+                    orientation: vertical;
+                    valign: center;
                     halign: start;
-                    ellipsize: end;
-                    max-width-chars: 14;
-                    styles ["quick-toggle-subtitle"]
+                    hexpand: true;
+
+                    Label dnd_title {
+                      label: _("Do Not Disturb");
+                      halign: start;
+                      styles ["quick-toggle-title"]
+                    }
+
+                    Label dnd_status {
+                      label: _("Off");
+                      halign: start;
+                      ellipsize: end;
+                      width-chars: 12;
+                      max-width-chars: 12;
+                      styles ["quick-toggle-subtitle"]
+                    }
                   }
-                }
-              };
+                };
+              }
             }
 
             Box power_tile {
@@ -238,7 +248,8 @@ Overlay overlay_box {
                       label: _("Balanced");
                       halign: start;
                       ellipsize: end;
-                      max-width-chars: 10;
+                      width-chars: 12;
+                      max-width-chars: 12;
                       styles ["quick-toggle-subtitle"]
                     }
                   }
@@ -402,6 +413,7 @@ Overlay overlay_box {
                 valign: start;
                 halign: end;
                 ellipsize: end;
+                width-chars: 8;
                 max-width-chars: 12;
                 styles ["mpris-player-name"]
               }
@@ -473,8 +485,8 @@ Overlay overlay_box {
           ScrolledWindow wifi_scrolled_window {
             hscrollbar-policy: never;
             vscrollbar-policy: automatic;
-            min-content-height: 260;
-            max-content-height: 340;
+            min-content-height: 300;
+            max-content-height: 300;
             propagate-natural-height: true;
             styles ["subview-scrolled"]
 
@@ -486,6 +498,8 @@ Overlay overlay_box {
 
           Label wifi_empty_label {
             label: _("No Wi-Fi networks found");
+            halign: center;
+            valign: center;
             visible: false;
             styles ["subview-empty-label"]
           }
@@ -530,8 +544,8 @@ Overlay overlay_box {
           ScrolledWindow bluetooth_scrolled_window {
             hscrollbar-policy: never;
             vscrollbar-policy: automatic;
-            min-content-height: 260;
-            max-content-height: 340;
+            min-content-height: 300;
+            max-content-height: 300;
             propagate-natural-height: true;
             styles ["subview-scrolled"]
 
@@ -543,6 +557,8 @@ Overlay overlay_box {
 
           Label bluetooth_empty_label {
             label: _("No Bluetooth devices found");
+            halign: center;
+            valign: center;
             visible: false;
             styles ["subview-empty-label"]
           }
@@ -831,7 +847,7 @@ Overlay overlay_box {
           ScrolledWindow audio_streams_scrolled_window {
             hscrollbar-policy: never;
             vscrollbar-policy: automatic;
-            min-content-height: 160;
+            min-content-height: 240;
             max-content-height: 240;
             propagate-natural-height: true;
             styles ["subview-scrolled"]
@@ -844,6 +860,8 @@ Overlay overlay_box {
 
           Label audio_empty_label {
             label: _("No applications currently playing audio");
+            halign: center;
+            valign: center;
             visible: false;
             styles ["subview-empty-label"]
           }

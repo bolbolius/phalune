@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
-	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"phalune/internal/config"
 	"phalune/internal/mpris"
@@ -107,7 +107,13 @@ type ControlCenter struct {
 	mprisNextBtn    *gtk.Button
 	mprisDestroyed  bool
 	mprisTexCache   map[string]*gdk.Texture
-	mprisTexPath    string
+	// lastMprisSig skips identical states; lastMprisArt tracks the applied
+	// artwork source; lastMprisVisible mirrors card visibility.
+	lastMprisSig     string
+	lastMprisArt     string
+	lastMprisVisible bool
+	// mprisArtPending is an in-flight cover decode, applied only if current.
+	mprisArtPending string
 
 	// Controllers
 	wifiCtrl    *WiFiController
@@ -118,12 +124,15 @@ type ControlCenter struct {
 	mprisCtrl   *mpris.Controller
 	notifyMgr   *notify.Manager
 
-	mu             sync.Mutex
-	visible        bool
-	dndFallback    bool
-	wifiPassSSID   string
-	connectingSSID string
-	wifiLastSig    string
+	mu               sync.Mutex
+	visible          bool
+	dndFallback      bool
+	wifiPassSSID     string
+	connectingSSID   string
+	connectingBtAddr string
+	wifiRowActions   []func()
+	btRowActions     []func()
+	wifiLastSig      string
 }
 
 type streamRow struct {
@@ -346,6 +355,14 @@ func New(app *gtk.Application, notifyMgr *notify.Manager, cfg config.ControlCent
 		cc.renderBluetoothDevices(devices)
 	})
 
+	cc.btCtrl.SetOnDiscoveringChanged(func(discovering bool) {
+		if discovering {
+			cc.bluetoothScanButton.AddCSSClass("scan-busy")
+		} else {
+			cc.bluetoothScanButton.RemoveCSSClass("scan-busy")
+		}
+	})
+
 	cc.powerCtrl = NewPowerController(func(profile, title, icon string, active bool) {
 		cc.powerStatus.SetText(title)
 		cc.powerIcon.SetFromIconName(icon)
@@ -446,6 +463,13 @@ func (cc *ControlCenter) setupInteractivity() {
 
 	cc.wifiScanButton.ConnectClicked(func() {
 		cc.wifiCtrl.Scan()
+		cc.wifiScanButton.AddCSSClass("scan-busy")
+		// No scan-complete signal exists; this window covers request plus re-refresh.
+		time.AfterFunc(3*time.Second, func() {
+			glib.IdleAdd(func() {
+				cc.wifiScanButton.RemoveCSSClass("scan-busy")
+			})
+		})
 	})
 
 	cc.wifiRadioSwitch.ConnectStateSet(func(state bool) bool {
@@ -477,7 +501,22 @@ func (cc *ControlCenter) setupInteractivity() {
 	})
 
 	cc.bluetoothScanButton.ConnectClicked(func() {
+		cc.bluetoothScanButton.AddCSSClass("scan-busy")
 		cc.btCtrl.Scan()
+	})
+
+	// Enter/Space on a focused row runs its action; order matches render order.
+	cc.wifiListBox.ConnectRowActivated(func(row *gtk.ListBoxRow) {
+		idx := row.Index()
+		if idx >= 0 && idx < len(cc.wifiRowActions) {
+			cc.wifiRowActions[idx]()
+		}
+	})
+	cc.bluetoothListBox.ConnectRowActivated(func(row *gtk.ListBoxRow) {
+		idx := row.Index()
+		if idx >= 0 && idx < len(cc.btRowActions) {
+			cc.btRowActions[idx]()
+		}
 	})
 
 	cc.bluetoothRadioSwitch.ConnectStateSet(func(state bool) bool {
@@ -613,6 +652,7 @@ func (cc *ControlCenter) renderNetworks(networks []AccessPoint) {
 		for row := cc.wifiListBox.RowAtIndex(0); row != nil; row = cc.wifiListBox.RowAtIndex(0) {
 			cc.wifiListBox.Remove(row)
 		}
+		cc.wifiRowActions = nil
 		cc.wifiEmptyLabel.SetVisible(true)
 		cc.wifiScrolledWindow.SetVisible(false)
 		cc.wifiLastSig = ""
@@ -628,6 +668,7 @@ func (cc *ControlCenter) renderNetworks(networks []AccessPoint) {
 	for row := cc.wifiListBox.RowAtIndex(0); row != nil; row = cc.wifiListBox.RowAtIndex(0) {
 		cc.wifiListBox.Remove(row)
 	}
+	cc.wifiRowActions = nil
 
 	cc.wifiEmptyLabel.SetVisible(false)
 	cc.wifiScrolledWindow.SetVisible(true)
@@ -651,7 +692,8 @@ func (cc *ControlCenter) renderNetworks(networks []AccessPoint) {
 		statusLabel := builder.GetObject("wifi_item_status").Cast().(*gtk.Label)
 		lockImg := builder.GetObject("wifi_item_lock").Cast().(*gtk.Image)
 		connImg := builder.GetObject("wifi_item_connected").Cast().(*gtk.Image)
-		actionBtn := builder.GetObject("wifi_item_button").Cast().(*gtk.Button)
+		wifiSpinner := builder.GetObject("wifi_item_spinner").Cast().(*gtk.Spinner)
+		headerBox := builder.GetObject("wifi_item_header").Cast().(*gtk.Box)
 		pwdBox := builder.GetObject("wifi_password_box").Cast().(*gtk.Box)
 		pwdEntry := builder.GetObject("wifi_password_entry").Cast().(*gtk.PasswordEntry)
 		joinBtn := builder.GetObject("wifi_password_connect_btn").Cast().(*gtk.Button)
@@ -663,11 +705,13 @@ func (cc *ControlCenter) renderNetworks(networks []AccessPoint) {
 		pwdBox.SetVisible(false)
 
 		doConnect := func(pass string) {
+			if cc.connectingSSID == ap.SSID {
+				return
+			}
 			cc.connectingSSID = ap.SSID
 			cc.wifiLastSig = ""
-			actionBtn.SetSensitive(false)
-			statusLabel.SetText("Connecting...")
-			statusLabel.SetVisible(true)
+			statusLabel.SetText("Connecting…")
+			spinBusy(wifiSpinner)
 			go func() {
 				err := cc.wifiCtrl.Connect(ap.SSID, pass)
 				glib.IdleAdd(func() {
@@ -676,75 +720,63 @@ func (cc *ControlCenter) renderNetworks(networks []AccessPoint) {
 							cc.connectingSSID = ""
 							cc.wifiLastSig = ""
 						}
-						actionBtn.SetSensitive(true)
-						statusLabel.SetText("Failed to connect")
+						statusLabel.SetText("Failed")
+						spinIdle(wifiSpinner)
 					}
 				})
 			}()
 		}
+
+		var activateRow func()
 
 		if ap.Connected {
 			if cc.connectingSSID == ap.SSID {
 				cc.connectingSSID = ""
 			}
 			rowBox.AddCSSClass("connected")
-			connImg.SetVisible(true)
+			connImg.SetOpacity(1.0)
 			statusLabel.SetText("Connected")
-			statusLabel.SetVisible(true)
-			actionBtn.SetLabel("Disconnect")
-			actionBtn.AddCSSClass("destructive-action")
-			actionBtn.ConnectClicked(func() {
-				actionBtn.SetSensitive(false)
+			spinIdle(wifiSpinner)
+			activateRow = func() {
 				go func() {
 					_ = cc.wifiCtrl.Disconnect()
-					glib.IdleAdd(func() {
-						actionBtn.SetSensitive(true)
-					})
 				}()
-			})
+			}
 		} else if isSavedSection {
 			rowBox.RemoveCSSClass("connected")
-			connImg.SetVisible(false)
-			actionBtn.RemoveCSSClass("destructive-action")
+			connImg.SetOpacity(0.0)
 			if cc.connectingSSID == ap.SSID {
-				actionBtn.SetLabel("Connecting...")
-				actionBtn.SetSensitive(false)
-				statusLabel.SetText("Connecting...")
-				statusLabel.SetVisible(true)
+				statusLabel.SetText("Connecting…")
+				spinBusy(wifiSpinner)
 			} else {
-				actionBtn.SetLabel("Connect")
-				actionBtn.SetSensitive(true)
-				statusLabel.SetVisible(false)
+				statusLabel.SetText("Saved")
+				spinIdle(wifiSpinner)
 			}
-			actionBtn.ConnectClicked(func() {
+			activateRow = func() {
 				doConnect("")
-			})
+			}
 		} else {
 			rowBox.RemoveCSSClass("connected")
-			connImg.SetVisible(false)
-			actionBtn.RemoveCSSClass("destructive-action")
+			connImg.SetOpacity(0.0)
 			if cc.connectingSSID == ap.SSID {
-				actionBtn.SetLabel("Connecting...")
-				actionBtn.SetSensitive(false)
-				statusLabel.SetText("Connecting...")
-				statusLabel.SetVisible(true)
+				statusLabel.SetText("Connecting…")
+				spinBusy(wifiSpinner)
 			} else {
-				actionBtn.SetLabel("Connect")
-				actionBtn.SetSensitive(true)
-				statusLabel.SetVisible(false)
+				statusLabel.SetText(wifiSignalWord(ap.Strength))
+				spinIdle(wifiSpinner)
 			}
 
 			if !ap.Secured {
-				actionBtn.ConnectClicked(func() {
+				activateRow = func() {
 					doConnect("")
-				})
+				}
 			} else {
 				if cc.wifiPassSSID == ap.SSID {
 					pwdBox.SetVisible(true)
 					pwdEntry.GrabFocus()
 				}
 
-				actionBtn.ConnectClicked(func() {
+				activateRow = func() {
 					if cc.wifiPassSSID == ap.SSID {
 						cc.wifiPassSSID = ""
 						pwdBox.SetVisible(false)
@@ -755,7 +787,7 @@ func (cc *ControlCenter) renderNetworks(networks []AccessPoint) {
 						pwdEntry.GrabFocus()
 						cc.wifiLastSig = ""
 					}
-				})
+				}
 
 				joinBtn.ConnectClicked(func() {
 					cc.wifiPassSSID = ""
@@ -779,6 +811,9 @@ func (cc *ControlCenter) renderNetworks(networks []AccessPoint) {
 			}
 		}
 
+		appendRowClick(headerBox, activateRow)
+		cc.wifiRowActions = append(cc.wifiRowActions, activateRow)
+
 		cc.wifiListBox.Append(rowBox)
 	}
 
@@ -790,10 +825,72 @@ func (cc *ControlCenter) renderNetworks(networks []AccessPoint) {
 	}
 }
 
+// appendRowClick runs the row action on header press. The header holds
+// no other controls.
+func appendRowClick(header *gtk.Box, activate func()) {
+	if header == nil || activate == nil {
+		return
+	}
+	header.SetCursorFromName("pointer")
+	click := gtk.NewGestureClick()
+	click.ConnectPressed(func(_ int, _, _ float64) {
+		activate()
+	})
+	header.AddController(click)
+}
+
+// spinBusy shows the busy spinner; spinIdle hides it without freeing
+// its reserved slot.
+func spinBusy(spinner *gtk.Spinner) {
+	if spinner == nil {
+		return
+	}
+	spinner.SetVisible(true)
+	spinner.SetOpacity(1.0)
+	spinner.Start()
+}
+
+func spinIdle(spinner *gtk.Spinner) {
+	if spinner == nil {
+		return
+	}
+	spinner.Stop()
+	spinner.SetOpacity(0.0)
+}
+
+// wifiSignalWord maps strength to a status word fitting the fixed row slot.
+func wifiSignalWord(strength uint8) string {
+	switch {
+	case strength >= 75:
+		return "Excellent"
+	case strength >= 50:
+		return "Good"
+	case strength >= 25:
+		return "Fair"
+	default:
+		return "Weak"
+	}
+}
+
+// bluetoothSignalWord maps RSSI the same way; 0 is unknown.
+func bluetoothSignalWord(rssi int16) string {
+	switch {
+	case rssi == 0:
+		return "Available"
+	case rssi >= -55:
+		return "Excellent"
+	case rssi >= -70:
+		return "Good"
+	default:
+		return "Fair"
+	}
+}
+
 func (cc *ControlCenter) renderBluetoothDevices(devices []BluetoothDevice) {
 	for row := cc.bluetoothListBox.RowAtIndex(0); row != nil; row = cc.bluetoothListBox.RowAtIndex(0) {
 		cc.bluetoothListBox.Remove(row)
 	}
+	cc.btRowActions = nil
 
 	if len(devices) == 0 {
 		cc.bluetoothEmptyLabel.SetVisible(true)
@@ -812,52 +909,62 @@ func (cc *ControlCenter) renderBluetoothDevices(devices []BluetoothDevice) {
 		nameLabel := builder.GetObject("bluetooth_item_name").Cast().(*gtk.Label)
 		statusLabel := builder.GetObject("bluetooth_item_status").Cast().(*gtk.Label)
 		connImg := builder.GetObject("bluetooth_item_connected").Cast().(*gtk.Image)
-		actionBtn := builder.GetObject("bluetooth_item_button").Cast().(*gtk.Button)
+		btSpinner := builder.GetObject("bluetooth_item_spinner").Cast().(*gtk.Spinner)
+		headerBox := builder.GetObject("bluetooth_item_header").Cast().(*gtk.Box)
 
 		nameLabel.SetText(d.Name)
 		devIcon.SetFromIconName(BluetoothDeviceIcon(d.Icon))
 
+		var activateRow func()
+
 		if d.Connected {
 			rowBox.AddCSSClass("connected")
-			connImg.SetVisible(true)
+			connImg.SetOpacity(1.0)
 			statusLabel.SetText("Connected")
-			statusLabel.SetVisible(true)
-			actionBtn.SetLabel("Disconnect")
-			actionBtn.AddCSSClass("destructive-action")
-			actionBtn.ConnectClicked(func() {
-				actionBtn.SetSensitive(false)
+			spinIdle(btSpinner)
+			activateRow = func() {
+				spinBusy(btSpinner)
 				go func() {
 					_ = cc.btCtrl.Disconnect(d.Address)
 					glib.IdleAdd(func() {
-						actionBtn.SetSensitive(true)
+						spinIdle(btSpinner)
 					})
 				}()
-			})
+			}
 		} else {
 			rowBox.RemoveCSSClass("connected")
-			connImg.SetVisible(false)
-			if d.Paired {
-				statusLabel.SetText("Paired")
-				statusLabel.SetVisible(true)
+			connImg.SetOpacity(0.0)
+			if cc.connectingBtAddr == d.Address {
+				statusLabel.SetText("Connecting…")
+				spinBusy(btSpinner)
 			} else {
-				statusLabel.SetVisible(false)
+				if d.Paired {
+					statusLabel.SetText("Paired")
+				} else {
+					statusLabel.SetText(bluetoothSignalWord(d.RSSI))
+				}
+				spinIdle(btSpinner)
 			}
-			actionBtn.SetLabel("Connect")
-			actionBtn.RemoveCSSClass("destructive-action")
-			actionBtn.ConnectClicked(func() {
-				actionBtn.SetSensitive(false)
-				statusLabel.SetText("Connecting...")
-				statusLabel.SetVisible(true)
+			activateRow = func() {
+				if cc.connectingBtAddr == d.Address {
+					return
+				}
+				cc.connectingBtAddr = d.Address
+				statusLabel.SetText("Connecting…")
+				spinBusy(btSpinner)
 				go func() {
 					err := cc.btCtrl.Connect(d.Address)
 					glib.IdleAdd(func() {
-						actionBtn.SetSensitive(true)
+						if cc.connectingBtAddr == d.Address {
+							cc.connectingBtAddr = ""
+						}
+						spinIdle(btSpinner)
 						if err != nil {
-							statusLabel.SetText("Connection failed")
+							statusLabel.SetText("Failed")
 						}
 					})
 				}()
-			})
+			}
 		}
 
 		actionsBox := builder.GetObject("bluetooth_actions_box").Cast().(*gtk.Box)
@@ -876,8 +983,71 @@ func (cc *ControlCenter) renderBluetoothDevices(devices []BluetoothDevice) {
 			})
 		}
 
+		appendRowClick(headerBox, activateRow)
+		cc.btRowActions = append(cc.btRowActions, activateRow)
+
 		cc.bluetoothListBox.Append(rowBox)
 	}
+}
+
+// DebugLayout snapshots control-center geometry for layout debugging.
+func (cc *ControlCenter) DebugLayout() map[string]any {
+	out := map[string]any{}
+	if cc.card != nil {
+		if a := cc.card.Allocation(); a != nil {
+			out["cardW"] = a.Width()
+			out["cardH"] = a.Height()
+		}
+	}
+	if cc.contentStack != nil {
+		out["page"] = cc.contentStack.VisibleChildName()
+	}
+	out["wifi"] = cc.debugList("wifi")
+	out["bluetooth"] = cc.debugList("bluetooth")
+	if cc.mprisCard != nil {
+		out["mprisVisible"] = cc.mprisCard.Visible()
+	}
+	return out
+}
+
+func (cc *ControlCenter) debugList(which string) map[string]any {
+	var (
+		list     *gtk.ListBox
+		tile     *gtk.Box
+		subtitle *gtk.Label
+	)
+	switch which {
+	case "wifi":
+		list, tile, subtitle = cc.wifiListBox, cc.wifiTile, cc.wifiStatus
+	default:
+		list, tile, subtitle = cc.bluetoothListBox, cc.bluetoothTile, cc.bluetoothStatus
+	}
+	info := map[string]any{}
+	if tile != nil {
+		if a := tile.Allocation(); a != nil {
+			info["tileW"] = a.Width()
+		}
+	}
+	if subtitle != nil {
+		info["subtitle"] = subtitle.Text()
+	}
+	if list == nil {
+		return info
+	}
+	rows := 0
+	widths := []int{}
+	for r := list.RowAtIndex(0); r != nil; r = list.RowAtIndex(rows) {
+		if a := r.Allocation(); a != nil {
+			widths = append(widths, a.Width())
+		}
+		rows++
+		if rows > 12 {
+			break
+		}
+	}
+	info["rows"] = rows
+	info["rowW"] = widths
+	return info
 }
 
 func (cc *ControlCenter) toggleDND() {
@@ -1207,15 +1377,53 @@ func (cc *ControlCenter) IsVisible() bool {
 	return cc.visible
 }
 
+// mprisCardSig fingerprints the mirrored player state.
+func mprisCardSig(active *mpris.PlayerState) string {
+	var b strings.Builder
+	b.WriteString(string(active.Status))
+	b.WriteByte(0)
+	b.WriteString(active.Identity)
+	b.WriteByte(0)
+	b.WriteString(active.Title)
+	b.WriteByte(0)
+	b.WriteString(active.Artist)
+	b.WriteByte(0)
+	b.WriteString(active.Album)
+	b.WriteByte(0)
+	b.WriteString(active.ArtURL)
+	b.WriteByte(0)
+	b.WriteString(active.LocalArtPath)
+	b.WriteByte(0)
+	for _, f := range []bool{active.CanGoPrevious, active.CanGoNext, active.CanPlay, active.CanPause, active.CanControl} {
+		if f {
+			b.WriteByte('1')
+		} else {
+			b.WriteByte('0')
+		}
+	}
+	return b.String()
+}
+
 func (cc *ControlCenter) updateMprisUI(active *mpris.PlayerState) {
 	if cc.mprisDestroyed {
 		return
 	}
 	if active == nil || active.Status == mpris.PlaybackStopped {
-		cc.mprisCard.SetVisible(false)
+		if cc.lastMprisVisible {
+			cc.mprisCard.SetVisible(false)
+			cc.lastMprisVisible = false
+			cc.lastMprisSig = ""
+		}
 		return
 	}
 
+	// Identical states never touch widgets.
+	sig := mprisCardSig(active)
+	if sig == cc.lastMprisSig && cc.lastMprisVisible {
+		return
+	}
+	cc.lastMprisSig = sig
+	cc.lastMprisVisible = true
 	cc.mprisCard.SetVisible(true)
 
 	title := active.Title
@@ -1306,7 +1514,7 @@ func loadCroppedTexture(path string, targetSize int) *gdk.Texture {
 
 	cropped := scaled.NewSubpixbuf(cropX, cropY, actualW, actualH)
 	if cropped == nil {
-		return gdk.NewTextureForPixbuf(scaled)
+		return nil
 	}
 	return gdk.NewTextureForPixbuf(cropped)
 }
@@ -1314,89 +1522,130 @@ func loadCroppedTexture(path string, targetSize int) *gdk.Texture {
 func (cc *ControlCenter) updateMprisArt(active *mpris.PlayerState) {
 	const artSize = 64
 
-	// 1. Cover Art: local file or cached remote file
-	artPath := active.LocalArtPath
-	if artPath == "" && active.ArtURL != "" {
-		raw := active.ArtURL
-		if strings.HasPrefix(raw, "file://") {
-			artPath = strings.TrimPrefix(raw, "file://")
-		} else if strings.HasPrefix(raw, "/") {
-			artPath = raw
+	// Cover art is cropped to artSize and decoded off the main thread.
+	if path := mprisCoverPath(active); path != "" {
+		key := "file:" + path
+		if key == cc.lastMprisArt {
+			return
 		}
+		if tex, ok := cc.mprisTexCache[path]; ok {
+			cc.mprisArt.SetFromPaintable(tex)
+			cc.lastMprisArt = key
+			cc.mprisArtPending = ""
+			return
+		}
+		if cc.mprisArtPending != key {
+			cc.mprisArtPending = key
+			go cc.decodeMprisArt(path, key, active, artSize)
+		}
+		return
 	}
 
-	if artPath != "" {
-		if _, err := os.Stat(artPath); err == nil {
-			if tex := cc.croppedTexture(artPath, artSize); tex != nil {
-				cc.mprisArt.SetPixelSize(artSize)
-				cc.mprisArt.SetFromPaintable(tex)
-				return
-			}
-		}
-	}
-
-	// 2. App Icon from active player identity & bus name
-	display := gdk.DisplayGetDefault()
-	if display != nil {
-		theme := gtk.IconThemeGetForDisplay(display)
-		if theme != nil {
-			// Candidate names derived from the player identity and bus name
-			// only; fall through to the generic icon when nothing matches.
-			candidates := make([]string, 0, 4)
-			if ident := strings.TrimSpace(active.Identity); ident != "" {
-				candidates = append(candidates, strings.ToLower(ident), ident)
-			}
-			busShort := strings.TrimPrefix(active.BusName, "org.mpris.MediaPlayer2.")
-			if busShort != "" && busShort != active.Identity {
-				candidates = append(candidates, strings.ToLower(busShort), busShort)
-			}
-
-			for _, c := range candidates {
-				if c == "" {
-					continue
-				}
-				if theme.HasIcon(c) {
-					cc.mprisArt.SetPixelSize(36)
-					cc.mprisArt.SetFromIconName(c)
-					return
-				}
-				// Also try splitting dot identifiers
-				if strings.Contains(c, ".") {
-					parts := strings.Split(c, ".")
-					for j := len(parts) - 1; j >= 0; j-- {
-						p := strings.ToLower(parts[j])
-						if p != "desktop" && p != "exe" && theme.HasIcon(p) {
-							cc.mprisArt.SetPixelSize(36)
-							cc.mprisArt.SetFromIconName(p)
-							return
-						}
-					}
-				}
-			}
-		}
-	}
-
-	// 3. Fallback generic audio icon
-	cc.mprisArt.SetPixelSize(32)
-	cc.mprisArt.SetFromIconName("audio-x-generic-symbolic")
+	cc.mprisArtPending = ""
+	cc.applyMprisIcon(active)
 }
 
-// croppedTexture loads and center-crops an image to targetSize, caching the
-// result per path so repeated state changes don't re-decode the file.
-func (cc *ControlCenter) croppedTexture(path string, targetSize int) *gdk.Texture {
-	if tex, ok := cc.mprisTexCache[path]; ok {
-		return tex
-	}
-	tex := loadCroppedTexture(path, targetSize)
-	if tex != nil {
-		// Drop any previous path so at most one cached texture lingers.
-		if cc.mprisTexPath != "" && cc.mprisTexPath != path {
-			delete(cc.mprisTexCache, cc.mprisTexPath)
+// decodeMprisArt applies decoded art only if still current.
+func (cc *ControlCenter) decodeMprisArt(path, key string, active *mpris.PlayerState, artSize int) {
+	tex := loadCroppedTexture(path, artSize)
+	glib.IdleAdd(func() {
+		if tex != nil {
+			cc.cacheTexture(path, tex)
 		}
-		cc.mprisTexCache[path] = tex
-		cc.mprisTexPath = path
+		if cc.mprisArtPending != key || cc.mprisDestroyed {
+			return
+		}
+		cc.mprisArtPending = ""
+		if tex != nil {
+			cc.mprisArt.SetFromPaintable(tex)
+			cc.lastMprisArt = key
+			return
+		}
+		cc.applyMprisIcon(active)
+	})
+}
+
+// applyMprisIcon resolves the app or fallback icon; no-op when unchanged.
+func (cc *ControlCenter) applyMprisIcon(active *mpris.PlayerState) {
+	if name, ok := mprisIconName(active); ok {
+		if key := "icon:" + name; key != cc.lastMprisArt {
+			cc.mprisArt.SetFromIconName(name)
+			cc.lastMprisArt = key
+		}
+		return
 	}
-	return tex
+	if key := "icon:audio-x-generic-symbolic"; key != cc.lastMprisArt {
+		cc.mprisArt.SetFromIconName("audio-x-generic-symbolic")
+		cc.lastMprisArt = key
+	}
+}
+
+// cacheTexture stores decoded covers in a bounded cache.
+func (cc *ControlCenter) cacheTexture(path string, tex *gdk.Texture) {
+	cc.mprisTexCache[path] = tex
+	if len(cc.mprisTexCache) > 8 {
+		for p := range cc.mprisTexCache {
+			if p != path {
+				delete(cc.mprisTexCache, p)
+			}
+		}
+	}
+}
+
+// mprisCoverPath resolves the local cover file, if any.
+func mprisCoverPath(active *mpris.PlayerState) string {
+	if active.LocalArtPath != "" {
+		return active.LocalArtPath
+	}
+	raw := active.ArtURL
+	if strings.HasPrefix(raw, "file://") {
+		return strings.TrimPrefix(raw, "file://")
+	}
+	if strings.HasPrefix(raw, "/") {
+		return raw
+	}
+	return ""
+}
+
+// mprisIconName matches player identity to an icon theme name.
+func mprisIconName(active *mpris.PlayerState) (string, bool) {
+	display := gdk.DisplayGetDefault()
+	if display == nil {
+		return "", false
+	}
+	theme := gtk.IconThemeGetForDisplay(display)
+	if theme == nil {
+		return "", false
+	}
+	// Candidates come from identity and bus name only.
+	candidates := make([]string, 0, 4)
+	if ident := strings.TrimSpace(active.Identity); ident != "" {
+		candidates = append(candidates, strings.ToLower(ident), ident)
+	}
+	busShort := strings.TrimPrefix(active.BusName, "org.mpris.MediaPlayer2.")
+	if busShort != "" && busShort != active.Identity {
+		candidates = append(candidates, strings.ToLower(busShort), busShort)
+	}
+
+	for _, c := range candidates {
+		if c == "" {
+			continue
+		}
+		if theme.HasIcon(c) {
+			return c, true
+		}
+		// Also try splitting dot identifiers
+		if strings.Contains(c, ".") {
+			parts := strings.Split(c, ".")
+			for j := len(parts) - 1; j >= 0; j-- {
+				p := strings.ToLower(parts[j])
+				if p != "desktop" && p != "exe" && theme.HasIcon(p) {
+					return p, true
+				}
+			}
+		}
+	}
+	return "", false
 }
 
 func (cc *ControlCenter) applyStyle(styleName, styleClass string) {

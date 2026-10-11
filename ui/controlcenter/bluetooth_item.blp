@@ -32,7 +32,9 @@ Box bluetooth_item_box {
       Label bluetooth_item_status {
         label: _("Status");
         halign: start;
-        visible: false;
+        width-chars: 12;
+        max-width-chars: 12;
+        ellipsize: end;
         styles ["bluetooth-item-status"]
       }
     }
@@ -41,14 +43,13 @@ Box bluetooth_item_box {
       icon-name: "object-select-symbolic";
       pixel-size: 16;
       accessible-role: presentation;
-      visible: false;
       styles ["bluetooth-item-connected-icon"]
     }
 
-    Button bluetooth_item_button {
-      label: _("Connect");
+    Spinner bluetooth_item_spinner {
       valign: center;
-      styles ["flat", "bluetooth-item-action-button"]
+      opacity: 0.0;
+      styles ["bluetooth-item-spinner"]
     }
   }
 

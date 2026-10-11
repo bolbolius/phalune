@@ -32,7 +32,9 @@ Box wifi_item_box {
       Label wifi_item_status {
         label: _("Status");
         halign: start;
-        visible: false;
+        width-chars: 12;
+        max-width-chars: 12;
+        ellipsize: end;
         styles ["wifi-item-status"]
       }
     }
@@ -49,14 +51,13 @@ Box wifi_item_box {
       icon-name: "object-select-symbolic";
       pixel-size: 16;
       accessible-role: presentation;
-      visible: false;
       styles ["wifi-item-connected-icon"]
     }
 
-    Button wifi_item_button {
-      label: _("Connect");
+    Spinner wifi_item_spinner {
       valign: center;
-      styles ["flat", "wifi-item-action-button"]
+      opacity: 0.0;
+      styles ["wifi-item-spinner"]
     }
   }
 
