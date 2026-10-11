@@ -4,7 +4,6 @@ on:
   push:
     paths:
       - 'Dockerfile.ci'
-      - '.github/workflows/docker.yml'
     branches:
       - main
   workflow_dispatch:
