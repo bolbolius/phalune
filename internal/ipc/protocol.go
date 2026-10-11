@@ -36,6 +36,7 @@ const (
 	ActionCloseNotificationCenter  = "close-notifications"
 	ActionReloadStyle              = "reload-style"
 	ActionPing                     = "ping"
+	ActionDebugLayout              = "debug-layout"
 	ActionShowOSD                  = "osd"
 	ActionTestOSD                  = "test-osd"
 	ActionNotify                   = "notify"

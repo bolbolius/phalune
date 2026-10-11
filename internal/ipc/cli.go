@@ -73,6 +73,7 @@ Reloading and logs:
   set-log-level <level> [notify_level]  Set console and optional notify log level
   toggle-notify-logs [on|off] Toggle forwarding logs to desktop notifications
   ping                        Ping running phalune daemon
+  debug-layout                Dump control-center geometry snapshot (JSON)
 `
 
 // RunClient is the entry point of "phalune msg".

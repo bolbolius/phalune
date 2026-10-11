@@ -1,6 +1,7 @@
 package ipc
 
 import (
+	"sort"
 	"strings"
 	"sync"
 )
@@ -24,17 +25,17 @@ const (
 	eventBuffer   = 16
 )
 
-// EventBus fans out events to topic subscribers. Subscriber channels are
-// buffered; a full channel skips delivery so a slow client never blocks
-// the shell main loop.
+// EventBus fans out events without blocking the sender. The latest
+// event per topic is retained for new subscribers.
 type EventBus struct {
 	mu     sync.RWMutex
 	subs   map[string]map[int]chan Event
+	last   map[string]Event
 	nextID int
 }
 
 func NewEventBus() *EventBus {
-	return &EventBus{subs: make(map[string]map[int]chan Event)}
+	return &EventBus{subs: make(map[string]map[int]chan Event), last: make(map[string]Event)}
 }
 
 // Subscribe registers a subscriber for one or more topics. An empty list
@@ -60,6 +61,27 @@ func (b *EventBus) Subscribe(topics []string) (<-chan Event, func()) {
 			b.subs[t] = set
 		}
 		set[id] = ch
+	}
+
+	// Replay latest state so the subscriber starts warm.
+	var replay []Event
+	if len(normalized) == 1 && normalized[0] == topicWildcard {
+		for _, ev := range b.last {
+			replay = append(replay, ev)
+		}
+	} else {
+		for _, t := range normalized {
+			if ev, ok := b.last[t]; ok {
+				replay = append(replay, ev)
+			}
+		}
+	}
+	sort.Slice(replay, func(i, j int) bool { return replay[i].Topic < replay[j].Topic })
+	for _, ev := range replay {
+		select {
+		case ch <- ev:
+		default:
+		}
 	}
 
 	unsubscribe := func() {
@@ -101,6 +123,9 @@ func (b *EventBus) Publish(topic string, data any) {
 	b.mu.RUnlock()
 
 	ev := Event{Topic: topic, Data: data}
+	b.mu.Lock()
+	b.last[topic] = ev
+	b.mu.Unlock()
 	for _, ch := range targets {
 		select {
 		case ch <- ev:

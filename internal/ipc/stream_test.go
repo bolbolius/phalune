@@ -90,6 +90,26 @@ func TestSubscribeStreamsEvents(t *testing.T) {
 	}
 }
 
+func TestSubscribeReplaysLatestState(t *testing.T) {
+	_, bus, _, path := startTestServer(t, func(req Request) Response {
+		return Response{OK: true}
+	})
+
+	bus.Publish("mpris", map[string]any{"title": "current song"})
+	bus.Publish("volume", map[string]any{"volume": 10})
+
+	c, sc := dial(t, path)
+	sendLine(t, c, Request{Action: ActionSubscribeEvents, Args: map[string]string{"events": "mpris"}})
+
+	handshake := scanLine(t, sc)
+	if handshake["ok"] != true {
+		t.Fatalf("bad handshake: %v", handshake)
+	}
+	if ev := scanLine(t, sc); ev["event"] != "mpris" {
+		t.Fatalf("expected replayed mpris event, got %v", ev)
+	}
+}
+
 func TestSubscribeWildcard(t *testing.T) {
 	_, bus, _, path := startTestServer(t, nil)
 

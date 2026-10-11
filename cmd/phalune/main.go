@@ -271,6 +271,14 @@ func main() {
 					Message: msg,
 					Data:    data,
 				}
+			case ipc.ActionDebugLayout:
+				layout := sh.DebugControlCenter()
+				data, _ := json.Marshal(layout)
+				respCh <- ipc.Response{
+					OK:      true,
+					Message: string(data),
+					Data:    data,
+				}
 			case ipc.ActionIsLocked, "lock-status":
 				locked := sh.IsLocked()
 				data, _ := json.Marshal(map[string]any{"locked": locked})

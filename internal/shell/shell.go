@@ -286,6 +286,16 @@ type Status struct {
 	Notifications int    `json:"notifications"`
 }
 
+// DebugControlCenter snapshots control-center geometry. Runs on the GTK thread.
+func (s *Shell) DebugControlCenter() map[string]any {
+	if s.controlCenter == nil {
+		return map[string]any{"open": false}
+	}
+	out := s.controlCenter.DebugLayout()
+	out["open"] = true
+	return out
+}
+
 func (s *Shell) Status() Status {
 	s.mu.Lock()
 	barsCount := len(s.barsByConnector)
@@ -490,6 +500,7 @@ func (s *Shell) Start() error {
 			} else {
 				s.notifyMgr = notifyInstance
 				s.dbusServer = dbusSvr
+				s.emitNotificationEvents(emitterCtx)
 			}
 		}
 	}
@@ -516,6 +527,7 @@ func (s *Shell) Start() error {
 		return fmt.Errorf("failed to create control center: %w", err)
 	}
 	s.controlCenter = ccInstance
+	s.emitMprisEvents(emitterCtx)
 	if s.osdMgr != nil && s.controlCenter != nil {
 		s.controlCenter.SetShowOSD(func(icon, label string, value float64) {
 			s.osdMgr.Show(icon, label, value)
