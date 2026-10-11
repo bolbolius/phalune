@@ -64,5 +64,5 @@
   - [X] Slideshow / auto-rotation.
   - [X] Dynamic color extraction.
 - [X] Making UX better.
-- [X] Installation scripts and Makefile targets (`scripts/install.sh`, `make install/uninstall`).
-- [X] Documentation (`docs/USAGE.md`, updated `docs/IPC.md`).
+- [X] Installation scripts and Makefile targets.
+- [X] Documentation.
