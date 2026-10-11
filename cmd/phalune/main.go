@@ -42,7 +42,14 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
+// version is injected at build time via -ldflags "-X main.version=...".
+var version = "dev"
+
 func main() {
+	if len(os.Args) > 1 && (os.Args[1] == "--version" || os.Args[1] == "-v") {
+		fmt.Println("phalune", version)
+		os.Exit(0)
+	}
 	if len(os.Args) > 1 && os.Args[1] == "msg" {
 		os.Exit(ipc.RunClient(os.Args[2:]))
 	}

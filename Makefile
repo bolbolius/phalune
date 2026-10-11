@@ -8,6 +8,9 @@ BINDIR ?= $(PREFIX)/bin
 DATADIR ?= $(PREFIX)/share
 DESTDIR ?=
 
+VERSION ?= $(shell git describe --tags --dirty --always 2>/dev/null || echo dev)
+LDFLAGS := -X main.version=$(VERSION)
+
 BLP_FILES := $(shell find ui -name "*.blp")
 UI_FILES := $(BLP_FILES:.blp=.ui)
 
@@ -22,14 +25,14 @@ clean-ui:
 	rm -f $(UI_FILES)
 
 build: ui
-	go build -o phalune ./cmd/phalune
-	go build -o phalune-settings ./cmd/phalune-settings
+	go build -ldflags "$(LDFLAGS)" -o phalune ./cmd/phalune
+	go build -ldflags "$(LDFLAGS)" -o phalune-settings ./cmd/phalune-settings
 
 shell: ui
-	go build -o phalune ./cmd/phalune
+	go build -ldflags "$(LDFLAGS)" -o phalune ./cmd/phalune
 
 settings: ui
-	go build -o phalune-settings ./cmd/phalune-settings
+	go build -ldflags "$(LDFLAGS)" -o phalune-settings ./cmd/phalune-settings
 
 test: ui
 	go test -v ./...

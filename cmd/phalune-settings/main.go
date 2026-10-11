@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 
@@ -12,7 +13,14 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
+// version is injected at build time via -ldflags "-X main.version=...".
+var version = "dev"
+
 func main() {
+	if len(os.Args) > 1 && (os.Args[1] == "--version" || os.Args[1] == "-v") {
+		fmt.Println("phalune-settings", version)
+		os.Exit(0)
+	}
 	if err := os.Setenv("GDK_BACKEND", "wayland"); err != nil {
 		slog.Warn("failed to set GDK_BACKEND=wayland", "error", err)
 	}

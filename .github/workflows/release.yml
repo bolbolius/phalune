@@ -1,0 +1,51 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      packages: read
+    container:
+      image: ghcr.io/bolbolius/phalune-ci:latest
+    env:
+      GOCACHE: ${{ github.workspace }}/.ci-cache/go-build
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Mark workspace directory safe
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Cache Go build cache
+        uses: actions/cache@v4
+        with:
+          path: .ci-cache/go-build
+          key: go-${{ runner.arch }}-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            go-${{ runner.arch }}-
+
+      - name: Build release binaries
+        run: make build
+
+      - name: Package
+        run: |
+          tar -czf "phalune-${{ github.ref_name }}-x86_64.tar.gz" \
+            phalune phalune-settings \
+            data/org.phalune.shell.desktop \
+            example/config.toml
+          sha256sum "phalune-${{ github.ref_name }}-x86_64.tar.gz" > "phalune-${{ github.ref_name }}-x86_64.tar.gz.sha256"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            phalune-*.tar.gz
+            phalune-*.tar.gz.sha256
+          generate_release_notes: true
