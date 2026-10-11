@@ -105,7 +105,7 @@ func New(app *gtk.Application, cfg config.OSDConfig) (*OSD, error) {
 		animDuration = 120
 	}
 
-	return &OSD{
+	o := &OSD{
 		window:              win,
 		icon:                icon,
 		label:               label,
@@ -117,7 +117,60 @@ func New(app *gtk.Application, cfg config.OSDConfig) (*OSD, error) {
 		animationDurationMs: animDuration,
 		lastFraction:        -1.0,
 		currentFraction:     -1.0,
-	}, nil
+	}
+
+	// Hovering the pill holds it on screen; leaving re-arms the timeout.
+	hover := gtk.NewEventControllerMotion()
+	hover.ConnectEnter(func(_, _ float64) {
+		o.holdDismiss()
+	})
+	hover.ConnectLeave(func() {
+		o.releaseDismiss()
+	})
+	card.AddController(hover)
+
+	return o, nil
+}
+
+// armDismissLocked restarts the auto-dismiss timer. Callers must hold o.mu.
+func (o *OSD) armDismissLocked() {
+	if o.timer != nil {
+		o.timer.Stop()
+	}
+	o.timer = time.AfterFunc(o.timeout, func() {
+		glib.IdleAdd(func() {
+			o.mu.Lock()
+			defer o.mu.Unlock()
+			if o.window != nil && o.isVisible {
+				o.stopAnimation()
+				o.window.SetVisible(false)
+				o.isVisible = false
+				o.lastIcon = ""
+				o.lastLabel = ""
+				o.lastValueText = ""
+				o.lastFraction = -1.0
+				o.currentFraction = -1.0
+			}
+		})
+	})
+}
+
+// holdDismiss pauses auto-dismiss while hovered.
+func (o *OSD) holdDismiss() {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	if o.timer != nil {
+		o.timer.Stop()
+		o.timer = nil
+	}
+}
+
+func (o *OSD) releaseDismiss() {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	if o.isVisible && o.timer == nil {
+		o.armDismissLocked()
+	}
 }
 
 func (o *OSD) UpdateConfig(cfg config.OSDConfig) error {
@@ -241,25 +294,7 @@ func (o *OSD) ShowCustom(iconName string, labelText string, value float64, custo
 	o.pendingCustom = customText
 
 	// Reset auto-dismiss timer on every update so it stays visible while sliding/scrolling
-	if o.timer != nil {
-		o.timer.Stop()
-	}
-	o.timer = time.AfterFunc(o.timeout, func() {
-		glib.IdleAdd(func() {
-			o.mu.Lock()
-			defer o.mu.Unlock()
-			if o.window != nil && o.isVisible {
-				o.stopAnimation()
-				o.window.SetVisible(false)
-				o.isVisible = false
-				o.lastIcon = ""
-				o.lastLabel = ""
-				o.lastValueText = ""
-				o.lastFraction = -1.0
-				o.currentFraction = -1.0
-			}
-		})
-	})
+	o.armDismissLocked()
 
 	hook := o.eventHook
 	isPending := o.hasPending
